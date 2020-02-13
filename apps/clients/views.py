@@ -2,7 +2,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from rest_framework.pagination import LimitOffsetPagination
 from .models import Client, ClientPostAdress, ContactProfile, ContactPhone, ContactEmail
-
+ 
+# Create your views here.
 class ClientList(generics.ListCreateAPIView):
       queryset = Client.objects.all()
       serializer_class = ClientSerializer

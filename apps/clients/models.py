@@ -1,6 +1,6 @@
-from django.db import models
 from phone_field import PhoneField
-
+ 
+# Create your models here.
 class Client(models.Model):
     PAY_FORM_CHOISE = (
         ('1', 'Безнал'),
@@ -61,6 +61,3 @@ class ContactEmail(models.Model):
 
      
       
-
-
-                         

@@ -71,6 +71,4 @@ class ClientSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'pay_form', 'login',
                   'adress', 'contacts')        
     
-        
-
-
+    
