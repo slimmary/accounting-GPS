@@ -60,7 +60,7 @@ class ContactProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactProfile
         fields = ('id', 'firstname', 'surname', 'patronymic',
-                  'position', 'phones', 'emails', 'client')
+                  'position', 'phones', 'emails', 'client_field')
 
         
 class ClientSerializer(serializers.ModelSerializer):

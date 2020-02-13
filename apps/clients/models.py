@@ -1,5 +1,6 @@
 from phone_field import PhoneField
- 
+from django.db import models
+
 # Create your models here.
 class Client(models.Model):
     PAY_FORM_CHOISE = (
@@ -12,7 +13,7 @@ class Client(models.Model):
     pay_form = models.CharField(max_length=1, choices=PAY_FORM_CHOISE,
                                 help_text='Оберіть форму оплати')
     name = models.CharField(max_length=128, blank=False)
-    login = name = models.CharField(max_length=128, blank=False)
+    login = models.CharField(max_length=128, blank=False)
 
 
 class ClientPostAdress(models.Model):
@@ -36,7 +37,7 @@ class ContactProfile(models.Model):
     surname = models.CharField(max_length=50, blank = False, help_text="І'мя")
     patronymic = models.CharField(max_length=50, help_text='По батькові')
     position = models.CharField(max_length=50, help_text='Посада')
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='contacts')
+    client_field = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='contacts')
 
     def __str__(self):
           return '{} {} {} - {}'.format(self.first_name, self.surname, self.patronymic, self.client)
