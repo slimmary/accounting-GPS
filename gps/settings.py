@@ -31,14 +31,23 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'jet.dashboard',
+    'jet',  
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
+    
     'rest_framework',
+
+    'phone_field',
+    'apps.clients',
+    #'apps.orders',
+    #'apps.products',
+    #'apps.users',
+    #'apps.vehicle',
 ]
 
 MIDDLEWARE = [
