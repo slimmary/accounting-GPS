@@ -1,0 +1,551 @@
+commit 1b40e4c4a1c78d91726bb3dc050201e971bd1c22
+Author: Мария Маркелова <slimmarkelova@MacBook-Air-Maria.local>
+Date:   Wed Feb 12 13:56:20 2020 +0200
+
+    create Client model, serialaizer, view
+
+diff --git a/apps/clients/__pycache__/__init__.cpython-37.pyc b/apps/clients/__pycache__/__init__.cpython-37.pyc
+new file mode 100644
+index 0000000..fc318b0
+Binary files /dev/null and b/apps/clients/__pycache__/__init__.cpython-37.pyc differ
+diff --git a/apps/clients/__pycache__/admin.cpython-37.pyc b/apps/clients/__pycache__/admin.cpython-37.pyc
+new file mode 100644
+index 0000000..6125f0f
+Binary files /dev/null and b/apps/clients/__pycache__/admin.cpython-37.pyc differ
+diff --git a/apps/clients/__pycache__/models.cpython-37.pyc b/apps/clients/__pycache__/models.cpython-37.pyc
+new file mode 100644
+index 0000000..2c9d72c
+Binary files /dev/null and b/apps/clients/__pycache__/models.cpython-37.pyc differ
+diff --git a/apps/clients/__pycache__/urls.cpython-37.pyc b/apps/clients/__pycache__/urls.cpython-37.pyc
+new file mode 100644
+index 0000000..dc0a700
+Binary files /dev/null and b/apps/clients/__pycache__/urls.cpython-37.pyc differ
+diff --git a/apps/clients/models.py b/apps/clients/models.py
+index 71a8362..bc3da10 100644
+--- a/apps/clients/models.py
++++ b/apps/clients/models.py
+@@ -1,3 +1,66 @@
+ from django.db import models
++from phone_field import PhoneField
+ 
+-# Create your models here.
++class Client(models.Model):
++    PAY_FORM_CHOISE = (
++        ('1', 'Безнал'),
++        ('2', 'Нал'),
++        ('3', 'БК'),
++        ('4','Безнал/Нал'),
++        ('5','Безнал/БК')
++        )
++    pay_form = models.CharField(max_length=1, choices=PAY_FORM_CHOISE,
++                                help_text='Оберіть форму оплати')
++    name = models.CharField(max_length=128, blank=False)
++    login = name = models.CharField(max_length=128, blank=False)
++
++
++class ClientPostAdress(models.Model):
++      index = models.IntegerField(help_text='Пштовий індекс', blank=False)
++      region = models.CharField(max_length=50,help_text='Область')
++      district = models.CharField(max_length=50,help_text='Район')
++      city = models.CharField(max_length=50,help_text='Місто', blank=False)
++      street = models.CharField(max_length=200,help_text='Вулиця', blank=False)
++      house = models.CharField(max_length=50,help_text='Номер будинку', blank=False)
++      office = models.CharField(max_length=50,help_text='Номер офісу або квартири')
++      client_profile = models.OneToOneField(Client,on_delete=models.CASCADE,
++                                     related_name='adress', blank=False)
++
++      def __str__(self):
++          return '{} {} {} {} {} {} {}'.format(self.index, self.region, self.district, self.city,
++                                    self.street, self.house, self.office, self.client_profile)
++
++    
++class ContactProfile(models.Model):
++    firstname = models.CharField(max_length=50,help_text='Прізвище')
++    surname = models.CharField(max_length=50, blank = False, help_text="І'мя")
++    patronymic = models.CharField(max_length=50, help_text='По батькові')
++    position = models.CharField(max_length=50, help_text='Посада')
++    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='contacts')
++
++    def __str__(self):
++          return '{} {} {} - {}'.format(self.first_name, self.surname, self.patronymic, self.client)
++    
++    
++class ContactPhone(models.Model):
++    phone = PhoneField(help_text='Контактний номер телефону')
++    contact_profile = models.ForeignKey(ContactProfile,on_delete=models.CASCADE,
++        related_name='phones')
++
++    def __str__(self):
++          return '{}. {} - {}'.format(self.id,self.phone,self.contact_profile)
++
++
++class ContactEmail(models.Model):
++      email = models.EmailField(max_length=254,help_text='Контактна електронна адреса')
++      contact_profile = models.ForeignKey(ContactProfile,on_delete=models.CASCADE,
++            related_name='emails')
++      
++      def __str__(self):
++          return '{}. {} - {}'.format(self.id,self.email,self.contact_profile)
++
++     
++      
++
++
++                         
+diff --git a/apps/clients/serializers.py b/apps/clients/serializers.py
+new file mode 100644
+index 0000000..1a74f80
+--- /dev/null
++++ b/apps/clients/serializers.py
+@@ -0,0 +1,76 @@
++from rest_framework import serializers
++from .models import Client, ClientPostAdress, ContactProfile, ContactPhone, ContactEmail 
++
++
++
++class ClientPostAdressSerializer(serializers.ModelSerializer):
++
++    class Meta:
++        model = ClientPostAdress
++        fields = ('id', 'index', 'region', 'district',
++                  'city', 'street', 'house', 'office', 'client_profile' )
++
++class ClientPostAdressBriefSerializer(serializers.ModelSerializer):
++
++    class Meta:
++        model = ClientPostAdress
++        fields = ('id', 'index', 'region', 'district',
++                  'city', 'street', 'house', 'office' )
++
++        
++class ContactPhoneSerializer(serializers.ModelSerializer):
++
++    class Meta:
++        model = ContactPhone
++        fields = ('id', 'phone', 'contact_profile' )
++
++class ContactPhoneBriefSerializer(serializers.ModelSerializer):
++
++    class Meta:
++        model = ContactPhone
++        fields = ('id', 'phone')
++
++
++        
++class ContactEmailSerializer(serializers.ModelSerializer):
++
++    class Meta:
++        model = ContactEmail
++        fields = ('id', 'email', 'contact_profile' )
++
++class ContactEmaiBrieflSerializer(serializers.ModelSerializer):
++
++    class Meta:
++        model = ContactEmail
++        fields = ('id', 'email')
++
++
++                
++class ContactProfileBriefSerializer(serializers.ModelSerializer):
++    emails = ContactEmaiBrieflSerializer
++    phones = ContactPhoneBriefSerializer
++    class Meta:
++        model = ContactProfile
++        fields = ('id', 'firstname', 'surname', 'patronymic',
++                  'position', 'phones', 'emails')
++        
++class ContactProfileSerializer(serializers.ModelSerializer):
++    emails = ContactEmaiBrieflSerializer
++    phones = ContactPhoneBriefSerializer
++    class Meta:
++        model = ContactProfile
++        fields = ('id', 'firstname', 'surname', 'patronymic',
++                  'position', 'phones', 'emails', 'client')
++
++        
++class ClientSerializer(serializers.ModelSerializer):
++    adress = ClientPostAdressBriefSerializer
++    contacts = ContactProfileBriefSerializer
++    class Meta:
++        model = Client
++        fields = ('id', 'name', 'pay_form', 'login',
++                  'adress', 'contacts')        
++    
++        
++
++
+diff --git a/apps/clients/urls.py b/apps/clients/urls.py
+new file mode 100644
+index 0000000..855952e
+--- /dev/null
++++ b/apps/clients/urls.py
+@@ -0,0 +1,21 @@
++"""gps URL Configuration
++
++The `urlpatterns` list routes URLs to views. For more information please see:
++    https://docs.djangoproject.com/en/2.2/topics/http/urls/
++Examples:
++Function views
++    1. Add an import:  from my_app import views
++    2. Add a URL to urlpatterns:  path('', views.home, name='home')
++Class-based views
++    1. Add an import:  from other_app.views import Home
++    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
++Including another URLconf
++    1. Import the include() function: from django.urls import include, path
++    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
++"""
++from django.contrib import admin
++from django.urls import path, include
++
++urlpatterns = [
++
++]
+diff --git a/apps/clients/views.py b/apps/clients/views.py
+index 91ea44a..2031c5d 100644
+--- a/apps/clients/views.py
++++ b/apps/clients/views.py
+@@ -1,3 +1,68 @@
+-from django.shortcuts import render
++from django.shortcuts import get_object_or_404
++from rest_framework import generics
++from rest_framework.pagination import LimitOffsetPagination
++from .models import Client, ClientPostAdress, ContactProfile, ContactPhone, ContactEmail
+ 
+-# Create your views here.
++class ClientList(generics.ListCreateAPIView):
++      queryset = Client.objects.all()
++      serializer_class = ClientSerializer
++      pagination_class = LimitOffsetPagination
++
++class ClientDetail(generics.RetrieveUpdateDestroyAPIView):
++      serializer_class = ClientSerializer
++
++      def get_object(self):
++        obj = get_object_or_404(Client, pk=self.kwargs.get('client_id'))
++        return obj
++
++
++class ClientPostAdressList(generics.ListCreateAPIView):
++      queryset = ClientPostAdress.objects.all()
++      serializer_class = ClientPostAdressSerializer
++      pagination_class = LimitOffsetPagination
++
++class ClientPostAdressDetail(generics.RetrieveUpdateDestroyAPIView):
++      serializer_class = ClientPostAdressSerializer
++
++      def get_object(self):
++        obj = get_object_or_404(ClientPostAdress, pk=self.kwargs.get('adress_id'))
++        return obj
++      
++
++class ContactProfileList(generics.ListCreateAPIView):
++      queryset = ContactProfile.objects.all()
++      serializer_class = ContactProfileSerializer
++      pagination_class = LimitOffsetPagination
++
++class ContactProfileDetail(generics.RetrieveUpdateDestroyAPIView):
++      serializer_class = ContactProfileSerializer
++
++      def get_object(self):
++        obj = get_object_or_404(ContactProfile, pk=self.kwargs.get('profile_id'))
++        return obj
++
++
++class ContactPhoneList(generics.ListCreateAPIView):
++      queryset = ContactPhone.objects.all()
++      serializer_class = ContactPhoneSerializer
++      pagination_class = LimitOffsetPagination
++
++class ContactPhoneDetail(generics.RetrieveUpdateDestroyAPIView):
++      serializer_class = ContactPhoneSerializer
++
++      def get_object(self):
++        obj = get_object_or_404(ContactPhone, pk=self.kwargs.get('phone_id'))
++        return obj
++
++      
++class ContactEmailList(generics.ListCreateAPIView):
++      queryset = ContactEmail.objects.all()
++      serializer_class = ContactEmailSerializer
++      pagination_class = LimitOffsetPagination
++
++class ContactEmailDetail(generics.RetrieveUpdateDestroyAPIView):
++      serializer_class = ContactEmailSerializer
++
++      def get_object(self):
++        obj = get_object_or_404(ContactEmail, pk=self.kwargs.get('email_id'))
++        return obj
+diff --git a/apps/orders/__pycache__/__init__.cpython-37.pyc b/apps/orders/__pycache__/__init__.cpython-37.pyc
+new file mode 100644
+index 0000000..3d5942a
+Binary files /dev/null and b/apps/orders/__pycache__/__init__.cpython-37.pyc differ
+diff --git a/apps/orders/__pycache__/admin.cpython-37.pyc b/apps/orders/__pycache__/admin.cpython-37.pyc
+new file mode 100644
+index 0000000..bec53b7
+Binary files /dev/null and b/apps/orders/__pycache__/admin.cpython-37.pyc differ
+diff --git a/apps/orders/__pycache__/models.cpython-37.pyc b/apps/orders/__pycache__/models.cpython-37.pyc
+new file mode 100644
+index 0000000..eafaeb9
+Binary files /dev/null and b/apps/orders/__pycache__/models.cpython-37.pyc differ
+diff --git a/apps/orders/__pycache__/urls.cpython-37.pyc b/apps/orders/__pycache__/urls.cpython-37.pyc
+new file mode 100644
+index 0000000..8d79666
+Binary files /dev/null and b/apps/orders/__pycache__/urls.cpython-37.pyc differ
+diff --git a/apps/orders/urls.py b/apps/orders/urls.py
+new file mode 100644
+index 0000000..16eaf9a
+--- /dev/null
++++ b/apps/orders/urls.py
+@@ -0,0 +1,26 @@
++"""gps URL Configuration
++
++The `urlpatterns` list routes URLs to views. For more information please see:
++    https://docs.djangoproject.com/en/2.2/topics/http/urls/
++Examples:
++Function views
++    1. Add an import:  from my_app import views
++    2. Add a URL to urlpatterns:  path('', views.home, name='home')
++Class-based views
++    1. Add an import:  from other_app.views import Home
++    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
++Including another URLconf
++    1. Import the include() function: from django.urls import include, path
++    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
++"""
++from django.contrib import admin
++from django.urls import path, include
++
++urlpatterns = [
++    path('admin/', admin.site.urls),
++    path('clients/',include('apps.clients.urls')),
++    path('orders/',include('apps.orders.urls')),
++    path('products/',include('apps.products.urls')),
++    path('users/',include('apps.users.urls')),
++    path('vehicle/',include('apps.vehicle.urls')),
++]
+diff --git a/apps/products/__pycache__/__init__.cpython-37.pyc b/apps/products/__pycache__/__init__.cpython-37.pyc
+new file mode 100644
+index 0000000..51d3cb3
+Binary files /dev/null and b/apps/products/__pycache__/__init__.cpython-37.pyc differ
+diff --git a/apps/products/__pycache__/admin.cpython-37.pyc b/apps/products/__pycache__/admin.cpython-37.pyc
+new file mode 100644
+index 0000000..2ac6573
+Binary files /dev/null and b/apps/products/__pycache__/admin.cpython-37.pyc differ
+diff --git a/apps/products/__pycache__/models.cpython-37.pyc b/apps/products/__pycache__/models.cpython-37.pyc
+new file mode 100644
+index 0000000..638ad39
+Binary files /dev/null and b/apps/products/__pycache__/models.cpython-37.pyc differ
+diff --git a/apps/products/__pycache__/urls.cpython-37.pyc b/apps/products/__pycache__/urls.cpython-37.pyc
+new file mode 100644
+index 0000000..082bd84
+Binary files /dev/null and b/apps/products/__pycache__/urls.cpython-37.pyc differ
+diff --git a/apps/products/urls.py b/apps/products/urls.py
+new file mode 100644
+index 0000000..16eaf9a
+--- /dev/null
++++ b/apps/products/urls.py
+@@ -0,0 +1,26 @@
++"""gps URL Configuration
++
++The `urlpatterns` list routes URLs to views. For more information please see:
++    https://docs.djangoproject.com/en/2.2/topics/http/urls/
++Examples:
++Function views
++    1. Add an import:  from my_app import views
++    2. Add a URL to urlpatterns:  path('', views.home, name='home')
++Class-based views
++    1. Add an import:  from other_app.views import Home
++    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
++Including another URLconf
++    1. Import the include() function: from django.urls import include, path
++    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
++"""
++from django.contrib import admin
++from django.urls import path, include
++
++urlpatterns = [
++    path('admin/', admin.site.urls),
++    path('clients/',include('apps.clients.urls')),
++    path('orders/',include('apps.orders.urls')),
++    path('products/',include('apps.products.urls')),
++    path('users/',include('apps.users.urls')),
++    path('vehicle/',include('apps.vehicle.urls')),
++]
+diff --git a/apps/users/__pycache__/__init__.cpython-37.pyc b/apps/users/__pycache__/__init__.cpython-37.pyc
+new file mode 100644
+index 0000000..8cbcc72
+Binary files /dev/null and b/apps/users/__pycache__/__init__.cpython-37.pyc differ
+diff --git a/apps/users/__pycache__/admin.cpython-37.pyc b/apps/users/__pycache__/admin.cpython-37.pyc
+new file mode 100644
+index 0000000..6dc9479
+Binary files /dev/null and b/apps/users/__pycache__/admin.cpython-37.pyc differ
+diff --git a/apps/users/__pycache__/models.cpython-37.pyc b/apps/users/__pycache__/models.cpython-37.pyc
+new file mode 100644
+index 0000000..ae82144
+Binary files /dev/null and b/apps/users/__pycache__/models.cpython-37.pyc differ
+diff --git a/apps/users/__pycache__/urls.cpython-37.pyc b/apps/users/__pycache__/urls.cpython-37.pyc
+new file mode 100644
+index 0000000..150cc22
+Binary files /dev/null and b/apps/users/__pycache__/urls.cpython-37.pyc differ
+diff --git a/apps/users/urls.py b/apps/users/urls.py
+new file mode 100644
+index 0000000..16eaf9a
+--- /dev/null
++++ b/apps/users/urls.py
+@@ -0,0 +1,26 @@
++"""gps URL Configuration
++
++The `urlpatterns` list routes URLs to views. For more information please see:
++    https://docs.djangoproject.com/en/2.2/topics/http/urls/
++Examples:
++Function views
++    1. Add an import:  from my_app import views
++    2. Add a URL to urlpatterns:  path('', views.home, name='home')
++Class-based views
++    1. Add an import:  from other_app.views import Home
++    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
++Including another URLconf
++    1. Import the include() function: from django.urls import include, path
++    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
++"""
++from django.contrib import admin
++from django.urls import path, include
++
++urlpatterns = [
++    path('admin/', admin.site.urls),
++    path('clients/',include('apps.clients.urls')),
++    path('orders/',include('apps.orders.urls')),
++    path('products/',include('apps.products.urls')),
++    path('users/',include('apps.users.urls')),
++    path('vehicle/',include('apps.vehicle.urls')),
++]
+diff --git a/apps/vehicle/__pycache__/__init__.cpython-37.pyc b/apps/vehicle/__pycache__/__init__.cpython-37.pyc
+new file mode 100644
+index 0000000..2a2b153
+Binary files /dev/null and b/apps/vehicle/__pycache__/__init__.cpython-37.pyc differ
+diff --git a/apps/vehicle/__pycache__/admin.cpython-37.pyc b/apps/vehicle/__pycache__/admin.cpython-37.pyc
+new file mode 100644
+index 0000000..79eaea7
+Binary files /dev/null and b/apps/vehicle/__pycache__/admin.cpython-37.pyc differ
+diff --git a/apps/vehicle/__pycache__/models.cpython-37.pyc b/apps/vehicle/__pycache__/models.cpython-37.pyc
+new file mode 100644
+index 0000000..920f8b0
+Binary files /dev/null and b/apps/vehicle/__pycache__/models.cpython-37.pyc differ
+diff --git a/apps/vehicle/__pycache__/urls.cpython-37.pyc b/apps/vehicle/__pycache__/urls.cpython-37.pyc
+new file mode 100644
+index 0000000..06576c0
+Binary files /dev/null and b/apps/vehicle/__pycache__/urls.cpython-37.pyc differ
+diff --git a/apps/vehicle/urls.py b/apps/vehicle/urls.py
+new file mode 100644
+index 0000000..16eaf9a
+--- /dev/null
++++ b/apps/vehicle/urls.py
+@@ -0,0 +1,26 @@
++"""gps URL Configuration
++
++The `urlpatterns` list routes URLs to views. For more information please see:
++    https://docs.djangoproject.com/en/2.2/topics/http/urls/
++Examples:
++Function views
++    1. Add an import:  from my_app import views
++    2. Add a URL to urlpatterns:  path('', views.home, name='home')
++Class-based views
++    1. Add an import:  from other_app.views import Home
++    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
++Including another URLconf
++    1. Import the include() function: from django.urls import include, path
++    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
++"""
++from django.contrib import admin
++from django.urls import path, include
++
++urlpatterns = [
++    path('admin/', admin.site.urls),
++    path('clients/',include('apps.clients.urls')),
++    path('orders/',include('apps.orders.urls')),
++    path('products/',include('apps.products.urls')),
++    path('users/',include('apps.users.urls')),
++    path('vehicle/',include('apps.vehicle.urls')),
++]
+diff --git a/gps/__pycache__/local.cpython-37.pyc b/gps/__pycache__/local.cpython-37.pyc
+new file mode 100644
+index 0000000..abec0eb
+Binary files /dev/null and b/gps/__pycache__/local.cpython-37.pyc differ
+diff --git a/gps/__pycache__/settings.cpython-37.pyc b/gps/__pycache__/settings.cpython-37.pyc
+index 314cdf2..bc39667 100644
+Binary files a/gps/__pycache__/settings.cpython-37.pyc and b/gps/__pycache__/settings.cpython-37.pyc differ
+diff --git a/gps/__pycache__/urls.cpython-37.pyc b/gps/__pycache__/urls.cpython-37.pyc
+new file mode 100644
+index 0000000..b5590f7
+Binary files /dev/null and b/gps/__pycache__/urls.cpython-37.pyc differ
+diff --git a/gps/__pycache__/wsgi.cpython-37.pyc b/gps/__pycache__/wsgi.cpython-37.pyc
+new file mode 100644
+index 0000000..b6a1538
+Binary files /dev/null and b/gps/__pycache__/wsgi.cpython-37.pyc differ
+diff --git a/gps/local.py b/gps/local.py
+new file mode 100644
+index 0000000..0ee660c
+--- /dev/null
++++ b/gps/local.py
+@@ -0,0 +1,15 @@
++
++
++# Database
++# https://docs.djangoproject.com/en/2.2/ref/settings/#databases
++
++DATABASES = {
++    'default': {
++        'ENGINE': 'django.db.backends.postgresql_psycopg2',
++        'NAME': 'gps',
++        'USER': 'slimmary',
++        'PASSWORD': '5600946',
++        'HOST': 'localhost',
++        'PORT': 5432,
++    }
++}
+diff --git a/gps/settings.py b/gps/settings.py
+index ec444d1..392cdf0 100644
+--- a/gps/settings.py
++++ b/gps/settings.py
+@@ -31,6 +31,8 @@ ALLOWED_HOSTS = []
+ # Application definition
+ 
+ INSTALLED_APPS = [
++    'jet.dashboard',
++    'jet',
+     'django.contrib.admin',
+     'django.contrib.auth',
+     'django.contrib.contenttypes',
+@@ -39,6 +41,12 @@ INSTALLED_APPS = [
+     'django.contrib.staticfiles',
+ 
+     'rest_framework',
++    'phone_field',
++    'apps.clients',
++    #'apps.orders',
++    #'apps.products',
++    #'apps.users',
++    #'apps.vehicle',
+ ]
+ 
+ MIDDLEWARE = [
+diff --git a/gps/urls.py b/gps/urls.py
+index 94a68e3..7660f26 100644
+--- a/gps/urls.py
++++ b/gps/urls.py
+@@ -14,8 +14,13 @@ Including another URLconf
+     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+ """
+ from django.contrib import admin
+-from django.urls import path
++from django.urls import path, include
+ 
+ urlpatterns = [
+     path('admin/', admin.site.urls),
++    path('clients/',include('apps.clients.urls')),
++    #path('orders/',include('apps.orders.urls')),
++    #path('products/',include('apps.products.urls')),
++    #path('users/',include('apps.users.urls')),
++    #path('vehicle/',include('apps.vehicle.urls')),
+ ]
