@@ -13,7 +13,14 @@ class ContactProfile(models.Model):
     email = models.EmailField(null=True, max_length=254, help_text='Контактна електронна адреса')
 
     def __str__(self):
-        return '{} {} {} '.format(self.firstname, self.surname, self.patronymic)
+        return '{} {} {}  - посада: {}, телефон: {}, email: {}  '.format(
+            self.firstname,
+            self.surname,
+            self.patronymic,
+            self.position,
+            self.phone,
+            self.email
+        )
 
 
 class ClientPostAddress(models.Model):
@@ -26,8 +33,14 @@ class ClientPostAddress(models.Model):
     office = models.CharField(max_length=50, help_text='Номер офісу або квартири')
 
     def __str__(self):
-        return '{} {} {} {} {} {} {}'.format(self.index, self.region, self.district, self.city,
-                                             self.street, self.house, self.office)
+        return 'Індекс: {}, Область: {}, Район: {}, Місто: {}, Вулиця: {}, Будинок №: {}, Офіс/квартира №: {}'.format(
+            self.index,
+            self.region,
+            self.district,
+            self.city,
+            self.street,
+            self.house,
+            self.office)
 
 
 class Client(models.Model):
@@ -51,4 +64,10 @@ class Client(models.Model):
     address = models.OneToOneField(ClientPostAddress, null=True, on_delete=models.CASCADE, related_name='client')
 
     def __str__(self):
-        return '{} {} {} {}'.format(self.pay_form, self.name, self.login, self.status)
+        return '"{}"  |  логін: {}  | статус: {} | форма оплати: {}'.format(
+            self.name,
+            self.login,
+            self.get_status_display(),
+            self.get_pay_form_display(),
+
+        )

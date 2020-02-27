@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'phone_field',
     'apps.clients',
     'apps.authenticate',
+    'apps.contracts',
     #'apps.orders',
     #'apps.products',
     'apps.users',

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Client, ClientPostAddress, ContactProfile
+from apps.contracts.serializers import ContractBriefSerializer
 
 
 class ClientPostAddressSerializer(serializers.ModelSerializer):
@@ -37,15 +38,16 @@ class ContactProfileSerializer(serializers.ModelSerializer):
 class ClientSerializer(serializers.ModelSerializer):
     address = ClientPostAddressBriefSerializer
     contacts = ContactProfileBriefSerializer
+    contracts = ContractBriefSerializer
 
     class Meta:
         model = Client
         fields = ('id', 'name', 'status', 'pay_form', 'login',
-                  'address', 'contacts')
+                  'address', 'contacts', 'contracts')
 
 
 class ClientBriefSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Client
-        fields = ('id', 'name', 'status''login')
+        fields = ('id', 'name', 'status', 'login')

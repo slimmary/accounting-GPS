@@ -10,6 +10,7 @@ urlpatterns = [
     #path('auth/', include('apps.authenticate.urls')),
     path('clients/',include('apps.clients.urls')),
     path('users/',include('apps.users.urls')),
+    path('contracts/',include('apps.contracts.urls')),
 #    path('orders/',include('apps.orders.urls')),
 #    path('products/',include('apps.products.urls')),
 #    path('users/',include('apps.users.urls')),

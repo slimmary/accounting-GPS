@@ -32,7 +32,7 @@ class ClientPostAddressDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ClientPostAddressSerializer
 
     def get_object(self):
-        obj = get_object_or_404(ClientPostAddress, pk=self.kwargs.get('adress_id'))
+        obj = get_object_or_404(ClientPostAddress, pk=self.kwargs.get('address_id'))
         return obj
 
 
