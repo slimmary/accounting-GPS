@@ -44,9 +44,11 @@ INSTALLED_APPS = [
 
     'phone_field',
     'apps.clients',
+    'apps.authenticate',
+    'apps.contracts',
     #'apps.orders',
     #'apps.products',
-    #'apps.users',
+    'apps.users',
     #'apps.vehicle',
 ]
 
@@ -133,5 +135,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
 
 from .local import *
