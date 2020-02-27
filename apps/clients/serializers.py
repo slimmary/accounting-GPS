@@ -1,74 +1,51 @@
 from rest_framework import serializers
-from .models import Client, ClientPostAdress, ContactProfile, ContactPhone, ContactEmail 
+from .models import Client, ClientPostAddress, ContactProfile
 
 
-
-class ClientPostAdressSerializer(serializers.ModelSerializer):
+class ClientPostAddressSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = ClientPostAdress
+        model = ClientPostAddress
         fields = ('id', 'index', 'region', 'district',
-                  'city', 'street', 'house', 'office', 'client_profile' )
+                  'city', 'street', 'house', 'office', 'client')
 
-class ClientPostAdressBriefSerializer(serializers.ModelSerializer):
+
+class ClientPostAddressBriefSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = ClientPostAdress
+        model = ClientPostAddress
         fields = ('id', 'index', 'region', 'district',
-                  'city', 'street', 'house', 'office' )
-
-        
-class ContactPhoneSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = ContactPhone
-        fields = ('id', 'phone', 'contact_profile' )
-
-class ContactPhoneBriefSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = ContactPhone
-        fields = ('id', 'phone')
+                  'city', 'street', 'house', 'office')
 
 
-        
-class ContactEmailSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = ContactEmail
-        fields = ('id', 'email', 'contact_profile' )
-
-class ContactEmaiBrieflSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = ContactEmail
-        fields = ('id', 'email')
-
-
-                
 class ContactProfileBriefSerializer(serializers.ModelSerializer):
-    emails = ContactEmaiBrieflSerializer
-    phones = ContactPhoneBriefSerializer
-    class Meta:
-        model = ContactProfile
-        fields = ('id', 'firstname', 'surname', 'patronymic',
-                  'position', 'phones', 'emails')
-        
-class ContactProfileSerializer(serializers.ModelSerializer):
-    emails = ContactEmaiBrieflSerializer
-    phones = ContactPhoneBriefSerializer
-    class Meta:
-        model = ContactProfile
-        fields = ('id', 'firstname', 'surname', 'patronymic',
-                  'position', 'phones', 'emails', 'client_field')
 
-        
+    class Meta:
+        model = ContactProfile
+        fields = ('id', 'firstname', 'surname', 'patronymic',
+                  'position', 'phone', 'phone_2', 'email')
+
+
+class ContactProfileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ContactProfile
+        fields = ('id', 'firstname', 'surname', 'patronymic',
+                  'position', 'phone', 'phone_2', 'email', 'client_field')
+
+
 class ClientSerializer(serializers.ModelSerializer):
-    adress = ClientPostAdressBriefSerializer
+    address = ClientPostAddressBriefSerializer
     contacts = ContactProfileBriefSerializer
+
     class Meta:
         model = Client
-        fields = ('id', 'name', 'pay_form', 'login',
-                  'adress', 'contacts')        
-    
-    
+        fields = ('id', 'name', 'status', 'pay_form', 'login',
+                  'address', 'contacts')
+
+
+class ClientBriefSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Client
+        fields = ('id', 'name', 'status''login')
