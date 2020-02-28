@@ -12,7 +12,7 @@ class VehicleList(generics.ListCreateAPIView):
     pagination_class = LimitOffsetPagination
 
 
-class ContractDetail(generics.RetrieveUpdateDestroyAPIView):
+class VehicleDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = VehicleSerializer
 
     def get_object(self):
