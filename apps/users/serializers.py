@@ -24,4 +24,3 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = ('user', 'date_start_work', 'status', 'position', 'birthday', 'avatar', 'phone')
-

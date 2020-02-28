@@ -11,18 +11,20 @@ class UserProfile(models.Model):
         on_delete=models.CASCADE,
         primary_key=True,
         related_name='profile',
+        verbose_name='Користувач'
     )
 
-    phone = PhoneField(null=True, help_text='Номер телефону співробітника')
+    phone = PhoneField(null=True, verbose_name='Номер телефону співробітника')
 
     birthday = models.DateField(null=True, blank=True,
-                                help_text='Дата народження')
+                                verbose_name='Дата народження')
     position = models.CharField(max_length=50,
-                                help_text='Посада')
+                                verbose_name='Посада')
     avatar = models.ImageField(upload_to='images/users',
                                verbose_name='Зображення')
+
     date_start_work = models.DateField(null=True, blank=True,
-                                       help_text='Дата прийому на роботу')
+                                       verbose_name='Дата прийому на роботу')
     STATUS_FORM_CHOICE = (
         ('1', 'на випробному терміні'),
         ('2', 'прийнятий')
@@ -39,4 +41,7 @@ class UserProfile(models.Model):
         instance.profile.save()
 
     def __str__(self):
-        return '{} {} {} {}'.format(self.user, self.birthday, self.position, self.get_status_display(), self.phone)
+        return '{} - {} - {} | Контактний телефон: {} | Дата народження: {} '.format(self.user, self.position, self.get_status_display(), self.phone, self.birthday,  )
+
+    class Meta:
+        verbose_name_plural = "Користувачі (співробітники)"

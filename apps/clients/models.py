@@ -60,7 +60,7 @@ class Client(models.Model):
     pay_form = models.CharField(max_length=1, choices=PAY_FORM_CHOICE, verbose_name='форма оплати',
                                 help_text='Оберіть форму оплати')
     name = models.CharField(max_length=128, verbose_name='Назва', blank=False)
-    login = models.CharField(max_length=128, verbose_name="Ім'я користувача", blank=False)
+    login = models.CharField(max_length=128, verbose_name="Ім'я користувача (login)", blank=False)
     STATUS_FORM_CHOICE = (
         ('1', 'активний'),
         ('2', 'видалений')
