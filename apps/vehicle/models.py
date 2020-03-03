@@ -27,7 +27,7 @@ class Vehicle(models.Model):
     owner = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name='Власник', related_name='vehicle')
 
     def __str__(self):
-        return '{} {} {} {} '.format(
+        return '{} {} {} держ.номер {} '.format(
             self.get_type_display(),
             self.make,
             self.model,
@@ -36,6 +36,6 @@ class Vehicle(models.Model):
         )
 
     class Meta:
-        verbose_name_plural = "транспортні засоби"
+        verbose_name_plural = "Транспортні засоби"
 
 

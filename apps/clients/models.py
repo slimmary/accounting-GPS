@@ -50,15 +50,7 @@ class ClientPostAddress(models.Model):
 
 
 class Client(models.Model):
-    PAY_FORM_CHOICE = (
-        ('1', 'Безнал'),
-        ('2', 'Нал'),
-        ('3', 'БК'),
-        ('4', 'Безнал/Нал'),
-        ('5', 'Безнал/БК')
-    )
-    pay_form = models.CharField(max_length=1, choices=PAY_FORM_CHOICE, verbose_name='форма оплати',
-                                help_text='Оберіть форму оплати')
+    day_start = models.DateField(null=True, verbose_name='Дата початку роботи', help_text='Оберіть дату', blank=False)
     name = models.CharField(max_length=128, verbose_name='Назва', blank=False)
     login = models.CharField(max_length=128, verbose_name="Ім'я користувача (login)", blank=False)
     STATUS_FORM_CHOICE = (
@@ -70,11 +62,11 @@ class Client(models.Model):
     address = models.OneToOneField(ClientPostAddress, null=True, on_delete=models.CASCADE, verbose_name='Поштова адреса', related_name='client')
 
     def __str__(self):
-        return '"{}"  |  логін: {}  | статус: {} | форма оплати: {}'.format(
+        return '"{}"  |  логін: {}  | статус: {} | дата початку роботи: {}'.format(
             self.name,
             self.login,
             self.get_status_display(),
-            self.get_pay_form_display(),
+            self.day_start,
 
         )
 
