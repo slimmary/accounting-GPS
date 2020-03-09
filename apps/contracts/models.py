@@ -9,7 +9,8 @@ class Contract(models.Model):
         ('2', 'Поставки'),
         ('3', 'Обслуговування'),
     )
-    form = models.CharField(max_length=1, choices=FORM_CHOICE,verbose_name='Тип договору', help_text='Оберіть тип договору')
+    form = models.CharField(max_length=1, choices=FORM_CHOICE,verbose_name='Тип договору',
+                            help_text='Оберіть тип договору')
     PROVIDER_CHOICE = (
         ('1', 'ТОВ "Системи Контролю Транспорту"'),
         ('2', 'ФОП Шевчук С.І.'),
@@ -17,7 +18,8 @@ class Contract(models.Model):
     )
     provider = models.CharField(max_length=1, choices=PROVIDER_CHOICE,verbose_name='Постачальник',
                                 help_text='Оберіть постачальника')
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name='Покупець/Абонент', related_name='contracts')
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name='Покупець/Абонент',
+                               related_name='contracts')
     number = models.IntegerField(verbose_name='Номер договору', help_text='Введіть номер договору')
     contract_date = models.DateField(verbose_name='Дата заключеня договору', help_text='Оберіть дату')
     STATUS_CHOICE = (
@@ -27,8 +29,10 @@ class Contract(models.Model):
         ('4', 'Відправлений на електронну пошту'),
         ('5', 'В наявності')
     )
-    status = models.CharField(max_length=1, choices=STATUS_CHOICE, verbose_name='Статус', help_text='Оберіть статус договору')
-    status_date = models.DateField(null=True, verbose_name='Дата статусу(створення/відправки/отримання)', help_text='Оберіть дату')
+    status = models.CharField(max_length=1, choices=STATUS_CHOICE, verbose_name='Статус',
+                              help_text='Оберіть статус договору')
+    status_date = models.DateField(null=True, verbose_name='Дата статусу(створення/відправки/отримання)',
+                                   help_text='Оберіть дату')
     contract_image = models.ImageField(upload_to='images/contracts', verbose_name='Скан-копія', blank=True)
 
     def __str__(self):
@@ -42,3 +46,13 @@ class Contract(models.Model):
 
     class Meta:
         verbose_name_plural = "Договори"
+
+
+class ContractSupplementary(models.Model):
+    contract_to = models.ForeignKey(Contract, on_delete=models.CASCADE, verbose_name='Додаткові угоди',
+                                    related_name='supplementary')
+    number = models.IntegerField(verbose_name='Номер ДУ', help_text='Введіть номер')
+    date = models.DateField(verbose_name='Дата заключеня ДУ', help_text='Оберіть дату')
+
+    class Meta:
+        verbose_name_plural = "Додаткові Угоди"

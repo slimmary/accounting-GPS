@@ -62,11 +62,9 @@ class Client(models.Model):
     address = models.OneToOneField(ClientPostAddress, null=True, on_delete=models.CASCADE, verbose_name='Поштова адреса', related_name='client')
 
     def __str__(self):
-        return '"{}"  |  логін: {}  | статус: {} | дата початку роботи: {}'.format(
+        return '"{}"  |  логін: {}  '.format(
             self.name,
             self.login,
-            self.get_status_display(),
-            self.day_start,
 
         )
 
