@@ -9,9 +9,6 @@ class ContractSupplementaryInline(admin.StackedInline):
 
 class ContractAdmin(admin.ModelAdmin):
     inlines = [ContractSupplementaryInline]
-    list_filter = ('form', 'provider', 'client', 'status',)
-    search_fields = ['client', 'number', 'provider', ]
-
     list_display = (
         'get_client_name',
         'get_client_login',
@@ -22,8 +19,13 @@ class ContractAdmin(admin.ModelAdmin):
         'status',
         'status_date',
         'contract_image',
-
+        'get_supplementary'
     )
+
+    def get_supplementary(self, obj):
+        return obj.supplementary
+    get_supplementary.admin_order_field = 'supplementary'  # Allows column order sorting
+    get_supplementary.short_description = 'ДУ'  #
 
     def get_client_name(self, obj):
         return obj.client.name
@@ -34,6 +36,9 @@ class ContractAdmin(admin.ModelAdmin):
         return obj.client.login
     get_client_login.admin_order_field = 'client_name'  # Allows column order sorting
     get_client_login.short_description = 'Login'  # Renames column head
+
+    list_filter = ('form', 'provider', 'client', 'status', )
+    search_fields = ['client', 'number', 'provider',]
 
 
 admin.site.register(Contract, ContractAdmin)

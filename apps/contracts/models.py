@@ -31,7 +31,7 @@ class Contract(models.Model):
     )
     status = models.CharField(max_length=1, choices=STATUS_CHOICE, verbose_name='Статус',
                               help_text='Оберіть статус договору')
-    status_date = models.DateField(null=True, verbose_name='Дата статусу(створення/відправки/отримання)',
+    status_date = models.DateField(null=True, verbose_name='Дата зміни статусу',
                                    help_text='Оберіть дату')
     contract_image = models.ImageField(upload_to='images/contracts', verbose_name='Скан-копія', blank=True)
 
@@ -53,6 +53,9 @@ class ContractSupplementary(models.Model):
                                     related_name='supplementary')
     number = models.IntegerField(verbose_name='Номер ДУ', help_text='Введіть номер')
     date = models.DateField(verbose_name='Дата заключеня ДУ', help_text='Оберіть дату')
+
+    def __str__(self):
+        return '№{} від {}'.format(self.number, self.date)
 
     class Meta:
         verbose_name_plural = "Додаткові Угоди"

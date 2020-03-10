@@ -8,7 +8,7 @@ from .serializers import ContractSerializer, ContractBriefSerializer, ContractSu
 
 class ContractList(generics.ListCreateAPIView):
     queryset = Contract.objects.all()
-    serializer_class = ContractBriefSerializer
+    serializer_class = ContractSerializer
     pagination_class = LimitOffsetPagination
 
 

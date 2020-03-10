@@ -8,7 +8,7 @@ class ContractSupplementarySerializer(serializers.ModelSerializer):
 
 
 class ContractSerializer(serializers.ModelSerializer):
-    supplementary = ContractSupplementarySerializer(many=True, read_only=True)
+    supplementary = ContractSupplementarySerializer
 
     class Meta:
         model = Contract
