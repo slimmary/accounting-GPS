@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from phone_field import PhoneField
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils.safestring import mark_safe
 
 
 class UserProfile(models.Model):
@@ -14,7 +15,11 @@ class UserProfile(models.Model):
         verbose_name='Користувач'
     )
 
-    phone = PhoneField(null=True, verbose_name='Номер телефону співробітника')
+    phone = PhoneField(null=True, verbose_name='Робочий номер телефону співробітника')
+
+    phone_2 = PhoneField(null=True, verbose_name='Власний номер телефону співробітника')
+
+    email = models.EmailField(null=True, max_length=254, verbose_name='Власна електронна адреса')
 
     birthday = models.DateField(null=True, blank=True,
                                 verbose_name='Дата народження')
@@ -22,6 +27,17 @@ class UserProfile(models.Model):
                                 verbose_name='Посада')
     avatar = models.ImageField(upload_to='images/users',
                                verbose_name='Зображення')
+
+    def get_avatar(self):
+        if not self.avatar:
+            return 'image/CKT'
+        return self.avatar.url
+
+    # метод, для создания фейкового поля таблицы в режиме read only
+    def avatar_tag(self):
+        return mark_safe('<img src="%s" width="100" height="100" />' % self.get_avatar())
+
+    avatar_tag.short_description = 'Фото'
 
     date_start_work = models.DateField(null=True, blank=True,
                                        verbose_name='Дата прийому на роботу')
