@@ -1,3 +1,7 @@
-from django.shortcuts import render
+'''from rest_framework import generics
+from rest_framework.pagination import LimitOffsetPagination
 
-# Create your views here.
+from .models import Sim
+from .serializers import SimSerializer
+
+'''
