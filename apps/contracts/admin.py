@@ -4,7 +4,7 @@ from .models import Contract, ContractSupplementary
 
 class ContractSupplementaryInline(admin.StackedInline):
     model = ContractSupplementary
-    fields = ('number','date')
+    fields = ('number', 'date')
 
 
 class ContractAdmin(admin.ModelAdmin):
@@ -19,13 +19,14 @@ class ContractAdmin(admin.ModelAdmin):
         'status',
         'status_date',
         'contract_image',
-        'get_supplementary'
+        'get_supplementary',
     )
 
     def get_supplementary(self, obj):
-        return obj.supplementary
-    get_supplementary.admin_order_field = 'supplementary'  # Allows column order sorting
-    get_supplementary.short_description = 'ДУ'  #
+        queryset = obj.supplementary.all()
+        sup = [i for i in queryset]
+        return sup
+    get_supplementary.short_description = 'ДУ'
 
     def get_client_name(self, obj):
         return obj.client.name
@@ -34,7 +35,7 @@ class ContractAdmin(admin.ModelAdmin):
 
     def get_client_login(self, obj):
         return obj.client.login
-    get_client_login.admin_order_field = 'client_name'  # Allows column order sorting
+    get_client_login.admin_order_field = 'client_login'  # Allows column order sorting
     get_client_login.short_description = 'Login'  # Renames column head
 
     list_filter = ('form', 'provider', 'client', 'status', )

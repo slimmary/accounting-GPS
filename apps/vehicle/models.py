@@ -23,7 +23,7 @@ class Vehicle(models.Model):
                             help_text='Оберіть тип Транспортного Засобу')
     make = models.CharField(max_length=50, verbose_name='Марка')
     model = models.CharField(max_length=50, verbose_name="Модель", blank=True)
-    number = models.CharField(max_length=50, verbose_name=' Ідентефікатор (держ.номер)')
+    number = models.CharField(max_length=50, verbose_name=' Ідентифікатор (держ.номер)')
     owner = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name='Власник', related_name='vehicle')
 
     def __str__(self):

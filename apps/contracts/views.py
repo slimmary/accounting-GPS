@@ -3,7 +3,7 @@ from rest_framework import generics
 from rest_framework.pagination import LimitOffsetPagination
 from .models import Contract, ContractSupplementary
 
-from .serializers import ContractSerializer, ContractBriefSerializer, ContractSupplementarySerializer
+from .serializers import ContractSerializer, ContractSupplementarySerializer
 
 
 class ContractList(generics.ListCreateAPIView):
