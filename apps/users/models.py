@@ -59,5 +59,3 @@ class UserProfile(models.Model):
     def __str__(self):
         return '{} - {} - {} | Контактний телефон: {} | Дата народження: {} '.format(self.user, self.position, self.get_status_display(), self.phone, self.birthday,  )
 
-    class Meta:
-        verbose_name_plural = "Користувачі (співробітники)"
