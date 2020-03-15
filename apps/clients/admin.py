@@ -1,6 +1,12 @@
 from django.contrib import admin
 from apps.contracts.models import Contract
 from .models import Client, ClientPostAddress, ContactProfile
+from apps.vehicle.models import Vehicle
+
+
+class VehicleInline(admin.StackedInline):
+    model = Vehicle
+    fields = ('type', 'make', 'model', 'number',)
 
 
 class ContractInline(admin.StackedInline):
@@ -8,7 +14,7 @@ class ContractInline(admin.StackedInline):
 
 
 class ClientAdmin(admin.ModelAdmin):
-    inlines = [ContractInline]
+    inlines = [ContractInline, VehicleInline]
     list_display = ('name', 'login', 'status', 'day_start', 'address',)
     list_filter = ('status',)
     search_fields = ['name', 'login', ]
