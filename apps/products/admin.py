@@ -10,9 +10,10 @@ class SimInline(admin.StackedInline):
 
 class GpsAdmin(admin.ModelAdmin):
     inlines = [SimInline]
-    ist_display = (
+    list_display = (
         'number',
         'vehicle',
+        'vehicle__owner'
     )
 
 

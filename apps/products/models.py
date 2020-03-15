@@ -36,17 +36,22 @@ class Sim(models.Model):
                                         help_text='Введіть кількість')
     rate_volume = models.FloatField(max_length=5, verbose_name='Тариф за 1Мб поза пакетом', help_text='Введіть суму')
     gps = models.ForeignKey(Gps, null=True, on_delete=models.CASCADE, verbose_name='БР', related_name='sim', blank=True)
-    # client = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name='Клієнт',
-                               #related_name='sim')
-    rate_client = models.FloatField(null=True, max_length=5, verbose_name='Тариф для клєнта грн/міс', help_text='Введіть суму')
+    RATE_CHOICE = (
+        ('1', 'Україна'),
+        ('2', 'Світ'),
+        ('3', 'Пауза'),
+    )
+
+    rate_client = models.CharField(max_length=1, choices=RATE_CHOICE, verbose_name='Тариф',
+                                help_text='Оберіть тариф для клієнта', default='1')
     INSTALLER_CHOICE = (
         ('1', 'Герус В.'),
         ('2', 'Манін В.'),
         ('3', 'Ігнатенко М.'),
     )
     installer = models.CharField(max_length=1, choices=INSTALLER_CHOICE, verbose_name='Монтажник',
-                                help_text='Оберіть монтажника, якому видано сім')
-    date_given = models.DateField(verbose_name='Дата видачі монтажнику сім', help_text='Оберіть дату')
+                                help_text='Оберіть монтажника, якому видано сім', blank=True)
+    date_given = models.DateField(verbose_name='Дата видачі монтажнику сім', help_text='Оберіть дату', blank=True)
 
     class Meta:
         verbose_name_plural = "Сім-картки"
