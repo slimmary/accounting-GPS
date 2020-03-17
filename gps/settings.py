@@ -42,13 +42,13 @@ INSTALLED_APPS = [
     'rest_framework',
 
     'phone_field',
-    'apps.clients',
-    'apps.authenticate',
-    'apps.contracts',
-    'apps.users',
+    'clients',
+    'authenticate',
+    'contracts',
+    'users',
     #'apps.orders',
-    'apps.products',
-    'apps.vehicle',
+    'products',
+    'vehicle',
 ]
 
 MIDDLEWARE = [
