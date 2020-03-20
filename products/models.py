@@ -58,3 +58,16 @@ class Sim(models.Model):
 
     def __str__(self):
         return '{} {} {}'.format(self.get_operator_display(), self.number, self.rate_client)
+
+
+class FuelSensor(models.Model):
+    serial = models.CharField(max_length=128, verbose_name='Серія')
+    number = models.PositiveIntegerField(verbose_name="Номер", help_text='Введіть номер',)
+    date_manufacturing = models.DateField(verbose_name='Дата виробництва', help_text='Оберіть дату', blank=True)
+    gps = models.ForeignKey(Gps, null=True, on_delete=models.CASCADE, verbose_name='БР', related_name='fuel_sensor', blank=True)
+
+    class Meta:
+        verbose_name_plural = "Датчики Вимірювання Рівня Пального"
+
+    def __str__(self):
+        return '{}-{}'.format(self.serial, self.number)

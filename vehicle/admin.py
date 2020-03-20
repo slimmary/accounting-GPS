@@ -12,7 +12,22 @@ class VehicleAdmin(admin.ModelAdmin):
         'get_owner_name',
         'get_owner_login',
         'get_gps',
+        'get_gps_fuel',
     )
+    list_filter = (
+        'type',
+        'make',
+        'model',
+        'owner__name',
+        'owner__login',
+        'gps'
+    )
+    search_fields = [
+        'number',
+        'gps',
+        'owner__login',
+        'owner__name',
+    ]
 
     def get_owner_name(self, obj):
         return obj.owner.name
@@ -27,6 +42,12 @@ class VehicleAdmin(admin.ModelAdmin):
     def get_gps(self, obj):
         return obj.gps
     get_gps.short_description = 'БР'
+
+    def get_gps_fuel(self, obj):
+        queryset = obj.gps.fuel_sensor.all()
+        fuel = [i for i in queryset]
+        return fuel
+    get_gps_fuel.short_description = 'ДВРП'
 
 
 admin.site.register(Vehicle, VehicleAdmin)
