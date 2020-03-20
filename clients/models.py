@@ -51,7 +51,7 @@ class ClientPostAddress(models.Model):
 
 class Client(models.Model):
     day_start = models.DateField(null=True, verbose_name='Дата початку роботи', help_text='Оберіть дату', blank=False)
-    name = models.CharField(max_length=128, verbose_name='Назва', blank=False)
+    name = models.CharField(max_length=128, verbose_name='Назва клієнта', blank=False)
     login = models.CharField(max_length=128, verbose_name="Ім'я користувача (login)", blank=False)
     STATUS_FORM_CHOICE = (
         ('1', 'активний'),
