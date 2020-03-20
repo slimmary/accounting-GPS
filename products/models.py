@@ -1,13 +1,12 @@
 from django.db import models
 from django.core.validators import RegexValidator
-from clients.models import Client
 from vehicle.models import Vehicle
 
 
 class Gps(models.Model):
     number = models.CharField(verbose_name='Номер', help_text='Введіть номер', max_length=6,
                               validators=[RegexValidator(r'^\d{0,10}$')])
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, verbose_name='Транспортний засіб',
+    vehicle = models.OneToOneField(Vehicle, on_delete=models.CASCADE, verbose_name='Транспортний засіб',
                                related_name='gps')
 
     class Meta:
@@ -40,10 +39,11 @@ class Sim(models.Model):
         ('1', 'Україна'),
         ('2', 'Світ'),
         ('3', 'Пауза'),
+        ('4', 'Власна сім'),
     )
 
     rate_client = models.CharField(max_length=1, choices=RATE_CHOICE, verbose_name='Тариф',
-                                help_text='Оберіть тариф для клієнта', default='1')
+                                help_text='Оберіть тариф для клієнта',)
     INSTALLER_CHOICE = (
         ('1', 'Герус В.'),
         ('2', 'Манін В.'),

@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'authenticate',
     'contracts',
     'users',
+    'subscription',
     #'apps.orders',
     'products',
     'vehicle',
