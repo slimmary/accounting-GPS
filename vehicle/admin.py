@@ -1,8 +1,16 @@
 from django.contrib import admin
 from .models import Vehicle
+from products.models import Gps
+
+
+class GpsInline(admin.StackedInline):
+    list_per_page = 5
+    model = Gps
+    fields = ('number',)
 
 
 class VehicleAdmin(admin.ModelAdmin):
+    inlines = [GpsInline]
     model = Vehicle
     list_display = (
         'type',

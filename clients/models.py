@@ -61,6 +61,20 @@ class Client(models.Model):
     contacts = models.ManyToManyField(ContactProfile, verbose_name='Контактні особи', related_name='client_field')
     address = models.OneToOneField(ClientPostAddress, null=True, on_delete=models.CASCADE, verbose_name='Поштова адреса', related_name='client')
 
+    class Provider:
+        ckt = 'ТОВ "Системи Контролю Транспорту"'
+        shevchuk = 'ФОП Шевчук С.І.'
+        dyachuk = 'ФОП Дячук Л.В.'
+        card = 'БК/ІНШЕ'
+    PROVIDER_CHOICE = (
+        (Provider.ckt, 'ТОВ "Системи Контролю Транспорту"'),
+        (Provider.shevchuk, 'ФОП Шевчук С.І.'),
+        (Provider.dyachuk, 'ФОП Дячук Л.В.'),
+        (Provider.card, 'БК/ІНШЕ')
+    )
+    provider = models.CharField(null=True, max_length=100, default=Provider.shevchuk, choices=PROVIDER_CHOICE,
+                                verbose_name='Постачальник з абонплати', help_text='Оберіть постачальника з абонплати')
+
     def __str__(self):
         return '"{}"  |  логін: {}  '.format(
             self.name,

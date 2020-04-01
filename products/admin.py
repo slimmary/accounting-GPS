@@ -3,6 +3,7 @@ from .models import Sim, Gps, FuelSensor
 
 
 class SimInline(admin.StackedInline):
+    list_per_page = 20
     model = Sim
     fields = ('operator',
               'number',
@@ -69,19 +70,30 @@ class GpsAdmin(admin.ModelAdmin):
 
 
 class SimAdmin(admin.ModelAdmin):
+    list_per_page = 20
     raw_id_fields = ('gps',)
     list_filter = ('operator','account_number','gps','rate_client','installer','date_given')
-    search_fields = ['number', 'gps', 'phone_2', 'email', ]
+    search_fields = ['number',]
     list_display = (
-        'operator',
+        'get_operator',
         'number',
         'account_number',
         'date_receive',
         'installer',
         'date_given',
-        'rate_client',
+        'get_rate_client',
         'gps',
     )
+
+    def get_operator(self, obj):
+        return obj.get_operator_display()
+    get_operator.admin_order_field = 'operator'
+    get_operator.short_description = 'Оператор'
+
+    def get_rate_client(self, obj):
+        return obj.get_rate_client_display()
+    get_rate_client.admin_order_field = 'rate_client'
+    get_rate_client.short_description = 'Тариф'
 
     def get_gps_vehicle_client_login(self, obj):
         return obj.gps.vehicle.owner.login
