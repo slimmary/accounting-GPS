@@ -95,13 +95,23 @@ class Sim(models.Model):
 
     rate_price = models.CharField(null=True,
                                   max_length=100,
-                                  verbose_name='Вартість',
-                                  help_text='Змініть вартість'
+                                  verbose_name='Вартість грн/міс',
+                                  help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                  blank = True
                                   )
 
     def save(self, *args, **kwargs):
-        if self.gps.vehicle.owner.provider == self.gps.vehicle.owner.Provider.ckt or \
-                self.gps.vehicle.owner.provider == self.gps.vehicle.owner.Provider.shevchuk:
+        if self.gps is None or self.gps.vehicle.owner.provider == self.gps.vehicle.owner.Provider.dyachuk or \
+                self.gps.vehicle.owner.provider == self.gps.vehicle.owner.Provider.card:
+            if self.rate_client == self.Rate.ua:
+                self.rate_price = 120
+            elif self.rate_client == self.Rate.world:
+                self.rate_price = 150
+            elif self.rate_client == self.Rate.pause:
+                self.rate_price = 30
+            else:
+                self.rate_price = 60
+        else:
             if self.rate_client == self.Rate.ua:
                 self.rate_price = 144
             elif self.rate_client == self.Rate.world:
@@ -111,15 +121,6 @@ class Sim(models.Model):
             else:
                 self.rate_price = 72
 
-        else:
-            if self.rate_client == self.Rate.ua:
-                self.rate_price = 120
-            elif self.rate_client == self.Rate.world:
-                self.rate_price = 150
-            elif self.rate_client == self.Rate.pause:
-                self.rate_price = 30
-            else:
-                self.rate_price = 60
         super(Sim, self).save(*args, **kwargs)
 
     INSTALLER_CHOICE = (
