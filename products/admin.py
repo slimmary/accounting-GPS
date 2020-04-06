@@ -82,6 +82,7 @@ class SimAdmin(admin.ModelAdmin):
         'installer',
         'date_given',
         'get_rate_client',
+        'rate_price',
         'gps',
     )
 
