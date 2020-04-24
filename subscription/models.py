@@ -33,6 +33,35 @@ class Subscription(models.Model):
     year = date.today().year
     client = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name='Платник', related_name='subscription')
 
+    if quarter == 'Перший':
+        first_month = 'січень'
+        second_month = 'лютий'
+        third_mont = 'березень'
+    elif quarter == 'Другий':
+        first_month = 'квітень'
+        second_month = 'травень'
+        third_mont = 'червень'
+    if quarter == 'Третій':
+        first_month = 'липень'
+        second_month = 'серпень'
+        third_mont = 'вересень'
+    else:
+        first_month = 'жовтень'
+        second_month = 'листопад'
+        third_mont = 'грудень'
+
+    rate_all = models.CharField(null=True,
+                                max_length=100,
+                                verbose_name="Всього об'єктів",
+                                help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                blank=True
+                                )
+
+    def save(self, *args, **kwargs):
+        self.rate_all = self.client.vehicle.gps.sim.count()
+
+        super(Subscription, self).save(*args, **kwargs)
+
     def __str__(self):
         return '{} {} року'.format(self.get_quarter_display(), self.year)
 
@@ -41,9 +70,15 @@ class Subscription(models.Model):
 
 
 class Letters(models.Model):
-    date = models.DateField(null=True, verbose_name='Дата листа', help_text='Оберіть дату')
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name='Покупець/Абонент',
-                               related_name='letters')
+    date = models.DateField(null=True,
+                            verbose_name='Дата листа',
+                            help_text='Оберіть дату'
+                            )
+    client = models.ForeignKey(Client,
+                               on_delete=models.CASCADE,
+                               verbose_name='Покупець/Абонент',
+                               related_name='letters'
+                               )
 
     class Action:
         delete = 'Видалення'
@@ -53,9 +88,14 @@ class Letters(models.Model):
         (Action.delete, 'Видалення'),
         (Action.change, 'Зміна тарифу'),
     )
-    action = models.CharField(max_length=1, choices=ACTION_CHOICE, verbose_name='Дія',
+    action = models.CharField(max_length=1,
+                              choices=ACTION_CHOICE,
+                              verbose_name='Дія',
                               help_text='Оберіть дію')
-    gps = models.ManyToManyField(Gps, verbose_name='БР', related_name='letters')
+    gps = models.ManyToManyField(Gps,
+                                 verbose_name='БР',
+                                 related_name='letters'
+                                 )
 
     class Rate:
         ua = 'Україна'
@@ -69,10 +109,18 @@ class Letters(models.Model):
         (Rate.pause, 'Пауза'),
         (Rate.own_sim, 'Власна сім'),
     )
-    old_rate = models.CharField(null=True, max_length=1, choices=RATE_CHOICE, verbose_name='з тарифу',
-                                help_text='Оберіть тариф який змінюється', blank=True)
-    new_rate = models.CharField(null=True, max_length=1, choices=RATE_CHOICE, verbose_name='на тариф',
-                                help_text='Оберіть тариф на який змінюється', blank=True)
+    old_rate = models.CharField(null=True,
+                                max_length=1,
+                                choices=RATE_CHOICE,
+                                verbose_name='з тарифу',
+                                help_text='Оберіть тариф який змінюється',
+                                blank=True)
+    new_rate = models.CharField(null=True,
+                                max_length=1,
+                                choices=RATE_CHOICE,
+                                verbose_name='на тариф',
+                                help_text='Оберіть тариф на який змінюється',
+                                blank=True)
 
     class Meta:
         verbose_name_plural = "Звернення/листи"

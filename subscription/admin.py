@@ -59,25 +59,26 @@ class SubscriptionAdmin(admin.ModelAdmin):
     list_per_page = 20
     search_fields = [
         'get_client_name',
-        #'get_provider',
+        'get_provider',
         'get_client_login',
     ]
     list_display = (
         'get_quarter',
         'get_year',
         'get_client_name',
-        #'get_provider',
         'get_client_login',
+        'get_provider',
         'get_all_gps',
-        'get_rate_ukr',
+        #'get_rate_ukr',
+        'rate_all',
 
     )
 
-    #def get_provider(self, obj):
-    #    return obj.get_provider_display()
+    def get_provider(self, obj):
+        return obj.client.provider
 
-    #get_provider.admin_order_field = 'provider'
-    #get_provider.short_description = 'Постачальник (форма оплати)'
+    get_provider.admin_order_field = 'provider'
+    get_provider.short_description = 'Постачальник (форма оплати)'
 
     def get_year(self, obj):
         return obj.year
@@ -110,16 +111,16 @@ class SubscriptionAdmin(admin.ModelAdmin):
     get_all_gps.admin_order_field = 'gps_all'
     get_all_gps.short_description = 'Кількість БР'
 
-    def get_rate_ukr(self, obj):
-        queryset = obj.client.vehicle.all()
-        gps = [i.gps for i in queryset]
-        for a in gps:
-            sim = a.sim.all()
-            sim_rate = [b.get_rate_client_display() for b in sim]
-
-            return sim_rate
-
-    get_rate_ukr.short_description = 'Тарифи'
+    # def get_rate_ukr(self, obj):
+    #     queryset = obj.client.vehicle.all()
+    #     gps = [i.gps for i in queryset]
+    #     for a in gps:
+    #         sim = a.sim.all()
+    #         sim_rate = [b.get_rate_client_display() for b in sim]
+    #
+    #         return sim_rate
+    #
+    # get_rate_ukr.short_description = 'Тарифи'
 
 
 admin.site.register(Subscription, SubscriptionAdmin)

@@ -57,7 +57,7 @@ class Client(models.Model):
         ('1', 'активний'),
         ('2', 'видалений')
     )
-    status = models.CharField(null=True, max_length=1, choices=STATUS_FORM_CHOICE, verbose_name='Статус', help_text='Оберіть статус клієнта')
+    status = models.CharField(null=True, max_length=1, default='активний',choices=STATUS_FORM_CHOICE, verbose_name='Статус', help_text='Оберіть статус клієнта')
     contacts = models.ManyToManyField(ContactProfile, verbose_name='Контактні особи', related_name='client_field')
     address = models.OneToOneField(ClientPostAddress, null=True, on_delete=models.CASCADE, verbose_name='Поштова адреса', related_name='client')
 
