@@ -20,7 +20,7 @@ class Vehicle(models.Model):
 
     )
     type = models.CharField(max_length=1, choices=TYPE_VEHICLE_CHOICE, verbose_name='Тип ТЗ',
-                            help_text='Оберіть тип Транспортного Засобу')
+                            help_text='Оберіть тип Транспортного Засобу', blank=True)
     make = models.CharField(max_length=50, verbose_name='Марка')
     model = models.CharField(max_length=50, verbose_name="Модель", blank=True)
     number = models.CharField(max_length=50, verbose_name=' Ідентифікатор (держ.номер)')

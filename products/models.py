@@ -6,8 +6,7 @@ from vehicle.models import Vehicle
 class Gps(models.Model):
     number = models.CharField(verbose_name='Номер', help_text='Введіть номер', max_length=6,
                               validators=[RegexValidator(r'^\d{0,10}$')])
-    vehicle = models.OneToOneField(Vehicle, on_delete=models.CASCADE, verbose_name='Транспортний засіб',
-                                   related_name='gps')
+    vehicle = models.OneToOneField(Vehicle, on_delete=models.CASCADE, verbose_name='Транспортний засіб', related_name='gps')
 
     class Meta:
         verbose_name_plural = "Бортові Реєстратори (БР)"
@@ -97,7 +96,7 @@ class Sim(models.Model):
                                   max_length=100,
                                   verbose_name='Вартість грн/міс',
                                   help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                  blank = True
+                                  blank=True
                                   )
 
     def save(self, *args, **kwargs):
