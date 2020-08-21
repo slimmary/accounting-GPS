@@ -24,7 +24,6 @@ class Vehicle(models.Model):
     make = models.CharField(max_length=50, verbose_name='Марка')
     model = models.CharField(max_length=50, verbose_name="Модель", blank=True)
     number = models.CharField(max_length=50, verbose_name=' Ідентифікатор (держ.номер)')
-    owner = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name='Власник', related_name='vehicle')
 
     def __str__(self):
         return '{} {} {} держ.номер {} '.format(
@@ -32,7 +31,6 @@ class Vehicle(models.Model):
             self.make,
             self.model,
             self.number,
-            self.owner,
         )
 
     class Meta:
