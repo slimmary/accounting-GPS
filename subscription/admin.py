@@ -1,10 +1,11 @@
 from django.contrib import admin
+from django import forms
 from .models import Subscription, Letters
 
 
 class LettersAdmin(admin.ModelAdmin):
     list_per_page = 20
-    readonly_fields = ['gps_rate',]
+    readonly_fields = ['gps_rate', ]
     list_display = ('date',
                     'get_client_name',
                     'get_client_login',
