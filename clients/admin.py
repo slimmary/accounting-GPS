@@ -2,17 +2,13 @@ from django.contrib import admin
 from contracts.models import Contract
 from .models import Client, ClientPostAddress, ContactProfile
 from vehicle.models import Vehicle
+from products.models import Gps
 
 
-class VehicleInline(admin.StackedInline):
+class GpsInline(admin.StackedInline):
     list_per_page = 20
-    model = Vehicle
-    fields = ('type', 'make', 'model', 'number', 'get_gps', )
-    readonly_fields = ('get_gps',)
-
-    def get_gps(self, obj):
-        return obj.gps
-    get_gps.short_description = 'БР'
+    model = Gps
+    fields = ('number', 'vehicle', 'rate_client', 'rate_price')
 
 
 class ContractInline(admin.StackedInline):
@@ -22,10 +18,24 @@ class ContractInline(admin.StackedInline):
 
 class ClientAdmin(admin.ModelAdmin):
     list_per_page = 20
-    inlines = [ContractInline, VehicleInline]
-    list_display = ('name', 'login', 'status', 'day_start', 'address',)
+    inlines = [ContractInline, GpsInline]
+    list_display = (
+        'name',
+        'login',
+        'status',
+        'day_start',
+        'get_all_gps',
+        'address',
+    )
     list_filter = ('status',)
     search_fields = ['name', 'login', ]
+
+    def get_all_gps(self, obj):
+        queryset = obj.gps.all().count()
+        return queryset
+
+    get_all_gps.admin_order_field = 'gps_all'
+    get_all_gps.short_description = 'Кількість БР'
 
 
 class ClientPostAddressAdmin(admin.ModelAdmin):

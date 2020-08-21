@@ -3,15 +3,7 @@ from .models import Vehicle
 from products.models import Gps
 
 
-class GpsInline(admin.StackedInline):
-    list_per_page = 5
-    model = Gps
-    fields = ('number',)
-
-
 class VehicleAdmin(admin.ModelAdmin):
-    inlines = [GpsInline]
-    model = Vehicle
     list_display = (
         'type',
         'make',
@@ -26,24 +18,24 @@ class VehicleAdmin(admin.ModelAdmin):
         'type',
         'make',
         'model',
-        'owner__name',
-        'owner__login',
-        'gps'
+        'gps__owner__name',
+        'gps__owner__login',
+        'gps__number'
     )
     search_fields = [
         'number',
-        'gps',
+        'gps__number',
         'owner__login',
         'owner__name',
     ]
 
     def get_owner_name(self, obj):
-        return obj.owner.name
+        return obj.gps.owner.name
     get_owner_name.admin_order_field = 'owner_name'  # Allows column order sorting
     get_owner_name.short_description = 'Власник назва'  # Renames column head
 
     def get_owner_login(self, obj):
-        return obj.owner.login
+        return obj.gps.owner.login
     get_owner_login.admin_order_field = 'owner_login'  # Allows column order sorting
     get_owner_login.short_description = 'Власник login'  # Renames column head
 
