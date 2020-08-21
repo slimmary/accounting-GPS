@@ -2,6 +2,7 @@ from django.db import models
 from datetime import date
 from clients.models import Client
 from products.models import Gps
+from django.core.exceptions import ValidationError
 
 
 class Subscription(models.Model):
@@ -235,21 +236,30 @@ class Letters(models.Model):
                                 help_text='Оберіть тариф на який змінюється',
                                 blank=True)
 
+    def clean(self):
+        if self.gps.owner != self.client:
+            raise ValidationError('Реєстратор не належить клієнту, ці данні не будуть збережені, оберіть реєстратор, '
+                                  'який належить клієнту')
+
     def save(self, *args, **kwargs):
-        if self.action == self.Action.change:
-            self.gps_rate = self.gps.rate_client
-            self.gps.rate_client = self.new_rate
-            super(Letters, self).save(*args, **kwargs)
-            Gps.save(self.gps, *args, **kwargs)
-        else:
-            self.gps_rate = None
-            self.new_rate = None
-            self.gps.rate_client = None
-            self.gps.owner = None
-            self.gps.vehicle = None
-            self.gps.rate_price = 0
-            super(Letters, self).save(*args, **kwargs)
-            Gps.save(self.gps, *args, **kwargs)
+        try:
+            self.gps.owner = self.client
+            if self.action == self.Action.change:
+                self.gps_rate = self.gps.rate_client
+                self.gps.rate_client = self.new_rate
+            else:
+                self.gps_rate = None
+                self.new_rate = None
+                self.gps.rate_client = None
+                self.gps.owner = None
+                self.gps.vehicle = None
+                self.gps__fuel_sensor = None
+                self.gps.rate_price = 0
+        except IndexError:
+            raise ValidationError('Реєстратор не належить клієнту, ці данні не будуть збережені, оберіть реєстратор, '
+                                  'який належить клієнту')
+        super(Letters, self).save(*args, **kwargs)
+        Gps.save(self.gps, *args, **kwargs)
 
     class Meta:
         verbose_name_plural = "Звернення/листи"
