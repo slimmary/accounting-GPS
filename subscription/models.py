@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 
 class Subscription(models.Model):
     date_init = date.today()
+
     if date_init.month == 3:
         quarter_choice = 'Другий'
     elif date_init.month == 6:
@@ -30,65 +31,172 @@ class Subscription(models.Model):
         (Quarter.third, 'Третій'),
         (Quarter.fourth, 'Четвертий')
     )
-    quarter = models.CharField(max_length=100, default=quarter_choice, choices=QUARTER_CHOICE, verbose_name='Квартал')
+    quarter = models.CharField(max_length=100,
+                               default=quarter_choice,
+                               choices=QUARTER_CHOICE,
+                               verbose_name='Квартал'
+                               )
     year = date.today().year
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name='Платник', related_name='subscription')
-
-    if quarter == 'Перший':
-        first_month = 'січень'
-        second_month = 'лютий'
-        third_mont = 'березень'
-    elif quarter == 'Другий':
-        first_month = 'квітень'
-        second_month = 'травень'
-        third_mont = 'червень'
-    if quarter == 'Третій':
-        first_month = 'липень'
-        second_month = 'серпень'
-        third_mont = 'вересень'
-    else:
-        first_month = 'жовтень'
-        second_month = 'листопад'
-        third_mont = 'грудень'
-
-    rate_ua = models.CharField(null=True,
-                               max_length=100,
-                               verbose_name="Ураїна",
-                               help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                               blank=True
+    client = models.ForeignKey(Client,
+                               on_delete=models.CASCADE,
+                               verbose_name='Платник',
+                               related_name='subscription'
                                )
 
-    rate_world = models.CharField(null=True,
+    if quarter == 'Перший':
+        first_month = 'січ'
+        second_month = 'лют'
+        third_month = 'бер'
+    elif quarter == 'Другий':
+        first_month = 'квіт'
+        second_month = 'трав'
+        third_mont = 'черв'
+    if quarter == 'Третій':
+        first_month = 'лип'
+        second_month = 'сер'
+        third_month = 'вер'
+    else:
+        first_month = 'жов'
+        second_month = 'лист'
+        third_month = 'груд'
+
+    rate_ua_1m = models.CharField(null=True,
                                   max_length=100,
-                                  verbose_name="Світ",
+                                  verbose_name="{} - Укр".format(first_month),
                                   help_text='Поле заповниться автоматично, вводити нічого не потрібно',
                                   blank=True
                                   )
-    rate_ua_world = models.CharField(null=True,
+
+    rate_world_1m = models.CharField(null=True,
                                      max_length=100,
-                                     verbose_name="Україна+Світ",
+                                     verbose_name="{} - Св".format(first_month),
                                      help_text='Поле заповниться автоматично, вводити нічого не потрібно',
                                      blank=True
                                      )
-    rate_pause = models.CharField(null=True,
+    rate_ua_world_1m = models.CharField(null=True,
+                                        max_length=100,
+                                        verbose_name="{} - Укр+Св".format(first_month),
+                                        help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                        blank=True
+                                        )
+    rate_pause_1m = models.CharField(null=True,
+                                     max_length=100,
+                                     verbose_name="{} - П".format(first_month),
+                                     help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                     blank=True
+                                     )
+    rate_own_sim_1m = models.CharField(null=True,
+                                       max_length=100,
+                                       verbose_name="{} - ВС".format(first_month),
+                                       help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                       blank=True
+                                       )
+    all_1m = models.CharField(null=True,
+                              max_length=100,
+                              verbose_name="{} - БР".format(first_month),
+                              help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                              blank=True
+                              )
+    rate_ua_2m = models.CharField(null=True,
                                   max_length=100,
-                                  verbose_name="Пауза",
+                                  verbose_name="{} - Укр".format(second_month),
                                   help_text='Поле заповниться автоматично, вводити нічого не потрібно',
                                   blank=True
                                   )
 
-    rate_own_sim = models.CharField(null=True,
-                                    max_length=100,
-                                    verbose_name="Власна Сім",
-                                    help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                    blank=True
-                                    )
-    price = models.IntegerField(null=True,
-                                default=0,
-                                verbose_name="Вартість грн/міс",
-                                help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                blank=True
-                                )
+    rate_world_2m = models.CharField(null=True,
+                                     max_length=100,
+                                     verbose_name="{} - Св".format(second_month),
+                                     help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                     blank=True
+                                     )
+    rate_ua_world_2m = models.CharField(null=True,
+                                        max_length=100,
+                                        verbose_name="{} - Укр+Св".format(second_month),
+                                        help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                        blank=True
+                                        )
+    rate_pause_2m = models.CharField(null=True,
+                                     max_length=100,
+                                     verbose_name="{} - П".format(second_month),
+                                     help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                     blank=True
+                                     )
+    rate_own_sim_2m = models.CharField(null=True,
+                                       max_length=100,
+                                       verbose_name="{} - ВС".format(second_month),
+                                       help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                       blank=True
+                                       )
+    all_2m = models.CharField(null=True,
+                              max_length=100,
+                              verbose_name="{} - БР".format(second_month),
+                              help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                              blank=True
+                              )
+
+    rate_ua_3m = models.CharField(null=True,
+                                  max_length=100,
+                                  verbose_name="{} - Укр".format(third_month),
+                                  help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                  blank=True
+                                  )
+    rate_world_3m = models.CharField(null=True,
+                                     max_length=100,
+                                     verbose_name="{} - Св".format(third_month),
+                                     help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                     blank=True
+                                     )
+    rate_ua_world_3m = models.CharField(null=True,
+                                        max_length=100,
+                                        verbose_name="{} - Укр+Св".format(third_month),
+                                        help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                        blank=True
+                                        )
+    rate_pause_3m = models.CharField(null=True,
+                                     max_length=100,
+                                     verbose_name="{} - П".format(third_month),
+                                     help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                     blank=True
+                                     )
+
+    rate_own_sim_3m = models.CharField(null=True,
+                                       max_length=100,
+                                       verbose_name="{} - ВС".format(third_month),
+                                       help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                       blank=True
+                                       )
+    all_3m = models.CharField(null=True,
+                              max_length=100,
+                              verbose_name="{} - БР".format(third_month),
+                              help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                              blank=True
+                              )
+
+    price_1m = models.IntegerField(null=True,
+                                   default=0,
+                                   verbose_name="грн/{}".format(first_month),
+                                   help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                   blank=True
+                                   )
+    price_2m = models.IntegerField(null=True,
+                                   default=0,
+                                   verbose_name="грн/{}".format(second_month),
+                                   help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                   blank=True
+                                   )
+    price_3m = models.IntegerField(null=True,
+                                   default=0,
+                                   verbose_name="грн/{}".format(third_month),
+                                   help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                   blank=True
+                                   )
+    price_quarter = models.IntegerField(null=True,
+                                        default=0,
+                                        verbose_name="нараховано грн/квартал",
+                                        help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                        blank=True
+                                        )
 
     class Status_payment:
         paid = 'Сплачено'
@@ -118,50 +226,67 @@ class Subscription(models.Model):
 
     def save(self, *args, **kwargs):
         all_gps = self.client.gps.all()
+        self.all_1m = all_gps.count()
+        self.all_2m = all_gps.count()
+        self.all_3m = all_gps.count()
 
         def get_rate_ua(all_gps):
             for i in all_gps:
                 return all_gps.filter(rate_client=i.Rate.ua).count()
 
-        self.rate_ua = get_rate_ua(all_gps)
+        self.rate_ua_1m = get_rate_ua(all_gps)
+        self.rate_ua_2m = get_rate_ua(all_gps)
+        self.rate_ua_3m = get_rate_ua(all_gps)
 
         def get_world(all_gps):
             for i in all_gps:
                 return all_gps.filter(rate_client=i.Rate.world).count()
 
-        self.rate_world = get_world(all_gps)
+        self.rate_world_1m = get_world(all_gps)
+        self.rate_world_2m = get_world(all_gps)
+        self.rate_world_2m = get_world(all_gps)
 
         def get_ua_world(all_gps):
             for i in all_gps:
                 return all_gps.filter(rate_client=i.Rate.ua_world).count()
 
-        self.rate_ua_world = get_ua_world(all_gps)
+        self.rate_ua_world_1m = get_ua_world(all_gps)
+        self.rate_ua_world_2m = get_ua_world(all_gps)
+        self.rate_ua_world_3m = get_ua_world(all_gps)
 
         def get_pause(all_gps):
             for i in all_gps:
                 return all_gps.filter(rate_client=i.Rate.pause).count()
 
-        self.rate_pause = get_pause(all_gps)
+        self.rate_pause_1m = get_pause(all_gps)
+        self.rate_pause_2m = get_pause(all_gps)
+        self.rate_pause_3m = get_pause(all_gps)
 
         def get_own_sim(all_gps):
             for i in all_gps:
                 return all_gps.filter(rate_client=i.Rate.own_sim).count()
 
-        self.rate_own_sim = get_own_sim(all_gps)
+        self.rate_own_sim_1m = get_own_sim(all_gps)
+        self.rate_own_sim_2m = get_own_sim(all_gps)
+        self.rate_own_sim_3m = get_own_sim(all_gps)
 
         def get_activation_sum(all_gps):
             if self.activation is True:
                 quantity = all_gps.count()
-                return quantity * 20
+                return quantity * 20 * 3
             else:
                 return 0
 
         self.activation_sum = get_activation_sum(all_gps)
 
         def get_price(all_gps):
-            return sum((gps.rate_price for gps in all_gps), self.activation_sum)
+            return sum((gps.rate_price for gps in all_gps))
 
-        self.price = get_price(all_gps)
+        self.price_1m = get_price(all_gps)
+        self.price_2m = get_price(all_gps)
+        self.price_3m = get_price(all_gps)
+
+        self.price_quarter = self.price_1m + self.price_2m + self.price_3m + self.activation_sum
 
         super(Subscription, self).save(*args, **kwargs)
 
@@ -173,14 +298,15 @@ class Subscription(models.Model):
 
 
 class Letters(models.Model):
-    date = models.DateField(null=True,
-                            verbose_name='Дата листа',
-                            help_text='Оберіть дату'
-                            )
+    date_letter = models.DateField(null=True,
+                                   verbose_name='Дата листа',
+                                   help_text='Оберіть дату'
+                                   )
     client = models.ForeignKey(Client,
                                null=True,
                                on_delete=models.CASCADE,
                                max_length=100,
+                               related_name='letters',
                                verbose_name='Покупець/Абонент',
                                help_text='Оберіть клієнта від якого реєструється звернення',
                                blank=True
@@ -255,7 +381,7 @@ class Letters(models.Model):
                 self.gps.vehicle = None
                 self.gps__fuel_sensor = None
                 self.gps.rate_price = 0
-        except IndexError:
+        except ValidationError:
             raise ValidationError('Реєстратор не належить клієнту, ці данні не будуть збережені, оберіть реєстратор, '
                                   'який належить клієнту')
         super(Letters, self).save(*args, **kwargs)
