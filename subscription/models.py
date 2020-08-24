@@ -60,6 +60,46 @@ class Subscription(models.Model):
         second_month = 'лист'
         third_month = 'груд'
 
+    price_quarter = models.IntegerField(null=True,
+                                        default=0,
+                                        verbose_name="нараховано",
+                                        help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                        blank=True
+                                        )
+
+    sum_payment = models.IntegerField(null=True,
+                                      default=0,
+                                      verbose_name="сплачено",
+                                      help_text='Введть суму, що сплатив клієнт',
+                                      blank=True
+                                      )
+
+    class Status_payment:
+        paid = 'Сплачено'
+        not_paid = 'НЕ сплачено'
+        partially_paid = 'Частково сплачено'
+
+    PAYMENT_CHOICE = (
+        (Status_payment.paid, 'Сплачено'),
+        (Status_payment.not_paid, 'НЕ сплачено'),
+        (Status_payment.partially_paid, 'Частково сплачено'),
+    )
+    status = models.CharField(max_length=100,
+                              default=Status_payment.not_paid,
+                              choices=PAYMENT_CHOICE,
+                              verbose_name='Статус оплати',
+                              help_text='Оберіть статус оплати',
+                              blank=True
+                              )
+    activation = models.BooleanField(default=False, verbose_name="Статус активації", )
+
+    activation_sum = models.IntegerField(null=True,
+                                         default=0,
+                                         verbose_name="Сума активації",
+                                         help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                         blank=True
+                                         )
+
     rate_ua_1m = models.CharField(null=True,
                                   max_length=100,
                                   verbose_name="{} - Укр".format(first_month),
@@ -191,40 +231,18 @@ class Subscription(models.Model):
                                    help_text='Поле заповниться автоматично, вводити нічого не потрібно',
                                    blank=True
                                    )
-    price_quarter = models.IntegerField(null=True,
-                                        default=0,
-                                        verbose_name="нараховано грн/квартал",
-                                        help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                        blank=True
-                                        )
-
-    class Status_payment:
-        paid = 'Сплачено'
-        not_paid = 'НЕ сплачено'
-        partially_paid = 'Частково сплачено'
-
-    PAYMENT_CHOICE = (
-        (Status_payment.paid, 'Сплачено'),
-        (Status_payment.not_paid, 'НЕ сплачено'),
-        (Status_payment.partially_paid, 'Частково сплачено'),
-    )
-    status = models.CharField(max_length=100,
-                              default=Status_payment.not_paid,
-                              choices=PAYMENT_CHOICE,
-                              verbose_name='Статус оплати',
-                              help_text='Оберіть статус оплати',
-                              blank=True
-                              )
-    activation = models.BooleanField(default=False, verbose_name="Статус активації", )
-
-    activation_sum = models.IntegerField(null=True,
-                                         default=0,
-                                         verbose_name="Сума активації",
-                                         help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                         blank=True
-                                         )
 
     def save(self, *args, **kwargs):
+        if self.status == self.Status_payment.paid:  # if status changed to paid - that means the all sum was paid
+            self.sum_payment = self.price_quarter
+        else:
+            if self.price_quarter == self.sum_payment:  # if user enter the sum, status will change
+                self.status = 'Сплачено'
+            elif self.price_quarter > self.sum_payment > 0:
+                self.status = 'Частково сплачено'
+            else:
+                self.status = 'НЕ сплачено'
+
         all_gps = self.client.gps.all()
         self.all_1m = all_gps.count()
         self.all_2m = all_gps.count()

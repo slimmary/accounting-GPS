@@ -68,6 +68,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
         'get_client_login',
         'get_provider',
         'price_quarter',
+        'sum_payment',
         'status',
         'activation',
         'activation_sum',
