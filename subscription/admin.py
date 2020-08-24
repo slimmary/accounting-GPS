@@ -68,7 +68,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
         'get_client_login',
     ]
     list_display = (
-        'date_init',
+        'get_date_init',
         'get_quarter',
         'get_year',
         'get_client_name',
@@ -107,6 +107,11 @@ class SubscriptionAdmin(admin.ModelAdmin):
         'rate_own_sim_3m',
 
     )
+
+    def get_date_init(self, obj):
+        return obj.date_init
+
+    get_date_init.short_description = 'Дата створення'
 
     def get_provider(self, obj):
         return obj.client.provider

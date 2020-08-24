@@ -233,18 +233,14 @@ class Subscription(models.Model):
     def save(self, *args, **kwargs):
         if self.status == self.Status_payment.paid:  # if status changed to paid - that means the all sum was paid
             self.sum_payment = self.price_quarter
-            self.sum_to_pay = self.price_quarter - self.sum_payment
         else:
             if self.price_quarter <= self.sum_payment:  # if user enter the sum, status will change
-                self.sum_to_pay = self.price_quarter - self.sum_payment
                 self.status = 'Сплачено'
             elif self.price_quarter > self.sum_payment > 0:
-                self.sum_to_pay = self.price_quarter - self.sum_payment
                 self.status = 'Частково сплачено'
             else:
-                self.sum_to_pay = self.price_quarter - self.sum_payment
                 self.status = 'НЕ сплачено'
-
+        self.sum_to_pay = self.price_quarter - self.sum_payment
         all_gps = self.client.gps.all()
         self.all_1m = all_gps.count()
         self.all_2m = all_gps.count()
