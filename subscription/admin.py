@@ -55,6 +55,13 @@ class LettersAdmin(admin.ModelAdmin):
 
 class SubscriptionAdmin(admin.ModelAdmin):
     list_per_page = 20
+    list_filter = (
+        'quarter',
+        'client__login',
+        'client__name',
+        'status',
+        'activation',
+    )
     search_fields = [
         'get_client_name',
         'get_provider',
@@ -69,6 +76,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
         'get_provider',
         'price_quarter',
         'sum_payment',
+        'sum_to_pay',
         'status',
         'activation',
         'activation_sum',

@@ -43,36 +43,29 @@ class Subscription(models.Model):
                                related_name='subscription'
                                )
 
-    if quarter == 'Перший':
-        first_month = 'січ'
-        second_month = 'лют'
-        third_month = 'бер'
-    elif quarter == 'Другий':
-        first_month = 'квіт'
-        second_month = 'трав'
-        third_mont = 'черв'
-    if quarter == 'Третій':
-        first_month = 'лип'
-        second_month = 'сер'
-        third_month = 'вер'
-    else:
-        first_month = 'жов'
-        second_month = 'лист'
-        third_month = 'груд'
+    first_month = '1 міс'
+    second_month = '2 міс'
+    third_month = '3 міс'
 
-    price_quarter = models.IntegerField(null=True,
-                                        default=0,
-                                        verbose_name="нараховано",
-                                        help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                        blank=True
-                                        )
+    price_quarter = models.PositiveIntegerField(null=True,
+                                                default=0,
+                                                verbose_name="нараховано",
+                                                help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                                blank=True
+                                                )
 
-    sum_payment = models.IntegerField(null=True,
-                                      default=0,
-                                      verbose_name="сплачено",
-                                      help_text='Введть суму, що сплатив клієнт',
-                                      blank=True
-                                      )
+    sum_payment = models.PositiveIntegerField(null=True,
+                                              default=0,
+                                              verbose_name="сплачено",
+                                              help_text='Введть суму, що сплатив клієнт',
+                                              blank=True
+                                              )
+    sum_to_pay = models.IntegerField(null=True,
+                                     default=0,
+                                     verbose_name="залишок",
+                                     help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                     blank=True
+                                     )
 
     class Status_payment:
         paid = 'Сплачено'
@@ -91,14 +84,19 @@ class Subscription(models.Model):
                               help_text='Оберіть статус оплати',
                               blank=True
                               )
+    date_payment = models.DateField(null=True,
+                                    verbose_name='Дата оплати',
+                                    help_text='Оберіть дату',
+                                    blank=True
+                                    )
     activation = models.BooleanField(default=False, verbose_name="Статус активації", )
 
-    activation_sum = models.IntegerField(null=True,
-                                         default=0,
-                                         verbose_name="Сума активації",
-                                         help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                         blank=True
-                                         )
+    activation_sum = models.PositiveIntegerField(null=True,
+                                                 default=0,
+                                                 verbose_name="Сума активації",
+                                                 help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                                 blank=True
+                                                 )
 
     rate_ua_1m = models.CharField(null=True,
                                   max_length=100,
@@ -213,34 +211,38 @@ class Subscription(models.Model):
                               blank=True
                               )
 
-    price_1m = models.IntegerField(null=True,
-                                   default=0,
-                                   verbose_name="грн/{}".format(first_month),
-                                   help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                   blank=True
-                                   )
-    price_2m = models.IntegerField(null=True,
-                                   default=0,
-                                   verbose_name="грн/{}".format(second_month),
-                                   help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                   blank=True
-                                   )
-    price_3m = models.IntegerField(null=True,
-                                   default=0,
-                                   verbose_name="грн/{}".format(third_month),
-                                   help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                   blank=True
-                                   )
+    price_1m = models.PositiveIntegerField(null=True,
+                                           default=0,
+                                           verbose_name="грн/{}".format(first_month),
+                                           help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                           blank=True
+                                           )
+    price_2m = models.PositiveIntegerField(null=True,
+                                           default=0,
+                                           verbose_name="грн/{}".format(second_month),
+                                           help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                           blank=True
+                                           )
+    price_3m = models.PositiveIntegerField(null=True,
+                                           default=0,
+                                           verbose_name="грн/{}".format(third_month),
+                                           help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                           blank=True
+                                           )
 
     def save(self, *args, **kwargs):
         if self.status == self.Status_payment.paid:  # if status changed to paid - that means the all sum was paid
             self.sum_payment = self.price_quarter
+            self.sum_to_pay = self.price_quarter - self.sum_payment
         else:
-            if self.price_quarter == self.sum_payment:  # if user enter the sum, status will change
+            if self.price_quarter <= self.sum_payment:  # if user enter the sum, status will change
+                self.sum_to_pay = self.price_quarter - self.sum_payment
                 self.status = 'Сплачено'
             elif self.price_quarter > self.sum_payment > 0:
+                self.sum_to_pay = self.price_quarter - self.sum_payment
                 self.status = 'Частково сплачено'
             else:
+                self.sum_to_pay = self.price_quarter - self.sum_payment
                 self.status = 'НЕ сплачено'
 
         all_gps = self.client.gps.all()
