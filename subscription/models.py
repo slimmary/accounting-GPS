@@ -407,7 +407,10 @@ class Subscription(models.Model):
         elif self.price_quarter > self.sum_payment > 0:
             self.status = 'Частково сплачено'
         else:
-            self.status = 'НЕ сплачено'
+            if self.status == 'Сплачено':
+                self.sum_payment = self.price_quarter
+            else:
+                self.status = 'НЕ сплачено'
 
         self.price_quarter = self.price_1m + self.price_2m + self.price_3m + self.activation_sum
         self.sum_to_pay = self.price_quarter - self.sum_payment
