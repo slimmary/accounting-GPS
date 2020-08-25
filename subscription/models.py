@@ -3,21 +3,23 @@ from datetime import date
 from clients.models import Client
 from products.models import Gps
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 
 class Subscription(models.Model):
-    date_init = date.today()
-
-    if date_init.month == 3:
-        quarter_choice = 'Другий'
-    elif date_init.month == 6:
-        quarter_choice = 'Третій'
-    elif date_init.month == 9:
-        quarter_choice = 'Четвертий'
-    elif date_init.month == 12:
-        quarter_choice = 'Перший'
-    else:
-        quarter_choice = 'Оберіть квартал в ручну'
+    date_init = models.DateField(null=True,
+                                 verbose_name='Дата створення',
+                                 help_text='Дата заповниться автоматично',
+                                 default=timezone.now,
+                                 )
+    year = models.CharField(verbose_name='Рік',
+                            help_text='Заповниться автоматично',
+                            max_length=10,
+                            null=True,
+                            blank=True,
+                            )
+    if date_init is None:
+        date_init = date.today()
 
     class Quarter:
         first = 'Перший'
@@ -32,11 +34,11 @@ class Subscription(models.Model):
         (Quarter.fourth, 'Четвертий')
     )
     quarter = models.CharField(max_length=100,
-                               default=quarter_choice,
+                               default=Quarter.first,
                                choices=QUARTER_CHOICE,
                                verbose_name='Квартал'
                                )
-    year = date.today().year
+
     client = models.ForeignKey(Client,
                                on_delete=models.CASCADE,
                                verbose_name='Платник',
@@ -231,60 +233,165 @@ class Subscription(models.Model):
                                            )
 
     def save(self, *args, **kwargs):
-        if self.status == self.Status_payment.paid:  # if status changed to paid - that means the all sum was paid
-            self.sum_payment = self.price_quarter
+        self.year = self.date_init.year
+        if self.date_init.month == 3:
+            self.quarter = 'Другий'
+        elif self.date_init.month == 6:
+            self.quarter = 'Третій'
+        elif self.date_init.month == 9:
+            self.quarter = 'Четвертий'
+        elif self.date_init.month == 12:
+            self.quarter = 'Перший'
         else:
-            if self.price_quarter <= self.sum_payment:  # if user enter the sum, status will change
-                self.status = 'Сплачено'
-            elif self.price_quarter > self.sum_payment > 0:
-                self.status = 'Частково сплачено'
-            else:
-                self.status = 'НЕ сплачено'
-        self.sum_to_pay = self.price_quarter - self.sum_payment
+            self.quarter = self.quarter
+
         all_gps = self.client.gps.all()
-        self.all_1m = all_gps.count()
-        self.all_2m = all_gps.count()
-        self.all_3m = all_gps.count()
 
-        def get_rate_ua(all_gps):
-            for i in all_gps:
-                return all_gps.filter(rate_client=i.Rate.ua).count()
+        m1 = date(self.date_init.year, (self.date_init.month + 1), 15)
+        m2 = date(self.date_init.year, (self.date_init.month + 2), 15)
+        m3 = date(self.date_init.year, (self.date_init.month + 3), 15)
 
-        self.rate_ua_1m = get_rate_ua(all_gps)
-        self.rate_ua_2m = get_rate_ua(all_gps)
-        self.rate_ua_3m = get_rate_ua(all_gps)
+        date_save = date.today()  # date of saving
 
-        def get_world(all_gps):
-            for i in all_gps:
-                return all_gps.filter(rate_client=i.Rate.world).count()
+        if m1 > date_save >= self.date_init:  # if date saving is between date of init and date_init + 15 days -
+            # updating all months and prices
+            self.all_1m = all_gps.count()
+            self.all_2m = all_gps.count()
+            self.all_3m = all_gps.count()
 
-        self.rate_world_1m = get_world(all_gps)
-        self.rate_world_2m = get_world(all_gps)
-        self.rate_world_2m = get_world(all_gps)
+            def get_rate_ua(all_gps):
+                for i in all_gps:
+                    return all_gps.filter(rate_client=i.Rate.ua).count()
 
-        def get_ua_world(all_gps):
-            for i in all_gps:
-                return all_gps.filter(rate_client=i.Rate.ua_world).count()
+            self.rate_ua_1m = get_rate_ua(all_gps)
+            self.rate_ua_2m = get_rate_ua(all_gps)
+            self.rate_ua_3m = get_rate_ua(all_gps)
 
-        self.rate_ua_world_1m = get_ua_world(all_gps)
-        self.rate_ua_world_2m = get_ua_world(all_gps)
-        self.rate_ua_world_3m = get_ua_world(all_gps)
+            def get_world(all_gps):
+                for i in all_gps:
+                    return all_gps.filter(rate_client=i.Rate.world).count()
 
-        def get_pause(all_gps):
-            for i in all_gps:
-                return all_gps.filter(rate_client=i.Rate.pause).count()
+            self.rate_world_1m = get_world(all_gps)
+            self.rate_world_2m = get_world(all_gps)
+            self.rate_world_2m = get_world(all_gps)
 
-        self.rate_pause_1m = get_pause(all_gps)
-        self.rate_pause_2m = get_pause(all_gps)
-        self.rate_pause_3m = get_pause(all_gps)
+            def get_ua_world(all_gps):
+                for i in all_gps:
+                    return all_gps.filter(rate_client=i.Rate.ua_world).count()
 
-        def get_own_sim(all_gps):
-            for i in all_gps:
-                return all_gps.filter(rate_client=i.Rate.own_sim).count()
+            self.rate_ua_world_1m = get_ua_world(all_gps)
+            self.rate_ua_world_2m = get_ua_world(all_gps)
+            self.rate_ua_world_3m = get_ua_world(all_gps)
 
-        self.rate_own_sim_1m = get_own_sim(all_gps)
-        self.rate_own_sim_2m = get_own_sim(all_gps)
-        self.rate_own_sim_3m = get_own_sim(all_gps)
+            def get_pause(all_gps):
+                for i in all_gps:
+                    return all_gps.filter(rate_client=i.Rate.pause).count()
+
+            self.rate_pause_1m = get_pause(all_gps)
+            self.rate_pause_2m = get_pause(all_gps)
+            self.rate_pause_3m = get_pause(all_gps)
+
+            def get_own_sim(all_gps):
+                for i in all_gps:
+                    return all_gps.filter(rate_client=i.Rate.own_sim).count()
+
+            self.rate_own_sim_1m = get_own_sim(all_gps)
+            self.rate_own_sim_2m = get_own_sim(all_gps)
+            self.rate_own_sim_3m = get_own_sim(all_gps)
+
+            def get_price(all_gps):
+                return sum((gps.rate_price for gps in all_gps))
+
+            self.price_1m = get_price(all_gps)
+            self.price_2m = get_price(all_gps)
+            self.price_3m = get_price(all_gps)
+
+        elif m1 < date_save < m2:  # if date saving is between 15.1month and 15.2month - updating 2d and 3th
+            # months and prices
+            self.all_2m = all_gps.count()
+            self.all_3m = all_gps.count()
+
+            def get_rate_ua(all_gps):
+                for i in all_gps:
+                    return all_gps.filter(rate_client=i.Rate.ua).count()
+
+            self.rate_ua_2m = get_rate_ua(all_gps)
+            self.rate_ua_3m = get_rate_ua(all_gps)
+
+            def get_world(all_gps):
+                for i in all_gps:
+                    return all_gps.filter(rate_client=i.Rate.world).count()
+
+            self.rate_world_2m = get_world(all_gps)
+            self.rate_world_2m = get_world(all_gps)
+
+            def get_ua_world(all_gps):
+                for i in all_gps:
+                    return all_gps.filter(rate_client=i.Rate.ua_world).count()
+
+            self.rate_ua_world_2m = get_ua_world(all_gps)
+            self.rate_ua_world_3m = get_ua_world(all_gps)
+
+            def get_pause(all_gps):
+                for i in all_gps:
+                    return all_gps.filter(rate_client=i.Rate.pause).count()
+
+            self.rate_pause_2m = get_pause(all_gps)
+            self.rate_pause_3m = get_pause(all_gps)
+
+            def get_own_sim(all_gps):
+                for i in all_gps:
+                    return all_gps.filter(rate_client=i.Rate.own_sim).count()
+
+            self.rate_own_sim_2m = get_own_sim(all_gps)
+            self.rate_own_sim_3m = get_own_sim(all_gps)
+
+            def get_price(all_gps):
+                return sum((gps.rate_price for gps in all_gps))
+
+            self.price_2m = get_price(all_gps)
+            self.price_3m = get_price(all_gps)
+
+        elif m2 < date_save < m3:  # if date saving is between 15.2month and 15.3month - updating 3th
+            # months and prices
+            self.all_3m = all_gps.count()
+
+            def get_rate_ua(all_gps):
+                for i in all_gps:
+                    return all_gps.filter(rate_client=i.Rate.ua).count()
+
+            self.rate_ua_3m = get_rate_ua(all_gps)
+
+            def get_world(all_gps):
+                for i in all_gps:
+                    return all_gps.filter(rate_client=i.Rate.world).count()
+
+            self.rate_world_2m = get_world(all_gps)
+
+            def get_ua_world(all_gps):
+                for i in all_gps:
+                    return all_gps.filter(rate_client=i.Rate.ua_world).count()
+
+            self.rate_ua_world_3m = get_ua_world(all_gps)
+
+            def get_pause(all_gps):
+                for i in all_gps:
+                    return all_gps.filter(rate_client=i.Rate.pause).count()
+
+            self.rate_pause_3m = get_pause(all_gps)
+
+            def get_own_sim(all_gps):
+                for i in all_gps:
+                    return all_gps.filter(rate_client=i.Rate.own_sim).count()
+
+            self.rate_own_sim_3m = get_own_sim(all_gps)
+
+            def get_price(all_gps):
+                return sum((gps.rate_price for gps in all_gps))
+
+            self.price_3m = get_price(all_gps)
+        else:
+            pass
 
         def get_activation_sum(all_gps):
             if self.activation is True:
@@ -295,14 +402,15 @@ class Subscription(models.Model):
 
         self.activation_sum = get_activation_sum(all_gps)
 
-        def get_price(all_gps):
-            return sum((gps.rate_price for gps in all_gps))
-
-        self.price_1m = get_price(all_gps)
-        self.price_2m = get_price(all_gps)
-        self.price_3m = get_price(all_gps)
+        if self.price_quarter <= self.sum_payment:  # if user enter the sum, status will change
+            self.status = 'Сплачено'
+        elif self.price_quarter > self.sum_payment > 0:
+            self.status = 'Частково сплачено'
+        else:
+            self.status = 'НЕ сплачено'
 
         self.price_quarter = self.price_1m + self.price_2m + self.price_3m + self.activation_sum
+        self.sum_to_pay = self.price_quarter - self.sum_payment
 
         super(Subscription, self).save(*args, **kwargs)
 

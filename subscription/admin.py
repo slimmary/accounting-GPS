@@ -78,7 +78,6 @@ class SubscriptionAdmin(admin.ModelAdmin):
         'sum_payment',
         'sum_to_pay',
         'status',
-        'activation',
         'activation_sum',
 
         'price_1m',
