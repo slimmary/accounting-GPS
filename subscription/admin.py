@@ -1,12 +1,10 @@
 from django.contrib import admin
-from django import forms
 from .models import Subscription, Letters
 
 
 class LettersAdmin(admin.ModelAdmin):
     list_per_page = 20
-    readonly_fields = ['gps_rate', ]
-    list_display = ('date',
+    list_display = ('date_letter',
                     'get_client_name',
                     'get_client_login',
                     'get_gps',
@@ -15,7 +13,7 @@ class LettersAdmin(admin.ModelAdmin):
                     'get_new_rate',
                     )
     list_filter = ('gps',
-                   'date',
+                   'date_letter',
                    'action',
                    )
     search_fields = ['get_client_name',
@@ -57,37 +55,62 @@ class LettersAdmin(admin.ModelAdmin):
 
 class SubscriptionAdmin(admin.ModelAdmin):
     list_per_page = 20
-    readonly_fields = [
-        'rate_ua',
-        'rate_world',
-        'rate_ua_world',
-        'rate_pause',
-        'rate_own_sim',
-        'price',
-        'activation_sum',
-    ]
+    list_filter = (
+        'quarter',
+        'client__login',
+        'client__name',
+        'status',
+        'activation',
+    )
     search_fields = [
         'get_client_name',
         'get_provider',
         'get_client_login',
     ]
     list_display = (
+        'get_date_init',
         'get_quarter',
         'get_year',
         'get_client_name',
         'get_client_login',
         'get_provider',
-        'price',
-        'get_all_gps',
-        'rate_ua',
-        'rate_world',
-        'rate_ua_world',
-        'rate_pause',
-        'rate_own_sim',
+        'price_quarter',
+        'sum_payment',
+        'sum_to_pay',
         'status',
-        'activation',
         'activation_sum',
+
+        'price_1m',
+        'price_2m',
+        'price_3m',
+        'all_1m',
+        'all_2m',
+        'all_3m',
+
+        'rate_ua_1m',
+        'rate_world_1m',
+        'rate_ua_world_1m',
+        'rate_pause_1m',
+        'rate_own_sim_1m',
+
+        'rate_ua_2m',
+        'rate_world_2m',
+        'rate_ua_world_2m',
+        'rate_pause_2m',
+        'rate_own_sim_2m',
+
+        'rate_ua_3m',
+        'rate_world_3m',
+        'rate_ua_world_3m',
+        'rate_pause_3m',
+        'rate_own_sim_3m',
+
     )
+
+    def get_date_init(self, obj):
+        return obj.date_init
+
+    get_date_init.short_description = 'Дата створення'
 
     def get_provider(self, obj):
         return obj.client.provider
@@ -118,13 +141,6 @@ class SubscriptionAdmin(admin.ModelAdmin):
 
     get_quarter.admin_order_field = 'quarter'
     get_quarter.short_description = 'Квартал'
-
-    def get_all_gps(self, obj):
-        queryset = obj.client.gps.all().count()
-        return queryset
-
-    get_all_gps.admin_order_field = 'gps_all'
-    get_all_gps.short_description = 'Кількість БР'
 
 
 admin.site.register(Subscription, SubscriptionAdmin)
