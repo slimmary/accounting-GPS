@@ -10,16 +10,15 @@ class Subscription(models.Model):
     date_init = models.DateField(null=True,
                                  verbose_name='Дата створення',
                                  help_text='Дата заповниться автоматично',
-                                 default=timezone.now,
+                                 auto_now_add=True,
                                  )
+
     year = models.CharField(verbose_name='Рік',
                             help_text='Заповниться автоматично',
                             max_length=10,
                             null=True,
                             blank=True,
                             )
-    if date_init is None:
-        date_init = date.today()
 
     class Quarter:
         first = 'Перший'
@@ -233,6 +232,8 @@ class Subscription(models.Model):
                                            )
 
     def save(self, *args, **kwargs):
+        if self.date_init is None:
+            self.date_init = date.today()
         self.year = self.date_init.year
         if self.date_init.month == 3:
             self.quarter = 'Другий'
@@ -401,16 +402,15 @@ class Subscription(models.Model):
                 return 0
 
         self.activation_sum = get_activation_sum(all_gps)
-
-        if self.price_quarter <= self.sum_payment:  # if user enter the sum, status will change
-            self.status = 'Сплачено'
-        elif self.price_quarter > self.sum_payment > 0:
-            self.status = 'Частково сплачено'
-        else:
+        if self.sum_payment == 0:
             if self.status == 'Сплачено':
                 self.sum_payment = self.price_quarter
             else:
                 self.status = 'НЕ сплачено'
+        elif self.price_quarter > self.sum_payment > 0:
+            self.status = 'Частково сплачено'
+        elif self.sum_payment >= self.price_quarter:  # if user enter the sum, status will change
+            self.status = 'Сплачено'
 
         self.price_quarter = self.price_1m + self.price_2m + self.price_3m + self.activation_sum
         self.sum_to_pay = self.price_quarter - self.sum_payment
