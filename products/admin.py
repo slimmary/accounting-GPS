@@ -16,7 +16,7 @@ class SimInline(admin.StackedInline):
 class GpsAdmin(admin.ModelAdmin):
     list_per_page = 20
     inlines = [SimInline]
-    fields = ('number', 'owner', 'vehicle', 'rate_client',)
+    fields = ('number', 'owner', 'vehicle', 'rate_client_1', 'rate_client_2')
     list_display = (
         'number',
         'get_gps_fuel',
@@ -24,7 +24,8 @@ class GpsAdmin(admin.ModelAdmin):
         'link_to_owner_name',
         'link_to_owner_login',
         'get_sim_numb',
-        'rate_client'
+        'rate_client_1',
+        'rate_client_2',
     )
 
     list_filter = (

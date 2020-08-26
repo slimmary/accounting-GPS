@@ -28,26 +28,32 @@ class Gps(models.Model):
     class Rate:
         ua = 'Україна'
         world = 'Світ'
-        ua_world = 'Україна+Світ'
         pause = 'Пауза'
         own_sim = 'Власна сім'
 
     RATE_CHOICE = (
         (Rate.ua, 'Україна'),
         (Rate.world, 'Світ'),
-        (Rate.ua_world, 'Україна+Світ'),
         (Rate.pause, 'Пауза'),
         (Rate.own_sim, 'Власна сім'),
     )
 
-    rate_client = models.CharField(null=True,
-                                   max_length=100,
-                                   default=Rate.ua,
-                                   choices=RATE_CHOICE,
-                                   verbose_name='Тариф',
-                                   help_text='Оберіть тариф для клієнта',
-                                   blank=True
-                                   )
+    rate_client_1 = models.CharField(null=True,
+                                     max_length=100,
+                                     choices=RATE_CHOICE,
+                                     default=Rate.ua,
+                                     verbose_name='Тариф 1',
+                                     help_text='Оберіть тариф для клієнта',
+                                     blank=True
+                                     )
+
+    rate_client_2 = models.CharField(null=True,
+                                     max_length=100,
+                                     choices=RATE_CHOICE,
+                                     verbose_name='Тариф 2',
+                                     help_text='Оберіть тариф для клієнта',
+                                     blank=True
+                                     )
 
     rate_price = models.IntegerField(null=True,
                                      default=0,
@@ -62,31 +68,45 @@ class Gps(models.Model):
         else:
             if self.owner.provider == self.owner.Provider.dyachuk or \
                     self.owner.provider == self.owner.Provider.card:
-                if self.rate_client == self.Rate.ua:
-                    self.rate_price = 120
-                elif self.rate_client == self.Rate.world:
-                    self.rate_price = 150
-                elif self.rate_client == self.Rate.ua_world:
-                    self.rate_price = 270
-                elif self.rate_client == self.Rate.pause:
-                    self.rate_price = 30
-                elif self.rate_client == self.Rate.own_sim:
-                    self.rate_price = 60
+                if self.rate_client_1 == self.Rate.ua:
+                    price_1 = 120
+                elif self.rate_client_1 == self.Rate.world:
+                    price_1 = 150
+                elif self.rate_client_1 == self.Rate.pause:
+                    price_1 = 30
+                elif self.rate_client_1 == self.Rate.own_sim:
+                    price_1 = 60
+                elif self.rate_client_2 == self.Rate.ua:
+                    price_2 = 120
+                elif self.rate_client_2 == self.Rate.world:
+                    price_2 = 150
+                elif self.rate_client_2 == self.Rate.pause:
+                    price_2 = 30
+                elif self.rate_client_2 == self.Rate.own_sim:
+                    price_2 = 60
                 else:
                     self.rate_price = 0
+                self.rate_price = sum(price_1, price_2)
             else:
-                if self.rate_client == self.Rate.ua:
-                    self.rate_price = 144
-                elif self.rate_client == self.Rate.world:
-                    self.rate_price = 180
-                elif self.rate_client == self.Rate.ua_world:
-                    self.rate_price = 324
-                elif self.rate_client == self.Rate.pause:
-                    self.rate_price = 36
-                elif self.rate_client == self.Rate.own_sim:
-                    self.rate_price = 72
+                if self.rate_client_1 == self.Rate.ua:
+                    price_1 = 144
+                elif self.rate_client_1 == self.Rate.world:
+                    price_1 = 180
+                elif self.rate_client_1 == self.Rate.pause:
+                    price_1 = 36
+                elif self.rate_client_1 == self.Rate.own_sim:
+                    price_1 = 72
+                elif self.rate_client_2 == self.Rate.ua:
+                    price_2 = 144
+                elif self.rate_client_2 == self.Rate.world:
+                    price_2 = 180
+                elif self.rate_client_2 == self.Rate.pause:
+                    price_2 = 36
+                elif self.rate_client_2 == self.Rate.own_sim:
+                    price_2 = 72
                 else:
                     self.rate_price = 0
+                self.rate_price = sum(price_1, price_2)
 
         super(Gps, self).save(*args, **kwargs)
 
