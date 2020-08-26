@@ -42,9 +42,9 @@ class GpsAdmin(admin.ModelAdmin):
     ]
 
     def link_to_owner_name(self, obj):
-        if obj.gps.owner is None:
+        if obj.owner is None:
             return 'CKT'
-        elif obj.gps.owner.id:
+        elif obj.owner.id:
             return format_html(
                 "<a href='../../clients/client/%s/change/' >%s</a>" % (str(obj.owner.id), str(obj.owner.name)))
         else:

@@ -112,19 +112,16 @@ class SubscriptionAdmin(admin.ModelAdmin):
 
         'rate_ua_1m',
         'rate_world_1m',
-        'rate_ua_world_1m',
         'rate_pause_1m',
         'rate_own_sim_1m',
 
         'rate_ua_2m',
         'rate_world_2m',
-        'rate_ua_world_2m',
         'rate_pause_2m',
         'rate_own_sim_2m',
 
         'rate_ua_3m',
         'rate_world_3m',
-        'rate_ua_world_3m',
         'rate_pause_3m',
         'rate_own_sim_3m',
 

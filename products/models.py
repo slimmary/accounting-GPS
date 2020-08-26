@@ -63,6 +63,8 @@ class Gps(models.Model):
                                      )
 
     def save(self, *args, **kwargs):
+        price_1 = 0
+        price_2 = 0
         if self.owner is None:
             self.rate_price = 0
         else:
@@ -106,7 +108,7 @@ class Gps(models.Model):
                     price_2 = 72
                 else:
                     self.rate_price = 0
-                self.rate_price = sum(price_1, price_2)
+                self.rate_price = price_1 + price_2
 
         super(Gps, self).save(*args, **kwargs)
 

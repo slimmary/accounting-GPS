@@ -112,12 +112,7 @@ class Subscription(models.Model):
                                      help_text='Поле заповниться автоматично, вводити нічого не потрібно',
                                      blank=True
                                      )
-    rate_ua_world_1m = models.CharField(null=True,
-                                        max_length=100,
-                                        verbose_name="{} - Укр+Св".format(first_month),
-                                        help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                        blank=True
-                                        )
+
     rate_pause_1m = models.CharField(null=True,
                                      max_length=100,
                                      verbose_name="{} - П".format(first_month),
@@ -149,12 +144,7 @@ class Subscription(models.Model):
                                      help_text='Поле заповниться автоматично, вводити нічого не потрібно',
                                      blank=True
                                      )
-    rate_ua_world_2m = models.CharField(null=True,
-                                        max_length=100,
-                                        verbose_name="{} - Укр+Св".format(second_month),
-                                        help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                        blank=True
-                                        )
+
     rate_pause_2m = models.CharField(null=True,
                                      max_length=100,
                                      verbose_name="{} - П".format(second_month),
@@ -186,12 +176,7 @@ class Subscription(models.Model):
                                      help_text='Поле заповниться автоматично, вводити нічого не потрібно',
                                      blank=True
                                      )
-    rate_ua_world_3m = models.CharField(null=True,
-                                        max_length=100,
-                                        verbose_name="{} - Укр+Св".format(third_month),
-                                        help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                        blank=True
-                                        )
+
     rate_pause_3m = models.CharField(null=True,
                                      max_length=100,
                                      verbose_name="{} - П".format(third_month),
@@ -262,7 +247,7 @@ class Subscription(models.Model):
 
             def get_rate_ua(all_gps):
                 for i in all_gps:
-                    return all_gps.filter(rate_client=i.Rate.ua).count()
+                    return all_gps.filter(rate_client_1=i.Rate.ua).count()
 
             self.rate_ua_1m = get_rate_ua(all_gps)
             self.rate_ua_2m = get_rate_ua(all_gps)
@@ -270,23 +255,15 @@ class Subscription(models.Model):
 
             def get_world(all_gps):
                 for i in all_gps:
-                    return all_gps.filter(rate_client=i.Rate.world).count()
+                    return all_gps.filter(rate_client_1=i.Rate.world).count() + all_gps.filter(rate_client_2=i.Rate.world).count()
 
             self.rate_world_1m = get_world(all_gps)
             self.rate_world_2m = get_world(all_gps)
             self.rate_world_2m = get_world(all_gps)
 
-            def get_ua_world(all_gps):
-                for i in all_gps:
-                    return all_gps.filter(rate_client=i.Rate.ua_world).count()
-
-            self.rate_ua_world_1m = get_ua_world(all_gps)
-            self.rate_ua_world_2m = get_ua_world(all_gps)
-            self.rate_ua_world_3m = get_ua_world(all_gps)
-
             def get_pause(all_gps):
                 for i in all_gps:
-                    return all_gps.filter(rate_client=i.Rate.pause).count()
+                    return all_gps.filter(rate_client_1=i.Rate.pause).count()
 
             self.rate_pause_1m = get_pause(all_gps)
             self.rate_pause_2m = get_pause(all_gps)
@@ -294,7 +271,7 @@ class Subscription(models.Model):
 
             def get_own_sim(all_gps):
                 for i in all_gps:
-                    return all_gps.filter(rate_client=i.Rate.own_sim).count()
+                    return all_gps.filter(rate_client_1=i.Rate.own_sim).count()
 
             self.rate_own_sim_1m = get_own_sim(all_gps)
             self.rate_own_sim_2m = get_own_sim(all_gps)
@@ -314,35 +291,29 @@ class Subscription(models.Model):
 
             def get_rate_ua(all_gps):
                 for i in all_gps:
-                    return all_gps.filter(rate_client=i.Rate.ua).count()
+                    return all_gps.filter(rate_client_1=i.Rate.ua).count()
 
             self.rate_ua_2m = get_rate_ua(all_gps)
             self.rate_ua_3m = get_rate_ua(all_gps)
 
             def get_world(all_gps):
                 for i in all_gps:
-                    return all_gps.filter(rate_client=i.Rate.world).count()
+                    return all_gps.filter(rate_client_1=i.Rate.world).count() + all_gps.filter(rate_client_2=i.Rate.world).count()
 
             self.rate_world_2m = get_world(all_gps)
             self.rate_world_2m = get_world(all_gps)
 
-            def get_ua_world(all_gps):
-                for i in all_gps:
-                    return all_gps.filter(rate_client=i.Rate.ua_world).count()
-
-            self.rate_ua_world_2m = get_ua_world(all_gps)
-            self.rate_ua_world_3m = get_ua_world(all_gps)
 
             def get_pause(all_gps):
                 for i in all_gps:
-                    return all_gps.filter(rate_client=i.Rate.pause).count()
+                    return all_gps.filter(rate_client_1=i.Rate.pause).count()
 
             self.rate_pause_2m = get_pause(all_gps)
             self.rate_pause_3m = get_pause(all_gps)
 
             def get_own_sim(all_gps):
                 for i in all_gps:
-                    return all_gps.filter(rate_client=i.Rate.own_sim).count()
+                    return all_gps.filter(rate_client_1=i.Rate.own_sim).count()
 
             self.rate_own_sim_2m = get_own_sim(all_gps)
             self.rate_own_sim_3m = get_own_sim(all_gps)
@@ -359,31 +330,25 @@ class Subscription(models.Model):
 
             def get_rate_ua(all_gps):
                 for i in all_gps:
-                    return all_gps.filter(rate_client=i.Rate.ua).count()
+                    return all_gps.filter(rate_client_1=i.Rate.ua).count()
 
             self.rate_ua_3m = get_rate_ua(all_gps)
 
             def get_world(all_gps):
                 for i in all_gps:
-                    return all_gps.filter(rate_client=i.Rate.world).count()
+                    return all_gps.filter(rate_client_1=i.Rate.world).count() + all_gps.filter(rate_client_2=i.Rate.world).count()
 
             self.rate_world_2m = get_world(all_gps)
 
-            def get_ua_world(all_gps):
-                for i in all_gps:
-                    return all_gps.filter(rate_client=i.Rate.ua_world).count()
-
-            self.rate_ua_world_3m = get_ua_world(all_gps)
-
             def get_pause(all_gps):
                 for i in all_gps:
-                    return all_gps.filter(rate_client=i.Rate.pause).count()
+                    return all_gps.filter(rate_client_1=i.Rate.pause).count()
 
             self.rate_pause_3m = get_pause(all_gps)
 
             def get_own_sim(all_gps):
                 for i in all_gps:
-                    return all_gps.filter(rate_client=i.Rate.own_sim).count()
+                    return all_gps.filter(rate_client_1=i.Rate.own_sim).count()
 
             self.rate_own_sim_3m = get_own_sim(all_gps)
 
