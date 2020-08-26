@@ -87,7 +87,7 @@ class Subscription(models.Model):
                               )
     date_payment = models.DateField(null=True,
                                     verbose_name='Дата оплати',
-                                    help_text='Оберіть дату',
+                                    help_text='Заповниться автоматично',
                                     blank=True
                                     )
     activation = models.BooleanField(default=False, verbose_name="Статус активації", )
@@ -404,13 +404,19 @@ class Subscription(models.Model):
         self.activation_sum = get_activation_sum(all_gps)
         if self.sum_payment == 0:
             if self.status == 'Сплачено':
+                self.date_payment = date.today()
                 self.sum_payment = self.price_quarter
             else:
                 self.status = 'НЕ сплачено'
         elif self.price_quarter > self.sum_payment > 0:
-            self.status = 'Частково сплачено'
+            if self.status == 'Сплачено':
+                self.date_payment = date.today()
+                self.sum_payment = self.price_quarter
+            else:
+                self.status = 'Частково сплачено'
         elif self.sum_payment >= self.price_quarter:  # if user enter the sum, status will change
             self.status = 'Сплачено'
+            self.date_payment = date.today()
 
         self.price_quarter = self.price_1m + self.price_2m + self.price_3m + self.activation_sum
         self.sum_to_pay = self.price_quarter - self.sum_payment

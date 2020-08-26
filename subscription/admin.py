@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import Subscription, Letters
+from django.shortcuts import render
 
 
 class LettersAdmin(admin.ModelAdmin):
@@ -55,6 +56,28 @@ class LettersAdmin(admin.ModelAdmin):
 
 class SubscriptionAdmin(admin.ModelAdmin):
     list_per_page = 20
+    actions = ['update_activation', 'update_status_payment', 'update_all']
+
+    def update_activation(self, request, queryset):
+        for subscriptions in queryset:
+            subscriptions.activation = True
+            subscriptions.save()
+
+    update_activation.short_description = "Нарахувати активацію"
+
+    def update_status_payment(self, request,queryset):
+        for subscriptions in queryset:
+            subscriptions.status = 'Сплачено'
+            subscriptions.save()
+
+    update_status_payment.short_description = 'Встановити "Сплачено"'
+
+    def update_all(self, request, queryset):
+        for subscriptions in queryset:
+            subscriptions.save()
+
+    update_all.short_description = "Оновити дані з сьогоднішнього числа"
+
     list_filter = (
         'quarter',
         'client__login',
