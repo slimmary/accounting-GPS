@@ -1,8 +1,8 @@
 from phone_field import PhoneField
 from django.db import models
+from django.core.validators import RegexValidator,MinLengthValidator
 
 
-# Create your models here.
 class ContactProfile(models.Model):
     firstname = models.CharField(max_length=50, verbose_name='Прізвище')
     surname = models.CharField(max_length=50, verbose_name="І'мя")
@@ -50,33 +50,94 @@ class ClientPostAddress(models.Model):
 
 
 class Client(models.Model):
-    day_start = models.DateField(null=True, verbose_name='Дата початку роботи', help_text='Оберіть дату', blank=False)
-    name = models.CharField(max_length=128, verbose_name='Назва клієнта', blank=False)
-    login = models.CharField(max_length=128, verbose_name="Ім'я користувача (login)", blank=False)
+    day_start = models.DateField(null=True,
+                                 verbose_name='Дата початку роботи',
+                                 help_text='Оберіть дату',
+                                 blank=False
+                                 )
+    name = models.CharField(max_length=128,
+                            verbose_name='Назва клієнта',
+                            blank=False
+                            )
+    login = models.CharField(max_length=128,
+                             verbose_name="Ім'я користувача (login)",
+                             blank=False
+                             )
     STATUS_FORM_CHOICE = (
         ('1', 'активний'),
         ('2', 'видалений')
     )
-    status = models.CharField(null=True, max_length=1, default='активний',choices=STATUS_FORM_CHOICE, verbose_name='Статус', help_text='Оберіть статус клієнта')
-    contacts = models.ManyToManyField(ContactProfile, verbose_name='Контактні особи', related_name='client_field')
-    address = models.OneToOneField(ClientPostAddress, null=True, on_delete=models.CASCADE, verbose_name='Поштова адреса', related_name='client')
+    status = models.CharField(null=True,
+                              max_length=1,
+                              default='активний',
+                              choices=STATUS_FORM_CHOICE,
+                              verbose_name='Статус',
+                              help_text='Оберіть статус клієнта'
+                              )
+    edrpou = models.PositiveIntegerField(null=True,
+                                         default=00000000,
+                                         max_length=8,
+                                         verbose_name="ЄДРПОУ",
+                                         help_text='Введіть ЄДРПОУ клієнта',
+                                         validators=[RegexValidator(r'^\d{0,10}$'), MinLengthValidator(8)],
+                                         )
+    IPN = models.CharField(null=True,
+                           default=00000000,
+                           max_length=12,
+                           verbose_name="ІПН",
+                           help_text='Введіть ІПН клієнта',
+                           validators=[RegexValidator(r'^\d{0,10}$'),MinLengthValidator(10)],
+                           blank=True
+                           )
+    director = models.CharField(null=True,
+                                max_length=100,
+                                verbose_name='Директор',
+                                help_text='Введіть ПІП директора',
+                                blank=True
+                                )
+    IBAN = models.CharField(null=True,
+                            default=00000000,
+                            max_length=29,
+                            verbose_name="IBAN",
+                            help_text='Введіть IBAN клієнта',
+                            validators=[RegexValidator(r'^\d{0,10}$'),MinLengthValidator(29)],
+                            blank=True
+                            )
+    contacts = models.ManyToManyField(ContactProfile,
+                                      verbose_name='Контактні особи',
+                                      related_name='client_field'
+                                      )
+    address = models.OneToOneField(ClientPostAddress,
+                                   null=True,
+                                   on_delete=models.CASCADE,
+                                   verbose_name='Поштова адреса',
+                                   related_name='client'
+                                   )
 
     class Provider:
         ckt = 'ТОВ "Системи Контролю Транспорту"'
         shevchuk = 'ФОП Шевчук С.І.'
+        demchenko = 'ФОП Демченко К.В.'
         dyachuk = 'ФОП Дячук Л.В.'
         card = 'БК/ІНШЕ'
+
     PROVIDER_CHOICE = (
         (Provider.ckt, 'ТОВ "Системи Контролю Транспорту"'),
         (Provider.shevchuk, 'ФОП Шевчук С.І.'),
-        (Provider.dyachuk, 'ФОП Дячук Л.В.'),
+        (Provider.dyachuk, 'ФОП Демченко К.В.'),
+        (Provider.demchenko, 'ФОП Дячук Л.В.'),
         (Provider.card, 'БК/ІНШЕ')
     )
-    provider = models.CharField(null=True, max_length=100, default=Provider.shevchuk, choices=PROVIDER_CHOICE,
-                                verbose_name='Постачальник з абонплати', help_text='Оберіть постачальника з абонплати')
+    provider = models.CharField(null=True,
+                                max_length=100,
+                                default=Provider.shevchuk,
+                                choices=PROVIDER_CHOICE,
+                                verbose_name='Постачальник з абонплати',
+                                help_text='Оберіть постачальника з абонплати'
+                                )
 
     def __str__(self):
-        return '"{}"  |  логін: {}  '.format(
+        return '"{}"  /  логін: {}  '.format(
             self.name,
             self.login,
 

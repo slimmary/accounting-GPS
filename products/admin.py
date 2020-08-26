@@ -41,9 +41,9 @@ class GpsAdmin(admin.ModelAdmin):
     ]
 
     def link_to_owner_name(self, obj):
-        if obj.owner is None:
+        if obj.gps.owner is None:
             return 'CKT'
-        elif obj.owner.id:
+        elif obj.gps.owner.id:
             return format_html(
                 "<a href='../../clients/client/%s/change/' >%s</a>" % (str(obj.owner.id), str(obj.owner.name)))
         else:
@@ -99,8 +99,8 @@ class SimAdmin(admin.ModelAdmin):
         'link_to_owner_login',
     )
 
-    def link_to_owner_name(self,obj):
-        if obj.owner is None:
+    def link_to_owner_name(self, obj):
+        if obj.gps is None:
             return 'CKT'
         else:
             if obj.gps is not None:
@@ -112,7 +112,7 @@ class SimAdmin(admin.ModelAdmin):
     link_to_owner_name.short_description = 'Власник назва'
 
     def link_to_owner_login(self, obj):
-        if obj.owner is None:
+        if obj.gps is None:
             return 'CKT'
         else:
             if obj.gps is not None:
