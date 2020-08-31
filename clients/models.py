@@ -1,32 +1,10 @@
 from phone_field import PhoneField
 from django.db import models
-from django.core.validators import RegexValidator,MinLengthValidator
+from django.core.validators import RegexValidator, MinLengthValidator
+from django.core.exceptions import ValidationError
 
 
-class ContactProfile(models.Model):
-    firstname = models.CharField(max_length=50, verbose_name='Прізвище')
-    surname = models.CharField(max_length=50, verbose_name="І'мя")
-    patronymic = models.CharField(max_length=50, verbose_name='По батькові')
-    position = models.CharField(max_length=50, verbose_name='Посада')
-    phone = PhoneField(null=True, verbose_name='Контактний номер телефону')
-    phone_2 = PhoneField(null=True, blank=True, verbose_name='додатковий контактний номер телефону')
-    email = models.EmailField(null=True, max_length=254, verbose_name='Контактна електронна адреса')
-
-    def __str__(self):
-        return '{} {} {}  - посада: {}, телефон: {}, email: {}  '.format(
-            self.firstname,
-            self.surname,
-            self.patronymic,
-            self.position,
-            self.phone,
-            self.email
-        )
-
-    class Meta:
-        verbose_name_plural = "Контактні особи клієнтів"
-
-
-class ClientPostAddress(models.Model):
+class ClientAddress(models.Model):
     index = models.IntegerField(verbose_name='Пштовий індекс')
     region = models.CharField(max_length=50, verbose_name='Область')
     district = models.CharField(max_length=50, verbose_name='Район', blank=True)
@@ -47,6 +25,29 @@ class ClientPostAddress(models.Model):
 
     class Meta:
         verbose_name_plural = "Поштові адреси"
+
+
+class ContactProfile(models.Model):
+    firstname = models.CharField(max_length=50, verbose_name='Прізвище')
+    surname = models.CharField(max_length=50, verbose_name="І'мя")
+    patronymic = models.CharField(max_length=50, verbose_name='По батькові')
+    position = models.CharField(max_length=50, verbose_name='Посада')
+    phone = PhoneField(null=True, verbose_name='№ телефону')
+    phone_2 = PhoneField(null=True, blank=True, verbose_name='додатковий № телефону')
+    email = models.EmailField(null=True, max_length=254, verbose_name='електронна адреса')
+
+    def __str__(self):
+        return '{} {} {}  - посада: {}, телефон: {}, email: {}  '.format(
+            self.firstname,
+            self.surname,
+            self.patronymic,
+            self.position,
+            self.phone,
+            self.email
+        )
+
+    class Meta:
+        verbose_name_plural = "Контактні особи клієнтів"
 
 
 class Client(models.Model):
@@ -74,45 +75,18 @@ class Client(models.Model):
                               verbose_name='Статус',
                               help_text='Оберіть статус клієнта'
                               )
-    edrpou = models.PositiveIntegerField(null=True,
-                                         default=00000000,
-                                         max_length=8,
-                                         verbose_name="ЄДРПОУ",
-                                         help_text='Введіть ЄДРПОУ клієнта',
-                                         validators=[RegexValidator(r'^\d{0,10}$'), MinLengthValidator(8)],
-                                         )
-    IPN = models.CharField(null=True,
-                           default=00000000,
-                           max_length=12,
-                           verbose_name="ІПН",
-                           help_text='Введіть ІПН клієнта',
-                           validators=[RegexValidator(r'^\d{0,10}$'),MinLengthValidator(10)],
-                           blank=True
-                           )
-    director = models.CharField(null=True,
-                                max_length=100,
-                                verbose_name='Директор',
-                                help_text='Введіть ПІП директора',
-                                blank=True
-                                )
-    IBAN = models.CharField(null=True,
-                            default=00000000,
-                            max_length=29,
-                            verbose_name="IBAN",
-                            help_text='Введіть IBAN клієнта',
-                            validators=[RegexValidator(r'^\d{0,10}$'),MinLengthValidator(29)],
-                            blank=True
-                            )
+    edrpou = models.CharField(null=True,
+                              default=12345678,
+                              max_length=8,
+                              verbose_name="ЄДРПОУ",
+                              help_text='Введіть ЄДРПОУ клієнта',
+                              validators=[RegexValidator(r'^\d{0,10}$'), MinLengthValidator(8)],
+                              )
+
     contacts = models.ManyToManyField(ContactProfile,
                                       verbose_name='Контактні особи',
-                                      related_name='client_field'
+                                      related_name='client_field',
                                       )
-    address = models.OneToOneField(ClientPostAddress,
-                                   null=True,
-                                   on_delete=models.CASCADE,
-                                   verbose_name='Поштова адреса',
-                                   related_name='client'
-                                   )
 
     class Provider:
         ckt = 'ТОВ "Системи Контролю Транспорту"'
@@ -132,9 +106,91 @@ class Client(models.Model):
                                 max_length=100,
                                 default=Provider.shevchuk,
                                 choices=PROVIDER_CHOICE,
-                                verbose_name='Постачальник з абонплати',
+                                verbose_name='Постачальник з АП',
                                 help_text='Оберіть постачальника з абонплати'
                                 )
+
+    class Notification:
+        sms = 'SMS'
+        viber = 'VIBER'
+        email = 'Email'
+        medoc = 'M.E.D.O.C.'
+        call = 'Дзвінок'
+
+    NOTIFICATION_CHOICE = (
+        (Notification.sms, 'SMS'),
+        (Notification.viber, 'VIBER'),
+        (Notification.email, 'Email'),
+        (Notification.medoc, 'M.E.D.O.C.'),
+        (Notification.call, 'Дзвінок')
+    )
+
+    type_notification_1 = models.CharField(null=True,
+                                           max_length=100,
+                                           default=Notification.medoc,
+                                           choices=NOTIFICATION_CHOICE,
+                                           verbose_name='Тип повідомлень 1',
+                                           help_text='Оберіть спосіб повідомлення клієнта по рахунках'
+                                           )
+    notification_contact_1 = models.ForeignKey(ContactProfile,
+                                               on_delete=models.CASCADE,
+                                               null=True,
+                                               default=None,
+                                               verbose_name='Контактна особи для повідомлень',
+                                               related_name='client_notification_field_1',
+                                               help_text='Оберіть контактну особу яку повідомлятимуть по рахунках',
+                                               blank=True
+                                               )
+
+    type_notification_2 = models.CharField(null=True,
+                                           max_length=100,
+                                           choices=NOTIFICATION_CHOICE,
+                                           verbose_name='Тип повідомлень 2',
+                                           help_text='Оберіть спосіб повідомлення клієнта по рахунках',
+                                           blank=True
+                                           )
+    notification_contact_2 = models.ForeignKey(ContactProfile,
+                                               on_delete=models.CASCADE,
+                                               null=True,
+                                               default=None,
+                                               verbose_name='Контактна особи для повідомлень',
+                                               related_name='client_notification_field_2',
+                                               help_text='Оберіть контактну особу, яку повідомлятимуть по рахунках',
+                                               blank=True
+                                               )
+
+
+    def clean(self):
+        if self.type_notification_1 != self.Notification.medoc:
+            if self.notification_contact_1 is None:
+                raise ValidationError("Не можливо обратий цей тип повідомленнь 1 не вказавши контактну особу,"
+                                      "яку повідомлятимуть по рахунках (особа має бути пов'язана з клієнтом)")
+            elif self.notification_contact_1 not in self.contacts.all():
+                raise ValidationError("Обрана особа не є контактною і не повязана з клєнтом, оберіть особу яка "
+                                      "пов'язана зі списку 'контактні особи'")
+        if self.type_notification_2 != self.Notification.medoc:
+            if self.type_notification_2 is not None:
+                if self.notification_contact_2 is None:
+                    raise ValidationError("Не можливо обратий тип повідомленнь 2 не вказавши контактну особу, "
+                                          "яку повідомлятимуть по рахунках (особа має бути пов'язана з клієнтом)")
+                elif self.notification_contact_2 not in self.contacts.all():
+                    raise ValidationError("Обрана особа не є контактною і не повязана з клєнтом, оберіть особу яка "
+                                          "пов'язана зі списку 'контактні особи'")
+
+    def save(self, *args, **kwargs):
+        if self.type_notification_1 != self.Notification.medoc:
+            if self.notification_contact_1 is None:
+                raise ValidationError
+        else:
+            self.notification_contact_1 = None
+
+        if self.type_notification_2 != self.Notification.medoc:
+            if self.type_notification_2 is not None:
+                if self.notification_contact_2 is None:
+                    raise ValidationError
+        else:
+            self.notification_contact_2 = None
+        super(Client, self).save(*args, **kwargs)
 
     def __str__(self):
         return '"{}"  /  логін: {}  '.format(
@@ -145,3 +201,83 @@ class Client(models.Model):
 
     class Meta:
         verbose_name_plural = "Клієнти"
+
+
+class ClientLegalDetail(models.Model):
+    IPN = models.CharField(null=True,
+                           default=123456789012,
+                           max_length=12,
+                           verbose_name="ІПН",
+                           help_text='Введіть ІПН клієнта',
+                           validators=[RegexValidator(r'^\d{0,100}$'), MinLengthValidator(10)],
+                           blank=True
+                           )
+    director = models.CharField(null=True,
+                                max_length=100,
+                                verbose_name='Директор',
+                                help_text='Введіть ПІП директора',
+                                blank=True
+                                )
+    IBAN = models.CharField(null=True,
+                            default=12345678912345678901234567890,
+                            max_length=29,
+                            verbose_name="IBAN",
+                            help_text='Введіть IBAN клієнта',
+                            validators=[RegexValidator(r'^\d{0,100}$'), MinLengthValidator(29)],
+                            blank=True
+                            )
+    bank_account = models.CharField(null=True,
+                                    default=1234567890,
+                                    max_length=20,
+                                    verbose_name="№ р/р",
+                                    help_text='Введіть р/р',
+                                    validators=[RegexValidator(r'^\d{0,100}$'), ],
+                                    blank=True
+                                    )
+    MFO = models.CharField(null=True,
+                           default=12345,
+                           max_length=10,
+                           verbose_name="IBAN",
+                           help_text='Введіть IBAN клієнта',
+                           validators=[RegexValidator(r'^\d{0,100}$'), MinLengthValidator(5)],
+                           blank=True
+                           )
+    bank = models.CharField(null=True,
+                            max_length=100,
+                            verbose_name='Банк>',
+                            help_text='Введіть назву банку',
+                            blank=True
+                            )
+    legal_address = models.OneToOneField(ClientAddress,
+                                         null=True,
+                                         on_delete=models.CASCADE,
+                                         verbose_name='Юридична адреса',
+                                         related_name='client_legal_address',
+                                         help_text='Оберіть юридичну адресу клієнта',
+                                         blank=True
+                                         )
+
+    post_address = models.OneToOneField(ClientAddress,
+                                        null=True,
+                                        on_delete=models.CASCADE,
+                                        verbose_name='Поштова адреса',
+                                        related_name='client_post_address',
+                                        help_text='Оберіть поштову адресу клієнта, якщо вона не співпадає з юридичною',
+                                        blank=True
+                                        )
+
+    client = models.ForeignKey(Client,
+                               on_delete=models.CASCADE,
+                               null=True,
+                               default=None,
+                               verbose_name='Клієнт',
+                               related_name='client_legal_detail',
+                               help_text='Оберіть клєнта якому належать ці реквізити',
+                               blank=True
+                               )
+
+    def __str__(self):
+        return 'Реквізити {}'.format(self.client.name)
+
+    class Meta:
+        verbose_name_plural = "Реквізити клієнтів"

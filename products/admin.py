@@ -3,27 +3,18 @@ from .models import Sim, Gps, FuelSensor
 from django.utils.html import format_html
 
 
-class SimInline(admin.StackedInline):
-    list_per_page = 20
-    model = Sim
-    fields = ('operator',
-              'number',
-              'account_number',
-              'date_receive',
-              )
-
-
 class GpsAdmin(admin.ModelAdmin):
     list_per_page = 20
-    inlines = [SimInline]
-    fields = ('number', 'owner', 'vehicle', 'rate_client_1', 'rate_client_2')
+    actions = ['rate_client_pause']
     list_display = (
         'number',
         'get_gps_fuel',
         'vehicle',
         'link_to_owner_name',
         'link_to_owner_login',
-        'get_sim_numb',
+
+        'sim_1',
+        'sim_2',
         'rate_client_1',
         'rate_client_2',
     )
@@ -38,8 +29,17 @@ class GpsAdmin(admin.ModelAdmin):
         'owner__name',
         'owner__login',
         'number',
-        'sim__number',
+        'sim_1',
+        'sim_2',
     ]
+
+    def rate_client_pause(self, request,queryset):
+        for gps in queryset:
+            gps.rate_client_1 = gps.Rate.pause
+            gps.rate_client_2 = gps.Rate.pause
+            gps.save()
+
+    rate_client_pause.short_description = 'Встановити тариф "Пауза"'
 
     def link_to_owner_name(self, obj):
         if obj.owner is None:
@@ -69,12 +69,14 @@ class GpsAdmin(admin.ModelAdmin):
         queryset = obj.sim.all()
         sim = [i.number for i in queryset]
         return sim
+
     get_sim_numb.short_description = 'Сім-Картки номер'
 
     def get_gps_fuel(self, obj):
         queryset = obj.fuel_sensor.all()
         fuel = [i for i in queryset]
         return fuel
+
     get_gps_fuel.short_description = 'ДВРП'
 
 
@@ -83,10 +85,9 @@ class SimAdmin(admin.ModelAdmin):
     list_filter = (
         'operator',
         'account_number',
-        'gps',
         'installer',
         'date_given',
-        'gps__owner__login',
+        #'gps__owner__login',
     )
     search_fields = ['number', 'gps__number']
     list_display = (
@@ -94,37 +95,48 @@ class SimAdmin(admin.ModelAdmin):
         'number',
         'account_number',
         'date_receive',
+        'gps_1',
         'installer',
         'date_given',
-        'link_to_owner_name',
-        'link_to_owner_login',
+        #'gps__owner__name',
+        #'gps__owner__login',
     )
 
-    def link_to_owner_name(self, obj):
-        if obj.gps is None:
-            return 'CKT'
-        else:
-            if obj.gps is not None:
-                return format_html("<a href='../../clients/client/%s/change/' >%s</a>" % (str(obj.gps.owner.id), str(obj.gps.owner.name)))
-            else:
-                return 'CKT'
-
-    link_to_owner_name.allow_tags = True
-    link_to_owner_name.short_description = 'Власник назва'
-
-    def link_to_owner_login(self, obj):
-        if obj.gps is None:
-            return 'CKT'
-        else:
-            if obj.gps is not None:
-                return format_html("<a href='../../clients/client/%s/change/' >%s</a>" % (str(obj.gps.owner.id), str(obj.gps.owner.login)))
-            else:
-                return 'CKT'
-    link_to_owner_login.allow_tags = True
-    link_to_owner_login.short_description = 'Власник Login'
+    # def link_to_owner_name(self, obj):
+    #     if self.gps is None:
+    #         return 'CKT'
+    #     else:
+    #         if self.gps is not None:
+    #             if self.gps.owner is None:
+    #                 return 'CKT'
+    #             else:
+    #                 return format_html("<a href='../../clients/client/%s/change/' >%s</a>" % (
+    #                     str(obj.gps.owner.id), str(obj.gps.owner.name)))
+    #         else:
+    #             return 'CKT'
+    #
+    # link_to_owner_name.allow_tags = True
+    # link_to_owner_name.short_description = 'Власник назва'
+    #
+    # def link_to_owner_login(self, obj):
+    #     if obj.gps is None:
+    #         return 'CKT'
+    #     else:
+    #         if obj.gps is not None:
+    #             if obj.gps.owner is None:
+    #                 return 'CKT'
+    #             else:
+    #                 return format_html("<a href='../../clients/client/%s/change/' >%s</a>" % (
+    #                     str(obj.gps.owner.id), str(obj.gps.owner.login)))
+    #         else:
+    #             return 'CKT'
+    #
+    # link_to_owner_login.allow_tags = True
+    # link_to_owner_login.short_description = 'Власник Login'
 
     def get_operator(self, obj):
         return obj.get_operator_display()
+
     get_operator.admin_order_field = 'operator'
     get_operator.short_description = 'Оператор'
 
@@ -155,21 +167,24 @@ class FuelSensorAdmin(admin.ModelAdmin):
 
     def get_gps_number(self, obj):
         return obj.gps.number
+
     get_gps_number.admin_order_field = 'gps_number'
     get_gps_number.short_description = 'БР'
 
     def get_gps_vehicle(self, obj):
         return obj.gps.vehicle
+
     get_gps_vehicle.admin_order_field = 'gps_vehicle'
     get_gps_vehicle.short_description = 'ТЗ'
 
     def link_to_owner_name(self, obj):
-        if obj.owner is None:
+        if obj.gps.owner is None:
             return 'CKT'
         else:
             if obj.gps is not None:
                 return format_html(
-                    "<a href='../../clients/client/%s/change/' >%s</a>" % (str(obj.gps.owner.id), str(obj.gps.owner.name)))
+                    "<a href='../../clients/client/%s/change/' >%s</a>" % (
+                        str(obj.gps.owner.id), str(obj.gps.owner.name)))
             else:
                 return 'CKT'
 
@@ -177,12 +192,13 @@ class FuelSensorAdmin(admin.ModelAdmin):
     link_to_owner_name.short_description = 'Власник назва'
 
     def link_to_owner_login(self, obj):
-        if obj.owner is None:
+        if obj.gps.owner is None:
             return 'CKT'
         else:
             if obj.gps is not None:
                 return format_html(
-                    "<a href='../../clients/client/%s/change/' >%s</a>" % (str(obj.gps.owner.id), str(obj.gps.owner.login)))
+                    "<a href='../../clients/client/%s/change/' >%s</a>" % (
+                        str(obj.gps.owner.id), str(obj.gps.owner.login)))
             else:
                 return 'CKT'
 

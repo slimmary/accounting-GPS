@@ -303,7 +303,6 @@ class Subscription(models.Model):
             self.rate_world_2m = get_world(all_gps)
             self.rate_world_2m = get_world(all_gps)
 
-
             def get_pause(all_gps):
                 for i in all_gps:
                     return all_gps.filter(rate_client_1=i.Rate.pause).count()
