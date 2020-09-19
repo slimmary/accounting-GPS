@@ -84,21 +84,43 @@ class GpsAdmin(admin.ModelAdmin):
 class SimAdmin(admin.ModelAdmin):
 
     class LoginListFilter(admin.SimpleListFilter):
-        title = 'login'
-        parameter_name = 'clients/client/'
+        title = 'login власника'
+        parameter_name = 'client_login'
 
         def lookups(self, request, model_admin):
             list_tuple = []
-            for login in Client.objects.all():
-                list_tuple.append((login.id, login.login.title()))
+            for client in Client.objects.all():
+                list_tuple.append((client.id, client.login.title()))
+            list_tuple.append(('СКТ', 'СКТ'))
             return list_tuple
 
         def queryset(self, request, queryset):
-            if self.value():
+            if self.value() == 'СКТ':
+                return queryset.filter(gps_1__owner=None)
+            elif self.value():
                 return queryset.filter(gps_1__owner__id=self.value())
             else:
                 return queryset
 
+    class ClientNameListFilter(admin.SimpleListFilter):
+        title = 'Назві власника'
+        parameter_name = 'clients_name'
+
+        def lookups(self, request, model_admin):
+            list_tuple = []
+            for client in Client.objects.all():
+                list_tuple.append((client.id, client.name.title()))
+            list_tuple.append(('СКТ', 'СКТ'))
+            return list_tuple
+
+        def queryset(self, request, queryset):
+            if self.value() == 'СКТ':
+                return queryset.filter(gps_1__owner=None)
+            elif self.value():
+                return queryset.filter(gps_1__owner__id=self.value())
+            else:
+                return queryset
+            
     list_per_page = 20
     list_filter = (
         'operator',
@@ -106,6 +128,7 @@ class SimAdmin(admin.ModelAdmin):
         'installer',
         'date_given',
         LoginListFilter,
+        ClientNameListFilter,
     )
     search_fields = ['number', 'gps__number']
     list_display = (
@@ -119,9 +142,6 @@ class SimAdmin(admin.ModelAdmin):
         'link_to_owner_name',
         'link_to_owner_login',
     )
-
-
-
 
     def link_to_gps(self, obj):
         if obj.gps_1 is None:
