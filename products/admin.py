@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import Sim, Gps, FuelSensor
+from clients.models import Client
 from django.utils.html import format_html
 
 
@@ -33,7 +34,7 @@ class GpsAdmin(admin.ModelAdmin):
         'sim_2',
     ]
 
-    def rate_client_pause(self, request,queryset):
+    def rate_client_pause(self, request, queryset):
         for gps in queryset:
             gps.rate_client_1 = gps.Rate.pause
             gps.rate_client_2 = gps.Rate.pause
@@ -81,64 +82,107 @@ class GpsAdmin(admin.ModelAdmin):
 
 
 class SimAdmin(admin.ModelAdmin):
+
+    class LoginListFilter(admin.SimpleListFilter):
+        title = 'login'
+        parameter_name = 'clients/client/'
+
+        def lookups(self, request, model_admin):
+            list_tuple = []
+            for login in Client.objects.all():
+                list_tuple.append((login.id, login.login.title()))
+            return list_tuple
+
+        def queryset(self, request, queryset):
+            if self.value():
+                return queryset.filter(gps_1__owner__id=self.value())
+            else:
+                return queryset
+
     list_per_page = 20
     list_filter = (
         'operator',
         'account_number',
         'installer',
         'date_given',
-        #'gps__owner__login',
+        LoginListFilter,
     )
     search_fields = ['number', 'gps__number']
     list_display = (
-        'get_operator',
+        'operator',
         'number',
         'account_number',
         'date_receive',
-        'gps_1',
         'installer',
         'date_given',
-        #'gps__owner__name',
-        #'gps__owner__login',
+        'link_to_gps',
+        'link_to_owner_name',
+        'link_to_owner_login',
     )
 
-    # def link_to_owner_name(self, obj):
-    #     if self.gps is None:
-    #         return 'CKT'
-    #     else:
-    #         if self.gps is not None:
-    #             if self.gps.owner is None:
-    #                 return 'CKT'
-    #             else:
-    #                 return format_html("<a href='../../clients/client/%s/change/' >%s</a>" % (
-    #                     str(obj.gps.owner.id), str(obj.gps.owner.name)))
-    #         else:
-    #             return 'CKT'
-    #
-    # link_to_owner_name.allow_tags = True
-    # link_to_owner_name.short_description = 'Власник назва'
-    #
-    # def link_to_owner_login(self, obj):
-    #     if obj.gps is None:
-    #         return 'CKT'
-    #     else:
-    #         if obj.gps is not None:
-    #             if obj.gps.owner is None:
-    #                 return 'CKT'
-    #             else:
-    #                 return format_html("<a href='../../clients/client/%s/change/' >%s</a>" % (
-    #                     str(obj.gps.owner.id), str(obj.gps.owner.login)))
-    #         else:
-    #             return 'CKT'
-    #
-    # link_to_owner_login.allow_tags = True
-    # link_to_owner_login.short_description = 'Власник Login'
 
-    def get_operator(self, obj):
-        return obj.get_operator_display()
 
-    get_operator.admin_order_field = 'operator'
-    get_operator.short_description = 'Оператор'
+
+    def link_to_gps(self, obj):
+        if obj.gps_1 is None:
+            if obj.gps_2 is None:
+                return None
+            else:
+                return format_html("<a href='../../products/gps/%s/change/' >%s</a>" % (
+                            str(obj.gps_2.id), str(obj.gps_2.number)))
+        else:
+            return format_html("<a href='../../products/gps/%s/change/' >%s</a>" % (
+                            str(obj.gps_1.id), str(obj.gps_1.number)))
+
+    link_to_gps.short_description = 'БР'
+
+    def link_to_owner_name(self, obj):
+        if obj.gps_1 is None:
+            if obj.gps_2 is None:
+                return 'CKT'
+            else:
+                if obj.gps_2 is not None:
+                    if obj.gps_2.owner is None:
+                        return 'CKT'
+                    else:
+                        return format_html("<a href='../../clients/client/%s/change/' >%s</a>" % (
+                            str(obj.gps_2.owner.id), str(obj.gps_2.owner.name)))
+        else:
+            if obj.gps_1 is not None:
+                if obj.gps_1.owner is None:
+                    return 'CKT'
+                else:
+                    return format_html("<a href='../../clients/client/%s/change/' >%s</a>" % (
+                        str(obj.gps_1.owner.id), str(obj.gps_1.owner.name)))
+            else:
+                return 'CKT'
+
+    link_to_owner_name.allow_tags = True
+    link_to_owner_name.short_description = 'Власник'
+
+    def link_to_owner_login(self, obj):
+        if obj.gps_1 is None:
+            if obj.gps_2 is None:
+                return 'CKT'
+            else:
+                if obj.gps_2 is not None:
+                    if obj.gps_2.owner is None:
+                        return 'CKT'
+                    else:
+                        return format_html("<a href='../../clients/client/%s/change/' >%s</a>" % (
+                            str(obj.gps_2.owner.id), str(obj.gps_2.owner.login)))
+        else:
+            if obj.gps_1 is not None:
+                if obj.gps_1.owner is None:
+                    return 'CKT'
+                else:
+                    return format_html("<a href='../../clients/client/%s/change/' >%s</a>" % (
+                        str(obj.gps_1.owner.id), str(obj.gps_1.owner.login)))
+            else:
+                return 'CKT'
+
+    link_to_owner_login.allow_tags = True
+    link_to_owner_login.short_description = 'Login'
 
 
 class FuelSensorAdmin(admin.ModelAdmin):
@@ -189,7 +233,7 @@ class FuelSensorAdmin(admin.ModelAdmin):
                 return 'CKT'
 
     link_to_owner_name.allow_tags = True
-    link_to_owner_name.short_description = 'Власник назва'
+    link_to_owner_name.short_description = 'Власник'
 
     def link_to_owner_login(self, obj):
         if obj.gps.owner is None:
@@ -203,7 +247,7 @@ class FuelSensorAdmin(admin.ModelAdmin):
                 return 'CKT'
 
     link_to_owner_login.allow_tags = True
-    link_to_owner_login.short_description = 'Власник Login'
+    link_to_owner_login.short_description = 'Login'
 
 
 admin.site.register(FuelSensor, FuelSensorAdmin)

@@ -13,6 +13,7 @@ class ContactInline(admin.TabularInline):
 class ClientLegalDetailInline(admin.StackedInline):
     list_per_page = 20
     model = ClientLegalDetail
+    verbose_name_plural = 'Реквізити'
 
 
 class GpsInline(admin.StackedInline):
@@ -44,7 +45,6 @@ class ClientAdmin(admin.ModelAdmin):
         'get_contacts',
     )
 
-
     list_filter = ('type_notification_2', 'type_notification_1', 'status', 'name', 'login',)
     search_fields = ['name', 'login', 'edrpou', 'login' ]
 
@@ -53,7 +53,7 @@ class ClientAdmin(admin.ModelAdmin):
         return queryset
 
     get_all_gps.admin_order_field = 'gps_all'
-    get_all_gps.short_description = 'Кількість БР'
+    get_all_gps.short_description = 'Кіл-ть БР'
 
     def get_phone_email_contact_1(self, obj):
         if obj.notification_contact_1 is not None:

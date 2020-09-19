@@ -129,7 +129,7 @@ class Gps(models.Model):
 
     rate_client_1 = models.CharField(null=True,
                                      max_length=100,
-                                     default=Rate.ua,
+                                     default=Rate.own_sim,
                                      verbose_name='Тариф 1',
                                      help_text='Тариф заповниться автоматично нічого не потрібно вводити',
                                      blank=True
@@ -150,10 +150,15 @@ class Gps(models.Model):
                                      )
 
     def clean(self):
-        if self.sim_2.operator != self.sim_1.Operator.travelsim:
-            raise ValidationError('Сім_2 може бути тільки оператора "тревел-сім" і тоді тариф_2 буде "Світ"')
-        elif self.sim_1.operator == self.sim_1.Operator.travelsim and self.sim_2.operator == self.sim_2.Operator.travelsim:
-            raise ValidationError('Сім_1 та Сім_2 не можуть бути одночасно оператора "тревел-сім"')
+        if self.sim_2 is not None:
+            if self.sim_1 is None:
+                if self.sim_2.operator != self.sim_2.Operator.travelsim:
+                    raise ValidationError('Сім_2 може бути тільки оператора "тревел-сім"')
+            else:
+                if self.sim_2.operator != self.sim_2.Operator.travelsim:
+                    raise ValidationError('Сім_2 може бути тільки оператора "тревел-сім" і тоді тариф_2 буде "Світ"')
+                elif self.sim_1.operator == self.sim_1.Operator.travelsim and self.sim_2.operator == self.sim_2.Operator.travelsim:
+                    raise ValidationError('Сім_1 та Сім_2 не можуть бути одночасно оператора "тревел-сім"')
 
     def save(self, *args, **kwargs):
         try:
