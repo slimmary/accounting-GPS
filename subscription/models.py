@@ -351,10 +351,45 @@ class Subscription(models.Model):
         super(Subscription, self).save(*args, **kwargs)
 
     def __str__(self):
-        return '{} {} року'.format(self.get_quarter_display(), self.year)
+        return '{} - {} квартал {} року'.format(self.client.name, self.get_quarter_display(), self.year)
 
     class Meta:
         verbose_name_plural = "АП звітність "
+
+
+class Invoice(models.Model):
+    subscription = models.ForeignKey(Subscription,
+                                     on_delete=models.CASCADE,
+                                     verbose_name='АП',
+                                     related_name='invoice'
+                                     )
+    client = models.CharField(null=True,
+                              max_length=100,
+                              verbose_name='Клієнт',
+                              help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                              blank=True
+                              )
+    number = models.CharField(null=True,
+                              max_length=100,
+                              verbose_name='№',
+                              help_text='Номер РФ',
+                              blank=True
+                              )
+    date = models.DateField(null=True,
+                            verbose_name='Дата створення',
+                            help_text='Оберіть дату'
+                            )
+
+    def save(self, *args, **kwargs):
+        self.client = self.subscription.client.name
+
+        super(Invoice, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return 'РФ №{} від {} '.format(self.number, self.date)
+
+    class Meta:
+        verbose_name_plural = "АП рахунки фактури "
 
 
 class Letters(models.Model):

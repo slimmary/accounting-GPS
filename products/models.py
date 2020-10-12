@@ -150,10 +150,10 @@ class Gps(models.Model):
                                      )
 
     def clean(self):
-        all_gps = Gps.objects.all()
-        for gps in all_gps:
-            if self.number == gps.number:
-                raise ValidationError('БР з таким номером вже існує')
+        # all_gps = Gps.objects.all()
+        # for gps in all_gps:
+        #     if self.number == gps.number:
+        #         raise ValidationError('БР з таким номером вже існує')
         if self.sim_2 is not None:
             if self.sim_1 is None:
                 if self.sim_2.operator != self.sim_2.Operator.travelsim:
@@ -165,69 +165,69 @@ class Gps(models.Model):
                     raise ValidationError('Сім_1 та Сім_2 не можуть бути одночасно оператора "тревел-сім"')
 
     def save(self, *args, **kwargs):
-        all_gps = Gps.objects.all()
+        # all_gps = Gps.objects.all()
         try:
-            for gps in all_gps:
-                if self.number != gps.number:
-                    if self.rate_client_1 == self.Rate.pause and self.rate_client_2 == self.Rate.pause:
-                        if self.owner.provider == self.owner.Provider.dyachuk or \
-                                self.owner.provider == self.owner.Provider.card:
-                            self.rate_price = 30
-                        else:
-                            self.rate_price = 36
+            # for gps in all_gps:
+            #     if self.number != gps.number:
+            if self.rate_client_1 == self.Rate.pause and self.rate_client_2 == self.Rate.pause:
+                if self.owner.provider == self.owner.Provider.dyachuk or \
+                        self.owner.provider == self.owner.Provider.card:
+                    self.rate_price = 30
+                else:
+                    self.rate_price = 36
+            else:
+                if self.sim_1 is None and self.sim_2 is None:
+                    self.rate_client_1 = self.Rate.own_sim
+                    self.rate_client_2 = None
+                elif self.sim_1 is not None and self.sim_2 is None:
+                    if self.sim_1.operator == self.sim_1.Operator.travelsim:
+                        self.rate_client_1 = self.Rate.ua
+                        self.rate_client_2 = self.Rate.world
                     else:
-                        if self.sim_1 is None and self.sim_2 is None:
-                            self.rate_client_1 = self.Rate.own_sim
-                            self.rate_client_2 = None
-                        elif self.sim_1 is not None and self.sim_2 is None:
-                            if self.sim_1.operator == self.sim_1.Operator.travelsim:
-                                self.rate_client_1 = self.Rate.ua
-                                self.rate_client_2 = self.Rate.world
-                            else:
-                                self.rate_client_1 = self.Rate.ua
-                                self.rate_client_2 = None
-                        elif self.sim_1 is not None and self.sim_2 is not None:
-                            if self.sim_1.operator != self.sim_1.Operator.travelsim and self.sim_2.operator == self.sim_2.Operator.travelsim :
-                                self.rate_client_1 = self.Rate.ua
-                                self.rate_client_2 = self.Rate.world
-                            else:
-                                self.rate_client_1 = self.Rate.world
-                                self.rate_client_2 = None
+                        self.rate_client_1 = self.Rate.ua
+                        self.rate_client_2 = None
+                elif self.sim_1 is not None and self.sim_2 is not None:
+                    if self.sim_1.operator != self.sim_1.Operator.travelsim and self.sim_2.operator == self.sim_2.Operator.travelsim:
+                        self.rate_client_1 = self.Rate.ua
+                        self.rate_client_2 = self.Rate.world
+                    else:
+                        self.rate_client_1 = self.Rate.world
+                        self.rate_client_2 = None
+                else:
+                    self.rate_client_1 = None
+                    self.rate_client_2 = self.Rate.world
+                if self.owner is None:
+                    self.rate_price = 0
+                else:
+                    if self.owner.provider == self.owner.Provider.dyachuk or \
+                            self.owner.provider == self.owner.Provider.card:
+                        if self.rate_client_1 == self.Rate.ua:
+                            price_1 = 120
+                        elif self.rate_client_1 == self.Rate.world:
+                            price_1 = 150
+                        elif self.rate_client_1 == self.Rate.own_sim:
+                            price_1 = 60
                         else:
-                            self.rate_client_1 = None
-                            self.rate_client_2 = self.Rate.world
-                        if self.owner is None:
-                            self.rate_price = 0
+                            price_1 = 0
+                        if self.rate_client_2 == self.Rate.world:
+                            price_2 = 150
                         else:
-                            if self.owner.provider == self.owner.Provider.dyachuk or \
-                                    self.owner.provider == self.owner.Provider.card:
-                                if self.rate_client_1 == self.Rate.ua:
-                                    price_1 = 120
-                                elif self.rate_client_1 == self.Rate.world:
-                                    price_1 = 150
-                                elif self.rate_client_1 == self.Rate.own_sim:
-                                    price_1 = 60
-                                else:
-                                    price_1 = 0
-                                if self.rate_client_2 == self.Rate.world:
-                                    price_2 = 150
-                                else:
-                                    price_2 = 0
-                                self.rate_price = sum(price_1, price_2)
-                            else:
-                                if self.rate_client_1 == self.Rate.ua:
-                                    price_1 = 144
-                                elif self.rate_client_1 == self.Rate.world:
-                                    price_1 = 180
-                                elif self.rate_client_1 == self.Rate.own_sim:
-                                    price_1 = 72
-                                else:
-                                    price_1 = 0
-                                if self.rate_client_2 == self.Rate.world:
-                                    price_2 = 180
-                                else:
-                                    price_2 = 0
-                                self.rate_price = price_1 + price_2
+                            price_2 = 0
+                        self.rate_price = sum(price_1, price_2)
+                    else:
+                        if self.rate_client_1 == self.Rate.ua:
+                            price_1 = 144
+                        elif self.rate_client_1 == self.Rate.world:
+                            price_1 = 180
+                        elif self.rate_client_1 == self.Rate.own_sim:
+                            price_1 = 72
+                        else:
+                            price_1 = 0
+                        if self.rate_client_2 == self.Rate.world:
+                            price_2 = 180
+                        else:
+                            price_2 = 0
+                        self.rate_price = price_1 + price_2
         except ValidationError:
             raise ValidationError
         super(Gps, self).save(*args, **kwargs)
