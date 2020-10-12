@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import Sim, Gps, FuelSensor
 from clients.models import Client
 from django.utils.html import format_html
+from django.db.models import Q
 
 
 class GpsAdmin(admin.ModelAdmin):
@@ -84,18 +85,40 @@ class GpsAdmin(admin.ModelAdmin):
 class SimAdmin(admin.ModelAdmin):
 
     class LoginListFilter(admin.SimpleListFilter):
-        title = 'login'
-        parameter_name = 'clients/client/'
+        title = 'login власника'
+        parameter_name = 'client_login'
 
         def lookups(self, request, model_admin):
             list_tuple = []
-            for login in Client.objects.all():
-                list_tuple.append((login.id, login.login.title()))
+            for client in Client.objects.all():
+                list_tuple.append((client.id, client.login.title()))
+            list_tuple.append(('СКТ', 'СКТ'))
             return list_tuple
 
         def queryset(self, request, queryset):
-            if self.value():
-                return queryset.filter(gps_1__owner__id=self.value())
+            if self.value() == 'СКТ':
+                return queryset.filter(gps_1__owner=None)
+            elif self.value():
+                return queryset.filter(Q(gps_1__owner__id=self.value()) | Q(gps_2__owner__id=self.value()))
+            else:
+                return queryset
+
+    class ClientNameListFilter(admin.SimpleListFilter):
+        title = 'Назві власника'
+        parameter_name = 'clients_name'
+
+        def lookups(self, request, model_admin):
+            list_tuple = []
+            for client in Client.objects.all():
+                list_tuple.append((client.id, client.name.title()))
+            list_tuple.append(('СКТ', 'СКТ'))
+            return list_tuple
+
+        def queryset(self, request, queryset):
+            if self.value() == 'СКТ':
+                return queryset.filter(gps_1__owner=None)
+            elif self.value():
+                return queryset.filter(Q(gps_1__owner__id=self.value()) | Q(gps_2__owner__id=self.value()))
             else:
                 return queryset
 
@@ -106,6 +129,7 @@ class SimAdmin(admin.ModelAdmin):
         'installer',
         'date_given',
         LoginListFilter,
+        ClientNameListFilter,
     )
     search_fields = ['number', 'gps__number']
     list_display = (
@@ -120,19 +144,16 @@ class SimAdmin(admin.ModelAdmin):
         'link_to_owner_login',
     )
 
-
-
-
     def link_to_gps(self, obj):
-        if obj.gps_1 is None:
-            if obj.gps_2 is None:
-                return None
-            else:
-                return format_html("<a href='../../products/gps/%s/change/' >%s</a>" % (
-                            str(obj.gps_2.id), str(obj.gps_2.number)))
-        else:
-            return format_html("<a href='../../products/gps/%s/change/' >%s</a>" % (
-                            str(obj.gps_1.id), str(obj.gps_1.number)))
+        links_to_gps = ''
+        if obj.gps_2 is not None:
+            links_to_gps += format_html("<a href='../../products/gps/%s/change/' >%s</a>" % (
+                str(obj.gps_2.id), str(obj.gps_2.number)))
+        if obj.gps_1 is not None:
+            links_to_gps += format_html("<a href='../../products/gps/%s/change/' >%s</a>" % (
+                str(obj.gps_1.id), str(obj.gps_1.number)))
+        return links_to_gps
+
 
     link_to_gps.short_description = 'БР'
 
@@ -141,21 +162,17 @@ class SimAdmin(admin.ModelAdmin):
             if obj.gps_2 is None:
                 return 'CKT'
             else:
-                if obj.gps_2 is not None:
-                    if obj.gps_2.owner is None:
-                        return 'CKT'
-                    else:
-                        return format_html("<a href='../../clients/client/%s/change/' >%s</a>" % (
-                            str(obj.gps_2.owner.id), str(obj.gps_2.owner.name)))
-        else:
-            if obj.gps_1 is not None:
-                if obj.gps_1.owner is None:
+                if obj.gps_2.owner is None:
                     return 'CKT'
                 else:
                     return format_html("<a href='../../clients/client/%s/change/' >%s</a>" % (
-                        str(obj.gps_1.owner.id), str(obj.gps_1.owner.name)))
-            else:
+                        str(obj.gps_2.owner.id), str(obj.gps_2.owner.name)))
+        else:
+            if obj.gps_1.owner is None:
                 return 'CKT'
+            else:
+                return format_html("<a href='../../clients/client/%s/change/' >%s</a>" % (
+                    str(obj.gps_1.owner.id), str(obj.gps_1.owner.name)))
 
     link_to_owner_name.allow_tags = True
     link_to_owner_name.short_description = 'Власник'

@@ -150,6 +150,10 @@ class Gps(models.Model):
                                      )
 
     def clean(self):
+        # all_gps = Gps.objects.all()
+        # for gps in all_gps:
+        #     if self.number == gps.number:
+        #         raise ValidationError('БР з таким номером вже існує')
         if self.sim_2 is not None:
             if self.sim_1 is None:
                 if self.sim_2.operator != self.sim_2.Operator.travelsim:
@@ -161,7 +165,10 @@ class Gps(models.Model):
                     raise ValidationError('Сім_1 та Сім_2 не можуть бути одночасно оператора "тревел-сім"')
 
     def save(self, *args, **kwargs):
+        # all_gps = Gps.objects.all()
         try:
+            # for gps in all_gps:
+            #     if self.number != gps.number:
             if self.rate_client_1 == self.Rate.pause and self.rate_client_2 == self.Rate.pause:
                 if self.owner.provider == self.owner.Provider.dyachuk or \
                         self.owner.provider == self.owner.Provider.card:
@@ -180,7 +187,7 @@ class Gps(models.Model):
                         self.rate_client_1 = self.Rate.ua
                         self.rate_client_2 = None
                 elif self.sim_1 is not None and self.sim_2 is not None:
-                    if self.sim_1.operator != self.sim_1.Operator.travelsim and self.sim_2.operator == self.sim_2.Operator.travelsim :
+                    if self.sim_1.operator != self.sim_1.Operator.travelsim and self.sim_2.operator == self.sim_2.Operator.travelsim:
                         self.rate_client_1 = self.Rate.ua
                         self.rate_client_2 = self.Rate.world
                     else:
