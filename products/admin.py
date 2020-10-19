@@ -83,7 +83,6 @@ class GpsAdmin(admin.ModelAdmin):
 
 
 class SimAdmin(admin.ModelAdmin):
-
     class LoginListFilter(admin.SimpleListFilter):
         title = 'login власника'
         parameter_name = 'client_login'
@@ -139,23 +138,21 @@ class SimAdmin(admin.ModelAdmin):
         'date_receive',
         'installer',
         'date_given',
-        'link_to_gps',
+        'link_to_gps_1',
+        'link_to_gps_2',
         'link_to_owner_name',
         'link_to_owner_login',
     )
 
-    def link_to_gps(self, obj):
-        links_to_gps = ''
-        if obj.gps_2 is not None:
-            links_to_gps += format_html("<a href='../../products/gps/%s/change/' >%s</a>" % (
-                str(obj.gps_2.id), str(obj.gps_2.number)))
-        if obj.gps_1 is not None:
-            links_to_gps += format_html("<a href='../../products/gps/%s/change/' >%s</a>" % (
-                str(obj.gps_1.id), str(obj.gps_1.number)))
-        return links_to_gps
+    def link_to_gps_1(self, obj):
+        return format_html("<a href='../../products/gps/%s/change/' >%s</a>" % (str(obj.gps_1.id), str(obj.gps_1.number)))
 
+    link_to_gps_1.short_description = 'БР'
 
-    link_to_gps.short_description = 'БР'
+    def link_to_gps_2(self, obj):
+        return format_html("<a href='../../products/gps/%s/change/' >%s</a>" % (str(obj.gps_2.id), str(obj.gps_2.number)))
+
+    link_to_gps_2.short_description = 'БР'
 
     def link_to_owner_name(self, obj):
         if obj.gps_1 is None:
