@@ -379,6 +379,12 @@ class Invoice(models.Model):
                             verbose_name='Дата створення',
                             help_text='Оберіть дату'
                             )
+    invoice_sum = models.PositiveIntegerField(null=True,
+                                              default=0,
+                                              verbose_name="сума рахунку грн",
+                                              help_text='Введіть суму рахунку',
+                                              blank=True
+                                              )
 
     def save(self, *args, **kwargs):
         self.client = self.subscription.client.name

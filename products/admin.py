@@ -127,6 +127,8 @@ class SimAdmin(admin.ModelAdmin):
         'account_number',
         'installer',
         'date_given',
+        'gps_1',
+        'gps_2',
         LoginListFilter,
         ClientNameListFilter,
     )

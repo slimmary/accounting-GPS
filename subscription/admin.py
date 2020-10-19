@@ -47,6 +47,7 @@ class InvoiceAdmin(admin.ModelAdmin):
                     'date',
                     'subscription',
                     'client',
+                    'invoice_sum',
                     )
     list_filter = ('date',
                    'subscription',
@@ -60,6 +61,7 @@ class InvoiceAdmin(admin.ModelAdmin):
 
     get_client_name.admin_order_field = 'client'
     get_client_name.short_description = 'Клієнт'
+
 
 
 class LettersAdmin(admin.ModelAdmin):
@@ -159,6 +161,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
         'get_provider',
         'price_quarter',
         'sum_payment',
+        'get_invoice',
         'sum_to_pay',
         'status',
         'activation',
@@ -187,6 +190,16 @@ class SubscriptionAdmin(admin.ModelAdmin):
         'rate_own_sim_3m',
 
     )
+
+    def get_invoice(self, obj):
+        invoices = ''
+        queryset = obj.invoice.all()
+        for invoice in queryset:
+            invoices += '№{} від {} на сумму {}грн ----|'.format(invoice.number, invoice.date, invoice.invoice_sum)
+        return invoices
+
+    get_invoice.short_description = 'Рах.фактура'
+    get_invoice.allow_tags = True
 
     def get_date_init(self, obj):
         return obj.date_init
