@@ -30,7 +30,7 @@ class Contract(models.Model):
         ('5', 'В наявності')
     )
     status = models.CharField(max_length=1, choices=STATUS_CHOICE, verbose_name='Статус',
-                              help_text='Оберіть статус договору')
+                              help_text='Оберіть статус договору', default='1')
     status_date = models.DateField(null=True, verbose_name='Дата зміни статусу',
                                    help_text='Оберіть дату')
     contract_image = models.ImageField(upload_to='images/contracts', verbose_name='Скан-копія', blank=True)
@@ -49,10 +49,24 @@ class Contract(models.Model):
 
 
 class ContractSupplementary(models.Model):
-    contract_to = models.ForeignKey(Contract, on_delete=models.CASCADE, verbose_name='Додаткові угоди',
+    contract_to = models.ForeignKey(Contract,
+                                    on_delete=models.CASCADE,
+                                    verbose_name='Основний договір до якого створюється ДУ',
                                     related_name='supplementary')
     number = models.IntegerField(verbose_name='Номер ДУ', help_text='Введіть номер')
     date = models.DateField(verbose_name='Дата заключеня ДУ', help_text='Оберіть дату')
+    STATUS_CHOICE = (
+        ('1', 'Створений'),
+        ('2', 'Відправлений укрпоштою'),
+        ('3', 'Відправлений НП'),
+        ('4', 'Відправлений на електронну пошту'),
+        ('5', 'В наявності')
+    )
+    status = models.CharField(max_length=1, choices=STATUS_CHOICE, verbose_name='Статус',
+                              help_text='Оберіть статус договору', default='1')
+    status_date = models.DateField(null=True, verbose_name='Дата зміни статусу',
+                                   help_text='Оберіть дату')
+    contract_supp_image = models.ImageField(upload_to='images/contracts', verbose_name='Скан-копія', blank=True)
 
     def __str__(self):
         return '№{} від {}'.format(self.number, self.date)
