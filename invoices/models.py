@@ -55,7 +55,7 @@ class Invoice(models.Model):
         super(Invoice, self).save(*args, **kwargs)
 
     class Meta:
-        abstract = True
+        verbose_name_plural = "рахунки за сервісні роботи "
 
 
 class SubInvoice(Invoice):
@@ -93,9 +93,11 @@ class SubInvoice(Invoice):
 
 class ProjectInvoice(Invoice):
     project = models.OneToOneField(Project,
+                                   null=True,
                                    on_delete=models.CASCADE,
                                    verbose_name='Проект',
-                                   related_name='project_invoice'
+                                   related_name='project_invoice',
+                                   blank=True
                                    )
 
     client = models.CharField(null=True,
