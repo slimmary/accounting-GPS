@@ -127,6 +127,11 @@ class ProjectInvoiceTaxfree(Invoice):
                                 related_name='project_invoice_taxfree'
                                 )
 
+    def save(self, *args, **kwargs):
+
+        super(ProjectInvoiceTaxfree, self).save(*args, **kwargs)
+        Project.save(self.project, *args, **kwargs)
+
     def __str__(self):
         return 'KO №{} від {} '.format(self.number, self.date)
 

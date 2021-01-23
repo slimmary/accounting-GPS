@@ -1,5 +1,6 @@
 from django.contrib import admin
 from projects.models import Project
+from django.utils.html import format_html
 
 
 class ProjectAdmin(admin.ModelAdmin):
@@ -14,7 +15,7 @@ class ProjectAdmin(admin.ModelAdmin):
         'add_costs',
         'sum',
         'get_invoice',
-        'get_contract_or_additions',
+        'get_link_contract_or_additions',
         'payment_status',
         'date_payment',
         'sum_payment',
@@ -24,14 +25,18 @@ class ProjectAdmin(admin.ModelAdmin):
         'notes'
     )
 
-    def get_contract_or_additions(self, obj):
+    def get_link_contract_or_additions(self, obj):
         if obj.contract is None:
-            return obj.additions
+            return format_html(
+                "<a href='../../contracts/additions/%s/change/' >%s</a>" % (
+                    str(obj.additions.id), str(obj.additions)))
         else:
-            return obj.contract
-
-    get_contract_or_additions.admin_order_field = 'contract_or_addition'
-    get_contract_or_additions.short_description = 'Договір/ДУ'
+            return format_html(
+                "<a href='../../contracts/contract/%s/change/' >%s</a>" % (
+                    str(obj.contract.id), str(obj.contract)))
+    get_link_contract_or_additions.allow_tags = True
+    get_link_contract_or_additions.admin_order_field = 'contract_or_addition'
+    get_link_contract_or_additions.short_description = 'Договір/ДУ'
 
     def get_invoice(self, obj):
         if obj.pay_form == obj.PayForm.taxfree:

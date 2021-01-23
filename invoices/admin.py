@@ -2,6 +2,7 @@ from django.contrib import admin
 from invoices.models import SubInvoice, ProjectInvoice, ProjectInvoiceTaxfree
 from clients.models import Client
 from django.db.models import Q
+from django.utils.html import format_html
 
 
 class SubInvoiceAdmin(admin.ModelAdmin):
@@ -167,16 +168,28 @@ class ProjectInvoiceTaxfreeAdmin(admin.ModelAdmin):
     list_per_page = 20
     list_display = ('number',
                     'date',
-                    'project',
-                    'get_client_name',
+                    'get_link_project',
+                    'get_link_client_name',
                     'invoice_sum',
                     )
 
-    def get_client_name(self, obj):
-        return obj.project.client.name
+    def get_link_project(self, obj):
+        return format_html(
+            "<a href='../../projects/project/%s/change/' >%s</a>" % (
+                str(obj.project.id), str(obj.project)))
 
-    get_client_name.admin_order_field = 'client'
-    get_client_name.short_description = 'Клієнт'
+    get_link_project.allow_tags = True
+    get_link_project.admin_order_field = 'project'
+    get_link_project.short_description = 'проект'
+
+    def get_link_client_name(self, obj):
+        return format_html(
+            "<a href='../../clients/client/%s/change/' >%s</a>" % (
+                str(obj.project.client.id), str(obj.project.client.name)))
+
+    get_link_client_name.allow_tags = True
+    get_link_client_name.admin_order_field = 'client'
+    get_link_client_name.short_description = 'Клієнт'
 
     list_filter = ('date',
                    'project',
