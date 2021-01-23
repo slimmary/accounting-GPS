@@ -159,7 +159,6 @@ class Client(models.Model):
                                                blank=True
                                                )
 
-
     def clean(self):
         if self.type_notification_1 != self.Notification.medoc:
             if self.notification_contact_1 is None:

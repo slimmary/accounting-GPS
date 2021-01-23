@@ -5,6 +5,49 @@ from clients.models import Client
 from django.core.exceptions import ValidationError
 
 
+class EquipmentAndService(models.Model):
+    name = models.CharField(max_length=100,
+                            verbose_name='Назва',
+                            help_text='Введіть назву товару або послуги',
+                            )
+    price_client_taxfree = models.PositiveIntegerField(null=True,
+                                                       default=0,
+                                                       verbose_name="Вартість для клієнта БЕЗ ПДВ",
+                                                       help_text='Введіть вартість',
+                                                       blank=True
+                                                       )
+    price_client_tax = models.PositiveIntegerField(null=True,
+                                                   default=0,
+                                                   verbose_name="Вартість для клієнта з ПДВ",
+                                                   help_text='Введіть вартість',
+                                                   blank=True
+                                                   )
+    price_taxfree = models.PositiveIntegerField(null=True,
+                                                default=0,
+                                                verbose_name="Собівартість БЕЗ ПДВ",
+                                                help_text='Введіть вартість',
+                                                blank=True
+                                                )
+    price_tax = models.PositiveIntegerField(null=True,
+                                            default=0,
+                                            verbose_name="Собівартість з ПДВ",
+                                            help_text='Введіть вартість',
+                                            blank=True
+                                            )
+    salary_installer = models.PositiveIntegerField(null=True,
+                                                   default=0,
+                                                   verbose_name="Вартість роботи монтажника",
+                                                   help_text='Введіть вартість',
+                                                   blank=True
+                                                   )
+
+    class Meta:
+        verbose_name_plural = "Комплектуючі та послуги"
+
+    def __str__(self):
+        return '{}'.format(self.name)
+
+
 class Sim(models.Model):
     class Operator:
         kiyvstar = 'Київстар'

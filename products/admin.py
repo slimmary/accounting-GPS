@@ -1,8 +1,20 @@
 from django.contrib import admin
-from .models import Sim, Gps, FuelSensor
+from .models import Sim, Gps, FuelSensor, EquipmentAndService
 from clients.models import Client
 from django.utils.html import format_html
 from django.db.models import Q
+
+
+class EquipmentAndServiceAdmin(admin.ModelAdmin):
+    list_per_page = 20
+    list_display = (
+        'name',
+        'price_client_taxfree',
+        'price_client_tax',
+        'price_taxfree',
+        'price_tax',
+        'salary_installer'
+    )
 
 
 class GpsAdmin(admin.ModelAdmin):
@@ -83,7 +95,6 @@ class GpsAdmin(admin.ModelAdmin):
 
 
 class SimAdmin(admin.ModelAdmin):
-
     class LoginListFilter(admin.SimpleListFilter):
         title = 'login власника'
         parameter_name = 'client_login'
@@ -128,6 +139,8 @@ class SimAdmin(admin.ModelAdmin):
         'account_number',
         'installer',
         'date_given',
+        'gps_1',
+        'gps_2',
         LoginListFilter,
         ClientNameListFilter,
     )
@@ -139,23 +152,21 @@ class SimAdmin(admin.ModelAdmin):
         'date_receive',
         'installer',
         'date_given',
-        'link_to_gps',
+        'link_to_gps_1',
+        'link_to_gps_2',
         'link_to_owner_name',
         'link_to_owner_login',
     )
 
-    def link_to_gps(self, obj):
-        links_to_gps = ''
-        if obj.gps_2 is not None:
-            links_to_gps += format_html("<a href='../../products/gps/%s/change/' >%s</a>" % (
-                str(obj.gps_2.id), str(obj.gps_2.number)))
-        if obj.gps_1 is not None:
-            links_to_gps += format_html("<a href='../../products/gps/%s/change/' >%s</a>" % (
-                str(obj.gps_1.id), str(obj.gps_1.number)))
-        return links_to_gps
+    def link_to_gps_1(self, obj):
+        return format_html("<a href='../../products/gps/%s/change/' >%s</a>" % (str(obj.gps_1.id), str(obj.gps_1.number)))
 
+    link_to_gps_1.short_description = 'БР'
 
-    link_to_gps.short_description = 'БР'
+    def link_to_gps_2(self, obj):
+        return format_html("<a href='../../products/gps/%s/change/' >%s</a>" % (str(obj.gps_2.id), str(obj.gps_2.number)))
+
+    link_to_gps_2.short_description = 'БР'
 
     def link_to_owner_name(self, obj):
         if obj.gps_1 is None:
@@ -270,3 +281,4 @@ class FuelSensorAdmin(admin.ModelAdmin):
 admin.site.register(FuelSensor, FuelSensorAdmin)
 admin.site.register(Sim, SimAdmin)
 admin.site.register(Gps, GpsAdmin)
+admin.site.register(EquipmentAndService,EquipmentAndServiceAdmin)
