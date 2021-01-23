@@ -1,45 +1,67 @@
 from django.db import models
 from clients.models import Client
-# Create your models here.
 
 
 class Contract(models.Model):
-    FORM_CHOICE = (
-        ('1', 'Абонплата'),
-        ('2', 'Поставки'),
-        ('3', 'Обслуговування'),
+    class TypeChoice:
+        project = 'поставки'
+        service = 'сервісного обслуговування'
+        subscription = 'абонентського обслуговування'
+
+    TYPE_CHOICE = (
+        (TypeChoice.project, 'поставки'),
+        (TypeChoice.service, 'сервісного обслуговування'),
+        (TypeChoice.subscription, 'абонентського обслуговування'),
     )
-    form = models.CharField(max_length=1, choices=FORM_CHOICE,verbose_name='Тип договору',
-                            help_text='Оберіть тип договору')
+
+    type = models.CharField(max_length=100, choices=TYPE_CHOICE, verbose_name='Тип договору',
+                            help_text='Оберіть тип', blank=True)
+
+    class ProviderChoice:
+        ckt = 'ТОВ "Системи Контролю Транспорту"'
+        shevchuk = 'ФОП Шевчук С.І.'
+        dyachuk = 'ФОП Дячук Л.В.'
+        demidenko = 'ФОП Демченко К.Б.'
+
     PROVIDER_CHOICE = (
-        ('1', 'ТОВ "Системи Контролю Транспорту"'),
-        ('2', 'ФОП Шевчук С.І.'),
-        ('3', 'ФОП Дячук Л.В.'),
+        (ProviderChoice.ckt, 'ТОВ "Системи Контролю Транспорту"'),
+        (ProviderChoice.shevchuk, 'ФОП Шевчук С.І.'),
+        (ProviderChoice.dyachuk, 'ФОП Дячук Л.В.'),
+        (ProviderChoice.demidenko, 'ФОП Демченко К.Б.'),
     )
-    provider = models.CharField(max_length=1, choices=PROVIDER_CHOICE,verbose_name='Постачальник',
-                                help_text='Оберіть постачальника')
+    provider = models.CharField(max_length=100, choices=PROVIDER_CHOICE, verbose_name='Постачальник',default=ProviderChoice.ckt,
+                                help_text='Оберіть постачальника', blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name='Покупець/Абонент',
                                related_name='contracts')
     number = models.IntegerField(verbose_name='Номер договору', help_text='Введіть номер договору')
     contract_date = models.DateField(verbose_name='Дата заключеня договору', help_text='Оберіть дату')
+
+    class StatusChoice:
+        created = 'Створений'
+        send_post = 'Відправлений укрпоштою'
+        send_NP = 'Відправлений НП'
+        send_email = 'Відправлений на електронну пошту'
+        in_stock = 'В наявності'
+
     STATUS_CHOICE = (
-        ('1', 'Створений'),
-        ('2', 'Відправлений укрпоштою'),
-        ('3', 'Відправлений НП'),
-        ('4', 'Відправлений на електронну пошту'),
-        ('5', 'В наявності')
+        (StatusChoice.created, 'Створений'),
+        (StatusChoice.send_post, 'Відправлений укрпоштою'),
+        (StatusChoice.send_NP, 'Відправлений НП'),
+        (StatusChoice.send_email, 'Відправлений на електронну пошту'),
+        (StatusChoice.in_stock, 'В наявності')
     )
-    status = models.CharField(max_length=1, choices=STATUS_CHOICE, verbose_name='Статус',
-                              help_text='Оберіть статус договору', default='1')
+    status = models.CharField(max_length=100, choices=STATUS_CHOICE, verbose_name='Статус',
+                              help_text='Оберіть статус договору', default=StatusChoice.created)
     status_date = models.DateField(null=True, verbose_name='Дата зміни статусу',
                                    help_text='Оберіть дату')
     contract_image = models.ImageField(upload_to='images/contracts', verbose_name='Скан-копія', blank=True)
 
     def __str__(self):
-        return 'Договір {} №{} від {} між {} та {}'.format(
-            self.get_form_display(),
-            self.number, self.contract_date,
-            self.get_provider_display(),
+        return 'Договір {} №{} від {} між {} та {} {}'.format(
+            self.type,
+            self.number,
+            self.contract_date,
+            self.provider,
             self.client,
             self.get_status_display()
         )
@@ -48,22 +70,33 @@ class Contract(models.Model):
         verbose_name_plural = "Договори"
 
 
-class ContractSupplementary(models.Model):
+class Additions(models.Model):
     contract_to = models.ForeignKey(Contract,
+                                    null=True,
                                     on_delete=models.CASCADE,
-                                    verbose_name='Основний договір до якого створюється ДУ',
-                                    related_name='supplementary')
-    number = models.IntegerField(verbose_name='Номер ДУ', help_text='Введіть номер')
-    date = models.DateField(verbose_name='Дата заключеня ДУ', help_text='Оберіть дату')
+                                    verbose_name='Основний договір до якого створено ДУ',
+                                    related_name='additions',
+                                    blank=True)
+
+    number = models.IntegerField(verbose_name='Номер ДУ',)
+    date = models.DateField(verbose_name='Дата заключеня ДУ',)
+
+    class StatusChoice:
+        created = 'Створений'
+        send_post = 'Відправлений укрпоштою'
+        send_NP = 'Відправлений НП'
+        send_email = 'Відправлений на електронну пошту'
+        in_stock = 'В наявності'
+
     STATUS_CHOICE = (
-        ('1', 'Створений'),
-        ('2', 'Відправлений укрпоштою'),
-        ('3', 'Відправлений НП'),
-        ('4', 'Відправлений на електронну пошту'),
-        ('5', 'В наявності')
+        (StatusChoice.created, 'Створений'),
+        (StatusChoice.send_post, 'Відправлений укрпоштою'),
+        (StatusChoice.send_NP, 'Відправлений НП'),
+        (StatusChoice.send_email, 'Відправлений на електронну пошту'),
+        (StatusChoice.in_stock, 'В наявності')
     )
-    status = models.CharField(max_length=1, choices=STATUS_CHOICE, verbose_name='Статус',
-                              help_text='Оберіть статус договору', default='1')
+    status = models.CharField(max_length=100, choices=STATUS_CHOICE, verbose_name='Статус',
+                              help_text='Оберіть статус договору', default=StatusChoice.created)
     status_date = models.DateField(null=True, verbose_name='Дата зміни статусу',
                                    help_text='Оберіть дату')
     contract_supp_image = models.ImageField(upload_to='images/contracts', verbose_name='Скан-копія', blank=True)

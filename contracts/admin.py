@@ -1,27 +1,29 @@
 from django.contrib import admin
-from .models import Contract, ContractSupplementary
+from .models import Contract, Additions
 
 
-class ContractSupplementaryInline(admin.StackedInline):
-    model = ContractSupplementary
+class AdditionsInline(admin.StackedInline):
+    model = Additions
     fields = ('number', 'date', 'status')
-    readonly_fields = ('number', 'date', 'status')
 
 
-class ContractSupplementaryAdmin(admin.ModelAdmin):
+class AdditionsAdmin(admin.ModelAdmin):
     list_display = (
         'contract_to',
         'number',
         'date',
         'get_client_name',
-        'get_provider',
+        'get_project',
+
     )
 
-    def get_provider(self, obj):
-        return obj.contract_to.provider
+    def get_project(self, obj):
+        if obj.contract_to.type == obj.contract_to.TypeChoice.project:
+            return obj.project_to_additions
+        else:
+            return None
 
-    get_provider.admin_order_field = 'client_name'
-    get_provider.short_description = 'Постачальник'
+    get_project.short_description = 'проект'
 
     def get_client_name(self, obj):
         return obj.contract_to.client.name
@@ -31,26 +33,35 @@ class ContractSupplementaryAdmin(admin.ModelAdmin):
 
 
 class ContractAdmin(admin.ModelAdmin):
-    inlines = [ContractSupplementaryInline]
+    inlines = [AdditionsInline]
     list_display = (
         'get_client_name',
         'get_client_login',
-        'form',
+        'type',
         'provider',
         'number',
         'contract_date',
         'status',
         'status_date',
         'contract_image',
-        'get_supplementary',
+        'get_additions',
+        'get_project',
     )
 
-    def get_supplementary(self, obj):
-        queryset = obj.supplementary.all()
+    def get_project(self, obj):
+        if obj.type == obj.TypeChoice.project:
+            return obj.project_to_contract
+        else:
+            return None
+
+    get_project.short_description = 'проект'
+
+    def get_additions(self, obj):
+        queryset = obj.additions.all()
         sup = [i for i in queryset]
         return sup
 
-    get_supplementary.short_description = 'ДУ'
+    get_additions.short_description = 'ДУ'
 
     def get_client_name(self, obj):
         return obj.client.name
@@ -64,9 +75,9 @@ class ContractAdmin(admin.ModelAdmin):
     get_client_login.admin_order_field = 'client_login'  # Allows column order sorting
     get_client_login.short_description = 'Login'  # Renames column head
 
-    list_filter = ('form', 'provider', 'client', 'status',)
-    search_fields = ['client', 'number', 'provider', ]
+    list_filter = ('client', 'status', 'provider')
+    search_fields = ['client', 'number', ]
 
 
-admin.site.register(ContractSupplementary, ContractSupplementaryAdmin)
 admin.site.register(Contract, ContractAdmin)
+admin.site.register(Additions, AdditionsAdmin)
