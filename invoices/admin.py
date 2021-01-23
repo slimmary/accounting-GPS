@@ -112,8 +112,7 @@ class ProjectInvoiceAdmin(admin.ModelAdmin):
                 return queryset
 
     list_per_page = 20
-    list_display = ('provider',
-                    'number',
+    list_display = ('number',
                     'date',
                     'project',
                     'client',

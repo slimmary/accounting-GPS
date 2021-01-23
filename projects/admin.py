@@ -14,7 +14,7 @@ class ProjectAdmin(admin.ModelAdmin):
         'amount_fuel_sensor',
         'add_costs',
         'sum',
-        'get_invoice',
+        'get_link_invoice',
         'get_link_contract_or_additions',
         'payment_status',
         'date_payment',
@@ -38,14 +38,18 @@ class ProjectAdmin(admin.ModelAdmin):
     get_link_contract_or_additions.admin_order_field = 'contract_or_addition'
     get_link_contract_or_additions.short_description = 'Договір/ДУ'
 
-    def get_invoice(self, obj):
+    def get_link_invoice(self, obj):
         if obj.pay_form == obj.PayForm.taxfree:
-            return obj.project_invoice_taxfree
+            return format_html(
+                "<a href='../../invoices/projectinvoicetaxfree/%s/change/' >%s</a>" % (
+                    str(obj.project_invoice_taxfree.id), str(obj.project_invoice_taxfree)))
         else:
-            return obj.project_invoice
+            return format_html(
+                "<a href='../../invoices/projectinvoice/%s/change/' >%s</a>" % (
+                    str(obj.project_invoice.id), str(obj.project_invoice)))
 
-    get_invoice.admin_order_field = 'invoice'
-    get_invoice.short_description = 'Рахунок Фактура/Kасовий Oрдер'
+    get_link_invoice.admin_order_field = 'invoice'
+    get_link_invoice.short_description = 'Рахунок Фактура/Kасовий Oрдер'
 
 
 admin.site.register(Project, ProjectAdmin)

@@ -54,6 +54,9 @@ class Invoice(models.Model):
             self.sum_payment = self.invoice_sum
         super(Invoice, self).save(*args, **kwargs)
 
+    class Meta:
+        abstract = True
+
 
 class SubInvoice(Invoice):
     subscription = models.ForeignKey(Subscription,
@@ -84,22 +87,17 @@ class SubInvoice(Invoice):
         return 'РФ №{} від {} '.format(self.number, self.date)
 
     class Meta:
+        db_table = 'subinvoice'
         verbose_name_plural = "АП рахунки фактури "
 
 
 class ProjectInvoice(Invoice):
-    project = models.ForeignKey(Project,
-                                on_delete=models.CASCADE,
-                                verbose_name='Проект',
-                                related_name='project_invoice'
-                                )
+    project = models.OneToOneField(Project,
+                                   on_delete=models.CASCADE,
+                                   verbose_name='Проект',
+                                   related_name='project_invoice'
+                                   )
 
-    provider = models.CharField(null=True,
-                                max_length=100,
-                                verbose_name='Постачальник',
-                                help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                blank=True
-                                )
     client = models.CharField(null=True,
                               max_length=100,
                               verbose_name='Клієнт',
@@ -108,7 +106,6 @@ class ProjectInvoice(Invoice):
                               )
 
     def save(self, *args, **kwargs):
-        self.provider = self.project.client.provider
         self.client = self.project.client.name
 
         super(ProjectInvoice, self).save(*args, **kwargs)
@@ -117,18 +114,18 @@ class ProjectInvoice(Invoice):
         return 'РФ №{} від {} '.format(self.number, self.date)
 
     class Meta:
+        db_table = 'projectinvoice'
         verbose_name_plural = "Проекти рахунки фактури "
 
 
 class ProjectInvoiceTaxfree(Invoice):
-    project = models.ForeignKey(Project,
-                                on_delete=models.CASCADE,
-                                verbose_name='Проект',
-                                related_name='project_invoice_taxfree'
-                                )
+    project = models.OneToOneField(Project,
+                                   on_delete=models.CASCADE,
+                                   verbose_name='Проект',
+                                   related_name='project_invoice_taxfree'
+                                   )
 
     def save(self, *args, **kwargs):
-
         super(ProjectInvoiceTaxfree, self).save(*args, **kwargs)
         Project.save(self.project, *args, **kwargs)
 
@@ -136,4 +133,5 @@ class ProjectInvoiceTaxfree(Invoice):
         return 'KO №{} від {} '.format(self.number, self.date)
 
     class Meta:
+        db_table = 'projectinvoicetaxfree'
         verbose_name_plural = "Касові Ордера (КО)"

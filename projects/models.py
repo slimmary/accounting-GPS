@@ -152,16 +152,15 @@ class Project(models.Model):
 
         if self.pay_form == self.PayForm.invoice:
             self.sum = self.amount_gps * 4200 + self.amount_fuel_sensor * 3240 + self.add_costs
-            if self.project_invoice == None:
-                pass
-            else:
+            if self.project_invoice is not None:
                 self.payment_status = self.project_invoice.status_payment
                 self.sum_payment = self.project_invoice.sum_payment
                 self.date_payment = self.project_invoice.date_payment
-
         else:
             self.sum = self.amount_gps * 3500 + self.amount_fuel_sensor * 2700 + self.add_costs
             if self.project_invoice_taxfree is None:
+                pass
+            else:
                 self.payment_status = self.project_invoice_taxfree.status_payment
                 self.sum_payment = self.project_invoice_taxfree.sum_payment
                 self.date_payment = self.project_invoice_taxfree.date_payment
