@@ -31,7 +31,7 @@ class ContactProfile(models.Model):
     firstname = models.CharField(max_length=50, verbose_name='Прізвище')
     surname = models.CharField(max_length=50, verbose_name="І'мя")
     patronymic = models.CharField(max_length=50, verbose_name='По батькові')
-    position = models.CharField(max_length=50, verbose_name='Посада')
+    position = models.CharField(max_length=50, verbose_name='Посада', default='менеджер')
     phone = PhoneField(null=True, verbose_name='№ телефону')
     phone_2 = PhoneField(null=True, blank=True, verbose_name='додатковий № телефону')
     email = models.EmailField(null=True, max_length=254, verbose_name='електронна адреса')
