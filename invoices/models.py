@@ -54,6 +54,12 @@ class Invoices(models.Model):
 
 
 class Invoice(Invoices):
+    # work_order = models.OneToOneField(WorkOrder,
+    #                                   null=True,
+    #                                   on_delete=models.CASCADE,
+    #                                   verbose_name='ЗН',
+    #                                   related_name='invoice_workorder',
+    #                                   blank=True)
 
     def save(self, *args, **kwargs):
         if self.status_payment == self.Status_payment.paid:
@@ -133,22 +139,4 @@ class ProjectInvoice(Invoices):
         db_table = 'projectinvoice'
         verbose_name_plural = "Проекти рахунки фактури та касові ордери "
 
-#
-# class ProjectInvoiceTaxfree(Invoices):
-#     project = models.OneToOneField(Project,
-#                                    null=True,
-#                                    on_delete=models.CASCADE,
-#                                    verbose_name='Проект',
-#                                    related_name='project_invoice_taxfree'
-#                                    )
-#
-#     def save(self, *args, **kwargs):
-#         super(ProjectInvoiceTaxfree, self).save(*args, **kwargs)
-#         Project.save(self.project, *args, **kwargs)
-#
-#     def __str__(self):
-#         return 'KO №{} від {} '.format(self.number, self.date)
-#
-#     class Meta:
-#         db_table = 'projectinvoicetaxfree'
-#         verbose_name_plural = "Касові Ордера (КО)"
+

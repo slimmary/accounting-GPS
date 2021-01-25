@@ -44,12 +44,9 @@ class WorkOrderAdmin(admin.ModelAdmin):
         'price_of_used_equipment',
         'pay_form',
         'milege',
-        'milege_price_executor',
         'milege_price_client',
-        'add_costs_executor',
         'add_costs_client',
         'description_add_costs',
-        'month_executor_pay',
         'sum_price_client'
     )
 

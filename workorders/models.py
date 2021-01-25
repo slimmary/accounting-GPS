@@ -182,9 +182,9 @@ class CompletedWorks(models.Model):
 
     PAYER_CHOICE = (
         (Payer.client, 'Клієнт'),
-        (Payer.ckt, 'ЛайСКТфсел'),
-        (Payer.executor, 'Тревел-монтажник'),
-        (Payer.manufacturer, 'виробник-сім'),
+        (Payer.ckt, 'СКТ'),
+        (Payer.executor, 'монтажник'),
+        (Payer.manufacturer, 'виробник'),
     )
     payer = models.CharField(max_length=100,
                              default=Payer.client,
@@ -226,3 +226,4 @@ class CompletedWorks(models.Model):
 
     class Meta:
         verbose_name_plural = "Список виконаних робіт"
+

@@ -68,23 +68,6 @@ class Project(models.Model):
                                    blank=True
                                    )
 
-    payment_status = models.CharField(null=True,
-                                      max_length=100,
-                                      verbose_name='Статус оплати',
-                                      help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                      blank=True
-                                      )
-    date_payment = models.CharField(null=True,
-                                    max_length=100,
-                                    verbose_name='Дата оплати',
-                                    help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                    blank=True
-                                    )
-    sum_payment = models.PositiveIntegerField(null=True,
-                                              verbose_name='Сума оплати',
-                                              help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                              blank=True
-                                              )
     contract = models.OneToOneField(Contract, null=True,
                                     on_delete=models.CASCADE,
                                     verbose_name='Договір до даного проекту',
@@ -100,7 +83,7 @@ class Project(models.Model):
                                              help_text='Введіть дату',
                                              blank=True
                                              )
-    date_raceipt_sale_invoice = models.DateField(null=True,
+    date_receipt_sale_invoice = models.DateField(null=True,
                                                  verbose_name='Дата отримання видаткової накладної',
                                                  help_text='Введіть дату',
                                                  blank=True
@@ -138,6 +121,7 @@ class Project(models.Model):
                     raise ValidationError("до проекту не можливо додати ДУ, яка не відноситься до договору поставки")
 
     def save(self, *args, **kwargs):
+
         if self.contract is not None:
             if self.contract.status == self.contract.StatusChoice.in_stock:
                 self.date_receipt_contract = self.contract.status_date
@@ -145,14 +129,11 @@ class Project(models.Model):
             if self.additions is not None:
                 if self.additions.status == self.additions.StatusChoice.in_stock:
                     self.date_receipt_contract = self.additions.status_date
-        if self.invoice is None:
-            self.sum = self.amount_gps * 3500 + self.amount_fuel_sensor * 2700 + self.add_costs
+
+        if self.invoice.pay_form == self.invoice.PayForm.tax:
+            self.sum = self.amount_gps * 4200 + self.amount_fuel_sensor * 3240 + self.add_costs
         else:
-            self.payment_status = self.invoice.status_payment
-            self.sum_payment = self.invoice.sum_payment
-            self.date_payment = self.invoice.date_payment
-            if self.invoice.pay_form == self.invoice.PayForm.tax:
-                self.sum = self.amount_gps * 4200 + self.amount_fuel_sensor * 3240 + self.add_costs
+            self.sum = self.amount_gps * 3500 + self.amount_fuel_sensor * 2700 + self.add_costs
 
         super(Project, self).save(*args, **kwargs)
 

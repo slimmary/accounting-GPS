@@ -61,9 +61,9 @@ class Contract(models.Model):
             self.type,
             self.number,
             self.contract_date,
-            self.get_status_display(),
             self.provider,
             self.client,
+            self.get_status_display(),
         )
 
     class Meta:
