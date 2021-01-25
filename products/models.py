@@ -5,7 +5,7 @@ from clients.models import Client
 from django.core.exceptions import ValidationError
 
 
-class Equipment(models.Model):
+class ServiceAndEquipment(models.Model):
     name = models.CharField(max_length=100,
                             verbose_name='Назва',
                             help_text='Введіть назву товару або послуги',
@@ -36,13 +36,19 @@ class Equipment(models.Model):
                                             )
 
     class Meta:
+        abstract = True
+
+
+class Equipment(ServiceAndEquipment):
+
+    class Meta:
         verbose_name_plural = "Комплектуючі"
 
     def __str__(self):
         return '{}'.format(self.name)
 
 
-class Service(Equipment):
+class Service(ServiceAndEquipment):
     salary_installer = models.PositiveIntegerField(null=True,
                                                    default=0,
                                                    verbose_name="Вартість роботи монтажника",

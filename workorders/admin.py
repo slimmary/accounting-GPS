@@ -54,8 +54,11 @@ class WorkOrderAdmin(admin.ModelAdmin):
 
     def get_list_of_work(self, obj):
         list_work = []
-        for i in obj.list_works.all():
-            list_work.append(i.type_service)
+        count_queryset = 0
+        for services in obj.list_works.all().filter(name=obj.list_works.type_service.name):
+            count_queryset = +1
+            count_work = '{} - {}'.format(obj.list_works.type_service.name, count_queryset)
+            list_work.append(count_work)
         return list_work
 
     get_list_of_work.short_description = 'список виконаних робіт'
