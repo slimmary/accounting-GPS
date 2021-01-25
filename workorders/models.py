@@ -58,12 +58,14 @@ class WorkOrder(models.Model):
 
     price_of_completed_works = models.PositiveIntegerField(null=True,
                                                            verbose_name='сума за виконані роботи',
-                                                           help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                                           help_text='Поле заповниться автоматично, вводити нічого не '
+                                                                     'потрібно',
                                                            blank=True
                                                            )
     price_of_used_equipment = models.PositiveIntegerField(null=True,
                                                           verbose_name='Сума за використане обладнання',
-                                                          help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                                          help_text='Поле заповниться автоматично, вводити нічого не '
+                                                                    'потрібно',
                                                           blank=True
                                                           )
 
@@ -104,14 +106,14 @@ class WorkOrder(models.Model):
                                                       )
 
     add_costs_executor = models.PositiveIntegerField(null=True,
-                                                     verbose_name='грн за ДВ монтажнику',
+                                                     verbose_name='грн за ДВ \nмонтажнику',
                                                      help_text='Сума коомпенсації за додаткові витрати '
                                                                'монтажнику\nПоле заповниться автоматично, '
                                                                'вводити нічого не потрібно',
                                                      blank=True
                                                      )
     add_costs_client = models.PositiveIntegerField(null=True,
-                                                   verbose_name='грн за км монтажнику',
+                                                   verbose_name='грн за ДВ \nклієнту',
                                                    help_text='Вартість додаткових витрат для клієнта\nПоле '
                                                              'заповниться автоматично, вводити нічого не потрібно',
                                                    blank=True
@@ -122,7 +124,7 @@ class WorkOrder(models.Model):
                                              help_text='',
                                              blank=True
                                              )
-    month_executor_pay = models.DateField(verbose_name='місяць/рік',
+    month_executor_pay = models.DateField(verbose_name='місяць/рік ЗП',
                                           help_text='місяць нарахування ЗП монтажнику',
                                           )
     sum_price_client = models.PositiveIntegerField(null=True,
@@ -131,19 +133,29 @@ class WorkOrder(models.Model):
                                                              'вводити нічого не потрібно',
                                                    blank=True
                                                    )
+
     # invoice =
     # date_payment:
     # def save(self,*args, **kwargs):
 
+    def __str__(self):
+        return 'ЗН №{}, від {}'.format(
+            self.number,
+            self.date,
+        )
 
-class CompletedProjectWorks(models.Model):
-    work_order_project = models.ForeignKey(WorkOrder,
-                                           null=True,
-                                           on_delete=models.CASCADE,
-                                           verbose_name='ЗН',
-                                           related_name='list_project_works',
-                                           blank=True
-                                           )
+    class Meta:
+        verbose_name_plural = "Зака-Наряди"
+
+
+class CompletedWorks(models.Model):
+    work_order = models.ForeignKey(WorkOrder,
+                                   null=True,
+                                   on_delete=models.CASCADE,
+                                   verbose_name='ЗН',
+                                   related_name='list_works',
+                                   blank=True
+                                   )
 
     car = models.ForeignKey(Vehicle,
                             null=True,
@@ -152,37 +164,12 @@ class CompletedProjectWorks(models.Model):
                             related_name='service_works',
                             blank=True
                             )
+
     type_service = models.ForeignKey(Service,
                                      on_delete=models.CASCADE,
                                      verbose_name='виконані роботи',
-                                     related_name='completed_project_works'
+                                     related_name='completed_works'
                                      )
-
-    gps = models.ForeignKey(Gps,
-                            null=True,
-                            on_delete=models.CASCADE,
-                            verbose_name='БР',
-                            related_name='gps_project_works',
-                            blank=True
-                            )
-
-    fuel_sensor = models.ForeignKey(FuelSensor,
-                                    null=True,
-                                    on_delete=models.CASCADE,
-                                    verbose_name='ДВРП',
-                                    related_name='fuel_sensor_project_works',
-                                    blank=True
-                                    )
-
-
-class CompletedServiceWorks(CompletedProjectWorks):
-    work_order_service = models.ForeignKey(WorkOrder,
-                                           null=True,
-                                           on_delete=models.CASCADE,
-                                           verbose_name='ЗН',
-                                           related_name='list_service_works',
-                                           blank=True
-                                           )
 
     used_equipment = models.ManyToManyField(Equipment,
                                             verbose_name='використане обладнання',
@@ -208,9 +195,31 @@ class CompletedServiceWorks(CompletedProjectWorks):
                              help_text='Оберіть платника'
                              )
 
-    class Meta:
-        verbose_name_plural = "Виконані сервісні роботи та використане обладнання"
+    gps = models.ForeignKey(Gps,
+                            null=True,
+                            on_delete=models.CASCADE,
+                            verbose_name='БР',
+                            related_name='gps_project_works',
+                            blank=True
+                            )
+
+    fuel_sensor = models.ForeignKey(FuelSensor,
+                                    null=True,
+                                    on_delete=models.CASCADE,
+                                    verbose_name='ДВРП',
+                                    related_name='fuel_sensor_project_works',
+                                    blank=True
+                                    )
 
     def __str__(self):
-        return '{}{}{}{}{}{}'.format(self.car, self.type_service, self.used_equipment, self.gps, self.fuel_sensor,
-                                     self.payer)
+        return '{} {} {} {} {} {}'.format(
+            self.car,
+            self.type_service,
+            self.gps,
+            self.fuel_sensor,
+            self.used_equipment,
+            self.payer
+        )
+
+    class Meta:
+        verbose_name_plural = "Список виконаних робіт"

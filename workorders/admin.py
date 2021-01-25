@@ -1,39 +1,22 @@
 from django.contrib import admin
-from .models import CompletedServiceWorks, CompletedProjectWorks, WorkOrder
+from .models import CompletedWorks, WorkOrder
 
 
-class CompletedProjectWorksInline(admin.StackedInline):
+class CompletedWorksInline(admin.StackedInline):
     list_per_page = 20
-    model = CompletedProjectWorks
-    verbose_name_plural = 'проектні виконані роботи'
+    model = CompletedWorks
+    verbose_name_plural = 'виконані роботи'
 
 
-class CompletedProjectWorksAdmin(admin.ModelAdmin):
+class CompletedWorksAdmin(admin.ModelAdmin):
     list_per_page = 20
     list_display = (
-        'work_order_project',
+        'work_order',
         'car',
         'type_service',
         'gps',
         'fuel_sensor',
-    )
-
-
-class CompletedServiceWorksInline(admin.StackedInline):
-    list_per_page = 20
-    model = CompletedProjectWorks
-    verbose_name_plural = 'сервісні виконані роботи'
-
-
-class CompletedServiceWorksAdmin(admin.ModelAdmin):
-    list_per_page = 20
-    list_display = (
-        'work_order_service',
-        'car',
-        'type_service',
         'get_used_equipment',
-        'gps',
-        'fuel_sensor',
         'payer',
     )
 
@@ -44,7 +27,7 @@ class CompletedServiceWorksAdmin(admin.ModelAdmin):
 
 
 class WorkOrderAdmin(admin.ModelAdmin):
-    inlines = [CompletedServiceWorksInline, CompletedProjectWorksInline]
+    inlines = [CompletedWorksInline]
     list_per_page = 20
     list_display = (
         'date',
@@ -70,14 +53,13 @@ class WorkOrderAdmin(admin.ModelAdmin):
     )
 
     def get_list_of_work(self, obj):
-        if obj.type_of_work == obj.TypeWork.project:
-            return obj.list_project_works.all()
-        else:
-            return obj.list_service_works.all()
+        list_work = []
+        for i in obj.list_works.all():
+            list_work.append(i.type_service)
+        return list_work
 
     get_list_of_work.short_description = 'список виконаних робіт'
 
 
-admin.site.register(CompletedProjectWorks, CompletedProjectWorksAdmin)
-admin.site.register(CompletedServiceWorks, CompletedServiceWorksAdmin)
+admin.site.register(CompletedWorks, CompletedWorksAdmin)
 admin.site.register(WorkOrder, WorkOrderAdmin)
