@@ -2,6 +2,7 @@ from django.db import models
 from datetime import date
 from clients.models import Client
 from contracts.models import Contract, Additions
+from invoices.models import ProjectInvoice
 from django.core.exceptions import ValidationError
 
 
@@ -59,21 +60,13 @@ class Project(models.Model):
                                       blank=True
                                       )
 
-    class PayForm:
-        taxfree = 'КО'
-        invoice = 'РФ'
-
-    PAY_CHOICE = (
-        (PayForm.taxfree, 'КО'),
-        (PayForm.invoice, 'РФ'),
-    )
-    pay_form = models.CharField(max_length=100,
-                                default=PayForm.taxfree,
-                                choices=PAY_CHOICE,
-                                verbose_name='Форма оплати',
-                                help_text='Оберіть форму оплати',
-                                blank=True
-                                )
+    invoice = models.OneToOneField(ProjectInvoice,
+                                   null=True,
+                                   on_delete=models.CASCADE,
+                                   verbose_name='РФ/КО',
+                                   related_name='project_invoice',
+                                   blank=True
+                                   )
 
     payment_status = models.CharField(null=True,
                                       max_length=100,
@@ -152,21 +145,14 @@ class Project(models.Model):
             if self.additions is not None:
                 if self.additions.status == self.additions.StatusChoice.in_stock:
                     self.date_receipt_contract = self.additions.status_date
-
-        if self.pay_form == self.PayForm.invoice:
-            self.sum = self.amount_gps * 4200 + self.amount_fuel_sensor * 3240 + self.add_costs
-            if self.project_invoice is not None:
-                self.payment_status = self.project_invoice.status_payment
-                self.sum_payment = self.project_invoice.sum_payment
-                self.date_payment = self.project_invoice.date_payment
-        else:
+        if self.invoice is None:
             self.sum = self.amount_gps * 3500 + self.amount_fuel_sensor * 2700 + self.add_costs
-            if self.project_invoice_taxfree is None:
-                pass
-            else:
-                self.payment_status = self.project_invoice_taxfree.status_payment
-                self.sum_payment = self.project_invoice_taxfree.sum_payment
-                self.date_payment = self.project_invoice_taxfree.date_payment
+        else:
+            self.payment_status = self.invoice.status_payment
+            self.sum_payment = self.invoice.sum_payment
+            self.date_payment = self.invoice.date_payment
+            if self.invoice.pay_form == self.invoice.PayForm.tax:
+                self.sum = self.amount_gps * 4200 + self.amount_fuel_sensor * 3240 + self.add_costs
 
         super(Project, self).save(*args, **kwargs)
 

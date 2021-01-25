@@ -1,15 +1,15 @@
 from django.db import models
 from datetime import date
 from subscription.models import Subscription
-from projects.models import Project
 
 
 class Invoices(models.Model):
-    number = models.PositiveIntegerField(null=True,
-                                         verbose_name='№',
-                                         help_text='Номер РФ',
-                                         blank=True
-                                         )
+    number = models.CharField(null=True,
+                              max_length=100,
+                              default='№ не призначений',
+                              verbose_name='№',
+                              help_text='Номер',
+                              )
     date = models.DateField(null=True,
                             verbose_name='Дата створення',
                             help_text='Оберіть дату'
@@ -98,48 +98,57 @@ class SubInvoice(Invoices):
 
 
 class ProjectInvoice(Invoices):
-    project = models.OneToOneField(Project,
-                                   null=True,
-                                   on_delete=models.CASCADE,
-                                   verbose_name='Проект',
-                                   related_name='project_invoice',
-                                   blank=True
-                                   )
+    class PayForm:
+        taxfree = 'КО'
+        tax = 'РФ'
 
-    client = models.CharField(null=True,
-                              max_length=100,
-                              verbose_name='Клієнт',
-                              help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                              blank=True
-                              )
+    PAY_CHOICE = (
+        (PayForm.taxfree, 'КО'),
+        (PayForm.tax, 'РФ'),
+    )
+    pay_form = models.CharField(max_length=100,
+                                default=PayForm.taxfree,
+                                choices=PAY_CHOICE,
+                                verbose_name='РФ/КО',
+                                help_text='Оберіть форму оплати',
+                                blank=True
+                                )
 
-    def save(self, *args, **kwargs):
-        self.client = self.project.client.name
-
-        super(ProjectInvoice, self).save(*args, **kwargs)
+    # client = models.CharField(null=True,
+    #                           max_length=100,
+    #                           verbose_name='Клієнт',
+    #                           help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+    #                           blank=True
+    #                           )
+    #
+    # def save(self, *args, **kwargs):
+    #     if self.project_invoice is not None:
+    #         self.client = self.project_invoice.client
+    #     super(ProjectInvoice, self).save(*args, **kwargs)
 
     def __str__(self):
-        return 'РФ №{} від {} '.format(self.number, self.date)
+        return '{} №{} від {} '.format(self.pay_form, self.number, self.date)
 
     class Meta:
         db_table = 'projectinvoice'
-        verbose_name_plural = "Проекти рахунки фактури "
+        verbose_name_plural = "Проекти рахунки фактури та касові ордери "
 
-
-class ProjectInvoiceTaxfree(Invoices):
-    project = models.OneToOneField(Project,
-                                   on_delete=models.CASCADE,
-                                   verbose_name='Проект',
-                                   related_name='project_invoice_taxfree'
-                                   )
-
-    def save(self, *args, **kwargs):
-        super(ProjectInvoiceTaxfree, self).save(*args, **kwargs)
-        Project.save(self.project, *args, **kwargs)
-
-    def __str__(self):
-        return 'KO №{} від {} '.format(self.number, self.date)
-
-    class Meta:
-        db_table = 'projectinvoicetaxfree'
-        verbose_name_plural = "Касові Ордера (КО)"
+#
+# class ProjectInvoiceTaxfree(Invoices):
+#     project = models.OneToOneField(Project,
+#                                    null=True,
+#                                    on_delete=models.CASCADE,
+#                                    verbose_name='Проект',
+#                                    related_name='project_invoice_taxfree'
+#                                    )
+#
+#     def save(self, *args, **kwargs):
+#         super(ProjectInvoiceTaxfree, self).save(*args, **kwargs)
+#         Project.save(self.project, *args, **kwargs)
+#
+#     def __str__(self):
+#         return 'KO №{} від {} '.format(self.number, self.date)
+#
+#     class Meta:
+#         db_table = 'projectinvoicetaxfree'
+#         verbose_name_plural = "Касові Ордера (КО)"

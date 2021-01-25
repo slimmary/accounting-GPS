@@ -36,7 +36,7 @@ class WorkOrder(models.Model):
     project = models.ForeignKey(Project,
                                 null=True,
                                 on_delete=models.CASCADE,
-                                verbose_name='№ проекту до якого відноситься ЗН',
+                                verbose_name='Проект',
                                 related_name='work_orders',
                                 blank=True
                                 )
@@ -68,8 +68,6 @@ class WorkOrder(models.Model):
                                                                     'потрібно',
                                                           blank=True
                                                           )
-
-    info = models.CharField(max_length=100, verbose_name='додаткова інформація з протоколу огляду')
 
     class PayForm:
         taxfree = 'БК'
@@ -210,6 +208,11 @@ class CompletedWorks(models.Model):
                                     related_name='fuel_sensor_project_works',
                                     blank=True
                                     )
+    info = models.CharField(max_length=100,
+                            null=True,
+                            verbose_name='додаткова інформація з протоколу огляду',
+                            blank=True
+                            )
 
     def __str__(self):
         return '{} {} {} {} {} {}'.format(

@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import CompletedWorks, WorkOrder
+from django.utils.html import format_html
 
 
 class CompletedWorksInline(admin.StackedInline):
@@ -17,6 +18,7 @@ class CompletedWorksAdmin(admin.ModelAdmin):
         'gps',
         'fuel_sensor',
         'get_used_equipment',
+        'info',
         'payer',
     )
 
@@ -34,13 +36,12 @@ class WorkOrderAdmin(admin.ModelAdmin):
         'number',
         'type_of_work',
         'client',
-        'project',
+        'get_link_project',
         'executor',
-        'get_list_of_work',
+        # 'get_list_of_work',
         # 'list_of_used_equipment',
         'price_of_completed_works',
         'price_of_used_equipment',
-        'info',
         'pay_form',
         'milege',
         'milege_price_executor',
@@ -52,16 +53,22 @@ class WorkOrderAdmin(admin.ModelAdmin):
         'sum_price_client'
     )
 
-    def get_list_of_work(self, obj):
-        list_work = []
-        count_queryset = 0
-        for services in obj.list_works.all().filter(name=obj.list_works.type_service.name):
-            count_queryset = +1
-            count_work = '{} - {}'.format(obj.list_works.type_service.name, count_queryset)
-            list_work.append(count_work)
-        return list_work
+    def get_link_project(self, obj):
+        return format_html("<a href='../../projects/project/%s/change/' >%s</a>" % (str(obj.project.id),str(obj.project)))
 
-    get_list_of_work.short_description = 'список виконаних робіт'
+    get_link_project.admin_order_field = 'workorder_project'
+    get_link_project.short_description = 'Проект'
+
+    # def get_list_of_work(self, obj):
+    #     list_work = []
+    #     count_queryset = 0
+    #     for services in obj.list_works.all().filter(name=obj.list_works.type_service.name):
+    #         count_queryset = +1
+    #         count_work = '{} - {}'.format(obj.list_works.type_service.name, count_queryset)
+    #         list_work.append(count_work)
+    #     return list_work
+    #
+    # get_list_of_work.short_description = 'список виконаних робіт'
 
 
 admin.site.register(CompletedWorks, CompletedWorksAdmin)
