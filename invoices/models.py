@@ -4,7 +4,7 @@ from subscription.models import Subscription
 from projects.models import Project
 
 
-class Invoice(models.Model):
+class Invoices(models.Model):
     number = models.PositiveIntegerField(null=True,
                                          verbose_name='№',
                                          help_text='Номер РФ',
@@ -49,16 +49,22 @@ class Invoice(models.Model):
                                     blank=True
                                     )
 
+    class Meta:
+        abstract = True
+
+
+class Invoice(Invoices):
+
     def save(self, *args, **kwargs):
         if self.status_payment == self.Status_payment.paid:
             self.sum_payment = self.invoice_sum
         super(Invoice, self).save(*args, **kwargs)
 
     class Meta:
-        verbose_name_plural = "рахунки за сервісні роботи "
+        verbose_name_plural = "рахунки на послуги"
 
 
-class SubInvoice(Invoice):
+class SubInvoice(Invoices):
     subscription = models.ForeignKey(Subscription,
                                      on_delete=models.CASCADE,
                                      verbose_name='АП',
@@ -91,7 +97,7 @@ class SubInvoice(Invoice):
         verbose_name_plural = "АП рахунки фактури "
 
 
-class ProjectInvoice(Invoice):
+class ProjectInvoice(Invoices):
     project = models.OneToOneField(Project,
                                    null=True,
                                    on_delete=models.CASCADE,
@@ -120,7 +126,7 @@ class ProjectInvoice(Invoice):
         verbose_name_plural = "Проекти рахунки фактури "
 
 
-class ProjectInvoiceTaxfree(Invoice):
+class ProjectInvoiceTaxfree(Invoices):
     project = models.OneToOneField(Project,
                                    on_delete=models.CASCADE,
                                    verbose_name='Проект',

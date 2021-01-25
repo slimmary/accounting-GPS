@@ -36,16 +36,19 @@ class Project(models.Model):
                                related_name='project'
                                )
     amount_gps = models.PositiveIntegerField(null=True,
+                                             default=0,
                                              verbose_name='кіл-ть СКТ',
                                              help_text='введіть кількість',
                                              blank=True
                                              )
     amount_fuel_sensor = models.PositiveIntegerField(null=True,
+                                                     default=0,
                                                      verbose_name='кіл-ть ДВРП',
                                                      help_text='введіть кількість',
                                                      blank=True
                                                      )
     add_costs = models.PositiveIntegerField(null=True,
+                                            default=0,
                                             verbose_name='дод. витрати грн',
                                             help_text='введіть суму',
                                             blank=True
