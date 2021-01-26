@@ -17,9 +17,9 @@ class UserProfile(models.Model):
 
     phone = PhoneField(null=True, verbose_name='Робочий номер телефону співробітника')
 
-    phone_2 = PhoneField(null=True, verbose_name='Власний номер телефону співробітника')
+    phone_2 = PhoneField(null=True, verbose_name='Персональний номер телефону співробітника')
 
-    email = models.EmailField(null=True, max_length=254, verbose_name='Власна електронна адреса')
+    email = models.EmailField(null=True, max_length=254, verbose_name='Персональна електронна адреса')
 
     birthday = models.DateField(null=True, blank=True,
                                 verbose_name='Дата народження')
@@ -57,5 +57,5 @@ class UserProfile(models.Model):
         instance.profile.save()
 
     def __str__(self):
-        return '{}'.format(self.user, )
+        return '{}'.format(self.user.last_name, )
 

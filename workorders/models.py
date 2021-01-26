@@ -4,8 +4,15 @@ from clients.models import Client
 from users.models import User
 from vehicle.models import Vehicle
 from projects.models import Project
-
 from products.models import Equipment, Service, Gps, FuelSensor
+from django.core.exceptions import ValidationError
+
+
+def get_first_name(self):
+    return self.first_name
+
+
+User.add_to_class("__str__", get_first_name)
 
 
 class WorkOrder(models.Model):
@@ -132,8 +139,25 @@ class WorkOrder(models.Model):
                                                    blank=True
                                                    )
 
+    amount_gps = models.PositiveIntegerField(null=True,
+                                             default=0,
+                                             verbose_name='кіл-ть СКТ',
+                                             help_text='введіть кількість ТІЛЬКИ ЯКЩО ПРОЕКТ',
+                                             blank=True
+                                             )
+    amount_fuel_sensor = models.PositiveIntegerField(null=True,
+                                                     default=0,
+                                                     verbose_name='кіл-ть ДВРП',
+                                                     help_text='введіть кількість ТІЛЬКИ ЯКЩО ПРОЕКТ',
+                                                     blank=True
+                                                     )
 
     # date_payment:
+    def clean(self):
+        if (self.amount_gps != 0 or self.amount_fuel_sensor != 0) and self.type_of_work != self.TypeWork.project:
+            raise ValidationError('Кількість СКТ да ДВРП не потрібно рахувати якщо ЗН не Проект')
+        if self.type_of_work != self.TypeWork.project and self.project:
+            raise ValidationError('Не можливо приєднати проект, якщо тип ЗН не Проект')
     # def save(self,*args, **kwargs):
 
     def __str__(self):
@@ -226,4 +250,3 @@ class CompletedWorks(models.Model):
 
     class Meta:
         verbose_name_plural = "Список виконаних робіт"
-

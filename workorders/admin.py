@@ -51,7 +51,8 @@ class WorkOrderAdmin(admin.ModelAdmin):
     )
 
     def get_link_project(self, obj):
-        return format_html("<a href='../../projects/project/%s/change/' >%s</a>" % (str(obj.project.id),str(obj.project)))
+        if obj.project:
+            return format_html("<a href='../../projects/project/%s/change/' >%s</a>" % (str(obj.project.id),str(obj.project)))
 
     get_link_project.admin_order_field = 'workorder_project'
     get_link_project.short_description = 'Проект'

@@ -151,4 +151,4 @@ class ProjectInvoice(Invoices):
 
     class Meta:
         db_table = 'projectinvoice'
-        verbose_name_plural = "Проекти рахунки фактури та касові ордери "
+        verbose_name_plural = "рахунки фактури та касові ордери проекти"

@@ -92,6 +92,17 @@ class Project(models.Model):
                              )
 
     def save(self, *args, **kwargs):
+        if self.work_orders is not None:
+            wo = self.work_orders.all()
+            wo_amount_gps = 0
+            wo_amount_fuel_sensor = 0
+            for i in wo:
+                wo_amount_gps += i.amount_gps
+                wo_amount_fuel_sensor += i.amount_fuel_sensor
+            if self.amount_gps == wo_amount_gps and self.amount_fuel_sensor == wo_amount_fuel_sensor:
+                self.execution_status = self.ExecutionStatus.finished
+            elif self.amount_gps > wo_amount_gps > 0 or self.amount_fuel_sensor > wo_amount_fuel_sensor > 0:
+                self.execution_status = self.ExecutionStatus.partly_executed
         try:
             if self.project_contract is not None:
                 if self.project_contract.status == self.project_contract.StatusChoice.in_stock:

@@ -31,6 +31,7 @@ class ProjectAdmin(admin.ModelAdmin):
         'client',
         'amount_gps',
         'amount_fuel_sensor',
+        # 'get_amount_gps_wo',
         'add_costs',
         'sum',
         'get_link_invoice',
@@ -44,6 +45,14 @@ class ProjectAdmin(admin.ModelAdmin):
         'get_link_work_orders',
         'notes'
     )
+
+    # def get_amount_gps_wo(self, obj):
+    #     sum_amount = 0
+    #     for i in obj.work_orders.all():
+    #         sum_amount += i.amount_gps
+    #     return sum_amount
+    #
+    # get_amount_gps_wo.short_description = 'встановлено СКТ'
 
     def get_link_contract_or_additions(self, obj):
         if obj.project_contract:
@@ -95,9 +104,15 @@ class ProjectAdmin(admin.ModelAdmin):
     get_sum_payment.short_description = 'Сума оплати'
 
     def get_link_work_orders(self, obj):
+        sum_amount_gps = 0
+        sum_amount_fuel_sensor = 0
+        for i in obj.work_orders.all():
+            sum_amount_gps += i.amount_gps
+            sum_amount_fuel_sensor += i.amount_fuel_sensor
+
         display_text = ", ".join([
-            "<a href={}>{}</a>".format(
-                reverse('admin:workorders_workorder_change', args=(work_orders.pk,)), str(work_orders))
+            "<a href={}>{} \nСКТ-{} ДВРП -{}\n</a>".format(
+                reverse('admin:workorders_workorder_change', args=(work_orders.pk,)), str(work_orders), sum_amount_gps, sum_amount_fuel_sensor )
             for work_orders in obj.work_orders.all()
         ])
         if display_text:
@@ -106,7 +121,7 @@ class ProjectAdmin(admin.ModelAdmin):
 
     get_link_work_orders.allow_tags = True
     get_link_work_orders.admin_order_field = 'work_orders'
-    get_link_work_orders.short_description = 'ЗН'
+    get_link_work_orders.short_description = 'Заказ-Наряди'
 
 
 admin.site.register(Project, ProjectAdmin)
