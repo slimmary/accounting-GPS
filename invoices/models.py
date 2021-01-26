@@ -6,12 +6,11 @@ from subscription.models import Subscription
 
 
 class Invoices(models.Model):
-    number = models.CharField(null=True,
-                              max_length=100,
-                              default='№ не призначений',
-                              verbose_name='№',
-                              help_text='Номер',
-                              )
+    number = models.PositiveIntegerField(null=True,
+                                         default=0,
+                                         verbose_name='№',
+                                         help_text='Номер',
+                                         )
     date = models.DateField(null=True,
                             verbose_name='Дата створення',
                             help_text='Оберіть дату'
@@ -62,11 +61,6 @@ class Invoice(Invoices):
                                       verbose_name='ЗН',
                                       related_name='invoice_workorder',
                                       blank=True)
-
-    def save(self, *args, **kwargs):
-        if self.status_payment == self.Status_payment.paid:
-            self.sum_payment = self.invoice_sum
-        super(Invoice, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name_plural = "рахунки на послуги"
@@ -141,6 +135,16 @@ class ProjectInvoice(Invoices):
     #     if self.project_invoice is not None:
     #         self.client = self.project_invoice.client
     #     super(ProjectInvoice, self).save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        if self.status_payment == self.Status_payment.paid:
+            self.sum_payment = self.invoice_sum
+        else:
+            if self.sum_payment== 0:
+                self.status_payment = self.Status_payment.not_paid
+            else:
+                self.status_payment = self.Status_payment.partially_paid
+
+        super(ProjectInvoice, self).save(*args, **kwargs)
 
     def __str__(self):
         return '{} №{} від {} '.format(self.pay_form, self.number, self.date)

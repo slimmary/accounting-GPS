@@ -2,15 +2,16 @@ from django.db import models
 from clients.models import Client
 from datetime import date
 from projects.models import Project
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+
 
 
 class AbstractContract(models.Model):
-    number = models.IntegerField(verbose_name='Номер Дог./ ДУ',
-                                 help_text='Введіть номер договору'
+    number = models.IntegerField(verbose_name='Номер №',
+                                 help_text='Введіть номер'
                                  )
     contract_date = models.DateField(default=date.today(),
-                                     verbose_name='Дата заключеня Дог./ ДУ',
+                                     verbose_name='Дата заключеня',
                                      help_text='Оберіть дату'
                                      )
 
@@ -59,7 +60,10 @@ class Contract(AbstractContract):
         (TypeChoice.subscription, 'абонентського обслуговування'),
     )
 
-    type = models.CharField(max_length=100, choices=TYPE_CHOICE, verbose_name='Тип договору',
+    type = models.CharField(max_length=100,
+                            default=TypeChoice.project,
+                            choices=TYPE_CHOICE,
+                            verbose_name='Тип договору',
                             help_text='Оберіть тип', blank=True)
 
     class ProviderChoice:
@@ -87,10 +91,10 @@ class Contract(AbstractContract):
                                                blank=True
                                                )
 
-    # def clean(self):
-    #     if self.contract_project_to:
-    #         if self.type != self.TypeChoice.project:
-    #             raise ValidationError("до проекту не можливо додати договір, який не є договором поставки")
+    def clean(self):
+        if self.contract_project_to:
+            if self.type != self.TypeChoice.project:
+                raise ValidationError("до проекту не можливо додати договір, який не є договором поставки")
 
     def __str__(self):
         return 'Договір {} №{} від {} між {} та {} {}'.format(

@@ -48,8 +48,8 @@ class ContractAdmin(admin.ModelAdmin):
     )
 
     def get_project(self, obj):
-        if obj.contract_to.type == obj.contract_to.TypeChoice.project:
-            return obj.project_to
+        if obj.type == obj.TypeChoice.project:
+            return obj.contract_project_to
         return '-'
 
     get_project.short_description = 'проект'

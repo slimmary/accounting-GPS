@@ -48,8 +48,8 @@ class ProjectAdmin(admin.ModelAdmin):
     def get_link_contract_or_additions(self, obj):
         if obj.project_contract:
             return format_html(
-                "<a href='../../contracts/contracts/%s/change/' >%s</a>" % (
-                    str(obj.project_contract.id), 'ДУ №{} від {}'.format(obj.project_contract.number, obj.project_contract.contract_date,)))
+                "<a href='../../contracts/contract/%s/change/' >%s</a>" % (
+                    str(obj.project_contract.id), 'Дог. №{} від {}'.format(obj.project_contract.number, obj.project_contract.contract_date,)))
         elif obj.project_add_contract:
             return format_html(
                 "<a href='../../contracts/additions/%s/change/' >%s</a>" % (
