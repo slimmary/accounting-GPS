@@ -9,7 +9,6 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('staff', '0001_initial'),
         ('products', '0001_initial'),
         ('clients', '0001_initial'),
         ('vehicle', '0001_initial'),
@@ -35,8 +34,7 @@ class Migration(migrations.Migration):
                 ('description_add_costs', models.CharField(blank=True, max_length=100, null=True, verbose_name='Список додаткових витрат')),
                 ('month_executor_pay', models.DateField(help_text='місяць нарахування ЗП монтажнику', verbose_name='місяць/рік ЗП')),
                 ('sum_price_client', models.PositiveIntegerField(blank=True, help_text='сума рахунку для клієнта\nПоле заповниться автоматично, вводити нічого не потрібно', null=True, verbose_name='сума рахунку')),
-                ('client', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='work_orders', to='clients.Client', verbose_name='клієнт')),
-                ('executor', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='work_orders', to='staff.Staff', verbose_name='виконавець')),
+                ('client', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='work_orders', to='clients.Client', verbose_name='клієнт')),   
                 ('project', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='work_orders', to='projects.Project', verbose_name='Проект')),
             ],
             options={

@@ -57,5 +57,5 @@ class UserProfile(models.Model):
         instance.profile.save()
 
     def __str__(self):
-        return '{} - {} - {} | Контактний телефон: {} | Дата народження: {} '.format(self.user, self.position, self.get_status_display(), self.phone, self.birthday,  )
+        return '{}'.format(self.user, )
 

@@ -1,7 +1,7 @@
 from django.db import models
 from datetime import date
 from clients.models import Client
-from staff.models import Staff
+from users.models import User
 from vehicle.models import Vehicle
 from projects.models import Project
 
@@ -41,7 +41,7 @@ class WorkOrder(models.Model):
                                 blank=True
                                 )
 
-    executor = models.ForeignKey(Staff,
+    executor = models.ForeignKey(User,
                                  null=True,
                                  on_delete=models.CASCADE,
                                  verbose_name='виконавець',
