@@ -1,8 +1,6 @@
 from django.db import models
 from datetime import date
 from clients.models import Client
-from contracts.models import Contract, Additions
-from invoices.models import ProjectInvoice
 from django.core.exceptions import ValidationError
 
 
@@ -60,24 +58,24 @@ class Project(models.Model):
                                       blank=True
                                       )
 
-    invoice = models.OneToOneField(ProjectInvoice,
-                                   null=True,
-                                   on_delete=models.CASCADE,
-                                   verbose_name='РФ/КО',
-                                   related_name='project_invoice',
-                                   blank=True
-                                   )
-
-    contract = models.OneToOneField(Contract, null=True,
-                                    on_delete=models.CASCADE,
-                                    verbose_name='Договір до даного проекту',
-                                    related_name='project_to_contract',
-                                    blank=True)
-    additions = models.OneToOneField(Additions, null=True,
-                                     on_delete=models.CASCADE,
-                                     verbose_name='ДУ до даного проекту',
-                                     related_name='project_to_additions',
-                                     blank=True)
+    # invoice = models.OneToOneField(ProjectInvoice,
+    #                                null=True,
+    #                                on_delete=models.CASCADE,
+    #                                verbose_name='РФ/КО',
+    #                                related_name='project_invoice',
+    #                                blank=True
+    #                                )
+    #
+    # contract = models.OneToOneField(Contract, null=True,
+    #                                 on_delete=models.CASCADE,
+    #                                 verbose_name='Договір до даного проекту',
+    #                                 related_name='project_to_contract',
+    #                                 blank=True)
+    # additions = models.OneToOneField(Additions, null=True,
+    #                                  on_delete=models.CASCADE,
+    #                                  verbose_name='ДУ до даного проекту',
+    #                                  related_name='project_to_additions',
+    #                                  blank=True)
     date_receipt_contract = models.DateField(null=True,
                                              verbose_name='Дата отримання договору',
                                              help_text='Введіть дату',
@@ -110,32 +108,23 @@ class Project(models.Model):
                              verbose_name='Приміки',
                              blank=True
                              )
-
-    def clean(self):
-        if self.contract is not None:
-            if self.contract.type != self.contract.TypeChoice.project:
-                raise ValidationError("до проекту не можливо додати договір, який не є договором поставки")
-        else:
-            if self.additions is not None:
-                if self.additions.contract_to.type != self.additions.contract_to.TypeChoice.project:
-                    raise ValidationError("до проекту не можливо додати ДУ, яка не відноситься до договору поставки")
-
-    def save(self, *args, **kwargs):
-
-        if self.contract is not None:
-            if self.contract.status == self.contract.StatusChoice.in_stock:
-                self.date_receipt_contract = self.contract.status_date
-        else:
-            if self.additions is not None:
-                if self.additions.status == self.additions.StatusChoice.in_stock:
-                    self.date_receipt_contract = self.additions.status_date
-
-        if self.invoice.pay_form == self.invoice.PayForm.tax:
-            self.sum = self.amount_gps * 4200 + self.amount_fuel_sensor * 3240 + self.add_costs
-        else:
-            self.sum = self.amount_gps * 3500 + self.amount_fuel_sensor * 2700 + self.add_costs
-
-        super(Project, self).save(*args, **kwargs)
+    #
+    # def save(self, *args, **kwargs):
+    #
+    #     if self.project_contract is not None:
+    #         if self.project_contract.status == self.contract.StatusChoice.in_stock:
+    #             self.date_receipt_contract = self.project_contract.status_date
+    #     else:
+    #         if self.project_add_contract is not None:
+    #             if self.project_add_contract.status == self.project_add_contract.StatusChoice.in_stock:
+    #                 self.date_receipt_contract = self.project_add_contract.status_date
+    #
+    #     if self.project_invoice.pay_form == self.project_invoice.PayForm.tax:
+    #         self.sum = self.amount_gps * 4200 + self.amount_fuel_sensor * 3240 + self.add_costs
+    #     else:
+    #         self.sum = self.amount_gps * 3500 + self.amount_fuel_sensor * 2700 + self.add_costs
+    #
+    #     super(Project, self).save(*args, **kwargs)
 
     def __str__(self):
         return 'Проект №{} від {} '.format(self.number, self.date_start)

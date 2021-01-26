@@ -132,7 +132,7 @@ class WorkOrder(models.Model):
                                                    blank=True
                                                    )
 
-    # invoice =
+
     # date_payment:
     # def save(self,*args, **kwargs):
 

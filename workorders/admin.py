@@ -3,7 +3,7 @@ from .models import CompletedWorks, WorkOrder
 from django.utils.html import format_html
 
 
-class CompletedWorksInline(admin.StackedInline):
+class CompletedWorksInline(admin.TabularInline):
     list_per_page = 20
     model = CompletedWorks
     verbose_name_plural = 'виконані роботи'

@@ -1,5 +1,7 @@
 from django.db import models
 from datetime import date
+from projects.models import Project
+from workorders.models import WorkOrder
 from subscription.models import Subscription
 
 
@@ -54,12 +56,12 @@ class Invoices(models.Model):
 
 
 class Invoice(Invoices):
-    # work_order = models.OneToOneField(WorkOrder,
-    #                                   null=True,
-    #                                   on_delete=models.CASCADE,
-    #                                   verbose_name='ЗН',
-    #                                   related_name='invoice_workorder',
-    #                                   blank=True)
+    work_order = models.OneToOneField(WorkOrder,
+                                      null=True,
+                                      on_delete=models.CASCADE,
+                                      verbose_name='ЗН',
+                                      related_name='invoice_workorder',
+                                      blank=True)
 
     def save(self, *args, **kwargs):
         if self.status_payment == self.Status_payment.paid:
@@ -104,6 +106,14 @@ class SubInvoice(Invoices):
 
 
 class ProjectInvoice(Invoices):
+    project_to = models.OneToOneField(Project,
+                                      null=True,
+                                      on_delete=models.CASCADE,
+                                      verbose_name='РФ/КО',
+                                      related_name='project_invoice',
+                                      blank=True
+                                      )
+
     class PayForm:
         taxfree = 'КО'
         tax = 'РФ'
@@ -138,5 +148,3 @@ class ProjectInvoice(Invoices):
     class Meta:
         db_table = 'projectinvoice'
         verbose_name_plural = "Проекти рахунки фактури та касові ордери "
-
-

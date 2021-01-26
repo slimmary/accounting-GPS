@@ -124,11 +124,11 @@ class ProjectInvoiceAdmin(admin.ModelAdmin):
                    )
 
     def get_link_project_invoice(self, obj):
-        return format_html("<a href='../../projects/project/%s/change/' >%s</a>" % (str(obj.project_invoice.id),
-                                                                                     str(obj.project_invoice)))
+        return format_html("<a href='../../projects/project/%s/change/' >%s</a>" % (str(obj.project_to.id),
+                                                                                     str(obj.project_to)))
 
     get_link_project_invoice.allow_tags = True
-    get_link_project_invoice.admin_order_field = 'contract_or_addition'
+    get_link_project_invoice.admin_order_field = 'project_to'
     get_link_project_invoice.short_description = 'Проект'
 
 

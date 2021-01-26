@@ -1,8 +1,53 @@
 from django.db import models
 from clients.models import Client
+from datetime import date
+from projects.models import Project
+from django.core.exceptions import ValidationError
 
 
-class Contract(models.Model):
+class AbstractContract(models.Model):
+    number = models.IntegerField(verbose_name='Номер Дог./ ДУ',
+                                 help_text='Введіть номер договору'
+                                 )
+    contract_date = models.DateField(default=date.today(),
+                                     verbose_name='Дата заключеня Дог./ ДУ',
+                                     help_text='Оберіть дату'
+                                     )
+
+    class StatusChoice:
+        created = 'Створений'
+        send_post = 'Відправлений укрпоштою'
+        send_NP = 'Відправлений НП'
+        send_email = 'Відправлений на електронну пошту'
+        in_stock = 'В наявності'
+
+    STATUS_CHOICE = (
+        (StatusChoice.created, 'Створений'),
+        (StatusChoice.send_post, 'Відправлений укрпоштою'),
+        (StatusChoice.send_NP, 'Відправлений НП'),
+        (StatusChoice.send_email, 'Відправлений на електронну пошту'),
+        (StatusChoice.in_stock, 'В наявності')
+    )
+    status = models.CharField(max_length=100,
+                              choices=STATUS_CHOICE,
+                              verbose_name='Статус',
+                              help_text='Оберіть статус договору',
+                              default=StatusChoice.created
+                              )
+    status_date = models.DateField(null=True,
+                                   verbose_name='Дата зміни статусу',
+                                   help_text='Оберіть дату',
+                                   blank=True
+                                   )
+    contract_image = models.ImageField(upload_to='images/contracts',
+                                       verbose_name='Скан-копія',
+                                       blank=True)
+
+    class Meta:
+        abstract = True
+
+
+class Contract(AbstractContract):
     class TypeChoice:
         project = 'поставки'
         service = 'сервісного обслуговування'
@@ -29,32 +74,23 @@ class Contract(models.Model):
         (ProviderChoice.dyachuk, 'ФОП Дячук Л.В.'),
         (ProviderChoice.demidenko, 'ФОП Демченко К.Б.'),
     )
-    provider = models.CharField(max_length=100, choices=PROVIDER_CHOICE, verbose_name='Постачальник',default=ProviderChoice.ckt,
+    provider = models.CharField(max_length=100, choices=PROVIDER_CHOICE, verbose_name='Постачальник',
+                                default=ProviderChoice.ckt,
                                 help_text='Оберіть постачальника', blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name='Покупець/Абонент',
                                related_name='contracts')
-    number = models.IntegerField(verbose_name='Номер договору', help_text='Введіть номер договору')
-    contract_date = models.DateField(verbose_name='Дата заключеня договору', help_text='Оберіть дату')
+    contract_project_to = models.OneToOneField(Project,
+                                               null=True,
+                                               on_delete=models.CASCADE,
+                                               verbose_name='Проект',
+                                               related_name='project_contract',
+                                               blank=True
+                                               )
 
-    class StatusChoice:
-        created = 'Створений'
-        send_post = 'Відправлений укрпоштою'
-        send_NP = 'Відправлений НП'
-        send_email = 'Відправлений на електронну пошту'
-        in_stock = 'В наявності'
-
-    STATUS_CHOICE = (
-        (StatusChoice.created, 'Створений'),
-        (StatusChoice.send_post, 'Відправлений укрпоштою'),
-        (StatusChoice.send_NP, 'Відправлений НП'),
-        (StatusChoice.send_email, 'Відправлений на електронну пошту'),
-        (StatusChoice.in_stock, 'В наявності')
-    )
-    status = models.CharField(max_length=100, choices=STATUS_CHOICE, verbose_name='Статус',
-                              help_text='Оберіть статус договору', default=StatusChoice.created)
-    status_date = models.DateField(null=True, verbose_name='Дата зміни статусу',
-                                   help_text='Оберіть дату')
-    contract_image = models.ImageField(upload_to='images/contracts', verbose_name='Скан-копія', blank=True)
+    # def clean(self):
+    #     if self.contract_project_to:
+    #         if self.type != self.TypeChoice.project:
+    #             raise ValidationError("до проекту не можливо додати договір, який не є договором поставки")
 
     def __str__(self):
         return 'Договір {} №{} від {} між {} та {} {}'.format(
@@ -70,36 +106,26 @@ class Contract(models.Model):
         verbose_name_plural = "Договори"
 
 
-class Additions(models.Model):
+class Additions(AbstractContract):
+    add_project_to = models.OneToOneField(Project,
+                                          null=True,
+                                          on_delete=models.CASCADE,
+                                          verbose_name='Проект',
+                                          related_name='project_add_contract',
+                                          blank=True
+                                          )
+
     contract_to = models.ForeignKey(Contract,
                                     null=True,
                                     on_delete=models.CASCADE,
                                     verbose_name='Основний договір до якого створено ДУ',
                                     related_name='additions',
                                     blank=True)
-
-    number = models.IntegerField(verbose_name='Номер ДУ',)
-    date = models.DateField(verbose_name='Дата заключеня ДУ',)
-
-    class StatusChoice:
-        created = 'Створений'
-        send_post = 'Відправлений укрпоштою'
-        send_NP = 'Відправлений НП'
-        send_email = 'Відправлений на електронну пошту'
-        in_stock = 'В наявності'
-
-    STATUS_CHOICE = (
-        (StatusChoice.created, 'Створений'),
-        (StatusChoice.send_post, 'Відправлений укрпоштою'),
-        (StatusChoice.send_NP, 'Відправлений НП'),
-        (StatusChoice.send_email, 'Відправлений на електронну пошту'),
-        (StatusChoice.in_stock, 'В наявності')
-    )
-    status = models.CharField(max_length=100, choices=STATUS_CHOICE, verbose_name='Статус',
-                              help_text='Оберіть статус договору', default=StatusChoice.created)
-    status_date = models.DateField(null=True, verbose_name='Дата зміни статусу',
-                                   help_text='Оберіть дату')
-    contract_supp_image = models.ImageField(upload_to='images/contracts', verbose_name='Скан-копія', blank=True)
+    #
+    # def clean(self):
+    #     if self.add_project_to:
+    #         if self.contract_to.type != self.contract_to.TypeChoice.project:
+    #             raise ValidationError("до проекту не можливо додати ДУ, яка не відноситься до договору поставки")
 
     def __str__(self):
         return '№{} від {}'.format(self.number, self.date)

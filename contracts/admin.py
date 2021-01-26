@@ -2,16 +2,16 @@ from django.contrib import admin
 from .models import Contract, Additions
 
 
-class AdditionsInline(admin.StackedInline):
+class AdditionsInline(admin.TabularInline):
     model = Additions
-    fields = ('number', 'date', 'status')
+    fields = ('number', 'contract_date', 'status')
 
 
 class AdditionsAdmin(admin.ModelAdmin):
     list_display = (
         'contract_to',
         'number',
-        'date',
+        'contract_date',
         'get_client_name',
         'get_project',
 
@@ -19,9 +19,8 @@ class AdditionsAdmin(admin.ModelAdmin):
 
     def get_project(self, obj):
         if obj.contract_to.type == obj.contract_to.TypeChoice.project:
-            return obj.project_to_additions
-        else:
-            return None
+            return obj.project_to
+        return '-'
 
     get_project.short_description = 'проект'
 
@@ -49,10 +48,9 @@ class ContractAdmin(admin.ModelAdmin):
     )
 
     def get_project(self, obj):
-        if obj.type == obj.TypeChoice.project:
-            return obj.project_to_contract
-        else:
-            return None
+        if obj.contract_to.type == obj.contract_to.TypeChoice.project:
+            return obj.project_to
+        return '-'
 
     get_project.short_description = 'проект'
 
