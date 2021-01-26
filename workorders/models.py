@@ -143,7 +143,7 @@ class WorkOrder(models.Model):
         )
 
     class Meta:
-        verbose_name_plural = "Зака-Наряди"
+        verbose_name_plural = "Заказ-Наряди"
 
 
 class CompletedWorks(models.Model):

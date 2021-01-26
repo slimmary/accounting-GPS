@@ -1,6 +1,7 @@
 from django.contrib import admin
 from projects.models import Project
 from django.utils.html import format_html
+from django.urls import reverse
 
 
 class ProjectAdmin(admin.ModelAdmin):
@@ -22,6 +23,7 @@ class ProjectAdmin(admin.ModelAdmin):
         'date_receipt_contract',
         'date_receipt_sale_invoice',
         'execution_status',
+        'get_link_work_orders',
         'notes'
     )
 
@@ -41,7 +43,7 @@ class ProjectAdmin(admin.ModelAdmin):
 
     def get_link_invoice(self, obj):
         return format_html(
-            "<a href='../../invoices/projectinvoicetaxfree/%s/change/' >%s</a>" % (
+            "<a href='../../invoices/projectinvoice/%s/change/' >%s</a>" % (
                 str(obj.invoice.id), str(obj.invoice)))
 
     get_link_invoice.admin_order_field = 'invoice'
@@ -64,6 +66,20 @@ class ProjectAdmin(admin.ModelAdmin):
 
     get_sum_payment.admin_order_field = 'sum_payment'
     get_sum_payment.short_description = 'Сума оплати'
+
+    def get_link_work_orders(self, obj):
+        display_text = ", ".join([
+            "<a href={}>{}</a>".format(
+                reverse('admin:workorders_workorder_change', args=(work_orders.pk,)), str(work_orders))
+            for work_orders in obj.work_orders.all()
+        ])
+        if display_text:
+            return format_html(display_text)
+        return "-"
+
+    get_link_work_orders.allow_tags = True
+    get_link_work_orders.admin_order_field = 'work_orders'
+    get_link_work_orders.short_description = 'ЗН'
 
 
 admin.site.register(Project, ProjectAdmin)
