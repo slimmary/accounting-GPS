@@ -1,5 +1,6 @@
 from django.db import models
 from datetime import date
+from clients.models import Client
 from projects.models import Project
 from workorders.models import WorkOrder
 from subscription.models import Subscription
@@ -124,22 +125,21 @@ class ProjectInvoice(Invoices):
                                 blank=True
                                 )
 
-    # client = models.CharField(null=True,
-    #                           max_length=100,
-    #                           verbose_name='Клієнт',
-    #                           help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-    #                           blank=True
-    #                           )
-    #
-    # def save(self, *args, **kwargs):
-    #     if self.project_invoice is not None:
-    #         self.client = self.project_invoice.client
-    #     super(ProjectInvoice, self).save(*args, **kwargs)
+    client = models.ForeignKey(Client,
+                               null=True,
+                               on_delete=models.CASCADE,
+                               verbose_name='Клієнт',
+                               help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                               blank=True
+                               )
+
     def save(self, *args, **kwargs):
+        if self.project_to is not None:
+            self.client = self.project_to.client
         if self.status_payment == self.Status_payment.paid:
             self.sum_payment = self.invoice_sum
         else:
-            if self.sum_payment== 0:
+            if self.sum_payment == 0:
                 self.status_payment = self.Status_payment.not_paid
             else:
                 self.status_payment = self.Status_payment.partially_paid

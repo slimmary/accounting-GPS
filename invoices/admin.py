@@ -115,6 +115,7 @@ class ProjectInvoiceAdmin(admin.ModelAdmin):
     list_per_page = 20
     list_display = ('number',
                     'date',
+                    'get_link_client',
                     'get_link_project_invoice',
                     'invoice_sum',
                     'status_payment',
@@ -142,6 +143,13 @@ class ProjectInvoiceAdmin(admin.ModelAdmin):
     get_link_project_invoice.allow_tags = True
     get_link_project_invoice.admin_order_field = 'project_to'
     get_link_project_invoice.short_description = 'Проект'
+
+    def get_link_client(self, obj):
+        return format_html("<a href='../../clients/client/%s/change/' >%s</a>" % (str(obj.client.id), str(obj.client.name)))
+
+    get_link_project_invoice.allow_tags = True
+    get_link_client.admin_order_field = 'client_invoice'
+    get_link_client.short_description = 'Платник'
 
 
 admin.site.register(SubInvoice, SubInvoiceAdmin)
