@@ -92,6 +92,7 @@ class WorkOrder(models.Model):
                                 blank=True
                                 )
     milege = models.PositiveIntegerField(null=True,
+                                         default=0,
                                          verbose_name='пробіг (км)',
                                          blank=True
                                          )
@@ -112,15 +113,12 @@ class WorkOrder(models.Model):
 
     add_costs_executor = models.PositiveIntegerField(null=True,
                                                      verbose_name='грн за ДВ \nмонтажнику',
-                                                     help_text='Сума коомпенсації за додаткові витрати '
-                                                               'монтажнику\nПоле заповниться автоматично, '
-                                                               'вводити нічого не потрібно',
+                                                     help_text='Сума коомпенсації за додаткові витрати монтажнику',
                                                      blank=True
                                                      )
     add_costs_client = models.PositiveIntegerField(null=True,
                                                    verbose_name='грн за ДВ \nклієнту',
-                                                   help_text='Вартість додаткових витрат для клієнта\nПоле '
-                                                             'заповниться автоматично, вводити нічого не потрібно',
+                                                   help_text='Вартість додаткових витрат для клієнта',
                                                    blank=True
                                                    )
     description_add_costs = models.CharField(null=True,
@@ -158,8 +156,16 @@ class WorkOrder(models.Model):
             raise ValidationError('Кількість СКТ да ДВРП не потрібно рахувати якщо ЗН не Проект')
         if self.type_of_work != self.TypeWork.project and self.project:
             raise ValidationError('Не можливо приєднати проект, якщо тип ЗН не Проект')
-    # def save(self,*args, **kwargs):
 
+    def save(self,*args, **kwargs):
+        self.milege_price_executor = self.milege * 4.5
+        if self.pay_form == self.PayForm.taxfree:
+            self.milege_price_client = self.milege * 4.5
+        else:
+            self.milege_price_client = self.milege * 5.4
+
+        super(WorkOrder, self).save(*args, **kwargs)
+        
     def __str__(self):
         return 'ЗН №{}, від {}'.format(
             self.number,
