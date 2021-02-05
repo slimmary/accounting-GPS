@@ -1,14 +1,16 @@
 from django.db import models
 from datetime import date
-from subscription.models import Subscription
+from clients.models import Client
 from projects.models import Project
+from workorders.models import WorkOrder
+from subscription.models import Subscription
 
 
-class Invoice(models.Model):
+class Invoices(models.Model):
     number = models.PositiveIntegerField(null=True,
+                                         default=0,
                                          verbose_name='№',
-                                         help_text='Номер РФ',
-                                         blank=True
+                                         help_text='Номер',
                                          )
     date = models.DateField(null=True,
                             verbose_name='Дата створення',
@@ -49,16 +51,23 @@ class Invoice(models.Model):
                                     blank=True
                                     )
 
-    def save(self, *args, **kwargs):
-        if self.status_payment == self.Status_payment.paid:
-            self.sum_payment = self.invoice_sum
-        super(Invoice, self).save(*args, **kwargs)
-
     class Meta:
         abstract = True
 
 
-class SubInvoice(Invoice):
+class Invoice(Invoices):
+    work_order = models.OneToOneField(WorkOrder,
+                                      null=True,
+                                      on_delete=models.CASCADE,
+                                      verbose_name='ЗН',
+                                      related_name='invoice_workorder',
+                                      blank=True)
+
+    class Meta:
+        verbose_name_plural = "рахунки на послуги"
+
+
+class SubInvoice(Invoices):
     subscription = models.ForeignKey(Subscription,
                                      on_delete=models.CASCADE,
                                      verbose_name='АП',
@@ -91,47 +100,55 @@ class SubInvoice(Invoice):
         verbose_name_plural = "АП рахунки фактури "
 
 
-class ProjectInvoice(Invoice):
-    project = models.OneToOneField(Project,
-                                   on_delete=models.CASCADE,
-                                   verbose_name='Проект',
-                                   related_name='project_invoice'
-                                   )
+class ProjectInvoice(Invoices):
+    project_to = models.OneToOneField(Project,
+                                      null=True,
+                                      on_delete=models.CASCADE,
+                                      verbose_name='РФ/КО',
+                                      related_name='project_invoice',
+                                      blank=True
+                                      )
 
-    client = models.CharField(null=True,
-                              max_length=100,
-                              verbose_name='Клієнт',
-                              help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                              blank=True
-                              )
+    class PayForm:
+        taxfree = 'КО'
+        tax = 'РФ'
+
+    PAY_CHOICE = (
+        (PayForm.taxfree, 'КО'),
+        (PayForm.tax, 'РФ'),
+    )
+    pay_form = models.CharField(max_length=100,
+                                default=PayForm.taxfree,
+                                choices=PAY_CHOICE,
+                                verbose_name='РФ/КО',
+                                help_text='Оберіть форму оплати',
+                                blank=True
+                                )
+
+    client = models.ForeignKey(Client,
+                               null=True,
+                               on_delete=models.CASCADE,
+                               verbose_name='Клієнт',
+                               help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                               blank=True
+                               )
 
     def save(self, *args, **kwargs):
-        self.client = self.project.client.name
+        if self.project_to is not None:
+            self.client = self.project_to.client
+        if self.status_payment == self.Status_payment.paid:
+            self.sum_payment = self.invoice_sum
+        else:
+            if self.sum_payment == 0:
+                self.status_payment = self.Status_payment.not_paid
+            else:
+                self.status_payment = self.Status_payment.partially_paid
 
         super(ProjectInvoice, self).save(*args, **kwargs)
 
     def __str__(self):
-        return 'РФ №{} від {} '.format(self.number, self.date)
+        return '{} №{} від {} '.format(self.pay_form, self.number, self.date)
 
     class Meta:
         db_table = 'projectinvoice'
-        verbose_name_plural = "Проекти рахунки фактури "
-
-
-class ProjectInvoiceTaxfree(Invoice):
-    project = models.OneToOneField(Project,
-                                   on_delete=models.CASCADE,
-                                   verbose_name='Проект',
-                                   related_name='project_invoice_taxfree'
-                                   )
-
-    def save(self, *args, **kwargs):
-        super(ProjectInvoiceTaxfree, self).save(*args, **kwargs)
-        Project.save(self.project, *args, **kwargs)
-
-    def __str__(self):
-        return 'KO №{} від {} '.format(self.number, self.date)
-
-    class Meta:
-        db_table = 'projectinvoicetaxfree'
-        verbose_name_plural = "Касові Ордера (КО)"
+        verbose_name_plural = "рахунки фактури та касові ордери проекти"

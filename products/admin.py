@@ -1,11 +1,22 @@
 from django.contrib import admin
-from .models import Sim, Gps, FuelSensor, EquipmentAndService
+from .models import Sim, Gps, FuelSensor, Equipment, Service
 from clients.models import Client
 from django.utils.html import format_html
 from django.db.models import Q
 
 
-class EquipmentAndServiceAdmin(admin.ModelAdmin):
+class EquipmentAdmin(admin.ModelAdmin):
+    list_per_page = 20
+    list_display = (
+        'name',
+        'price_client_taxfree',
+        'price_client_tax',
+        'price_taxfree',
+        'price_tax',
+    )
+
+
+class ServiceAdmin(admin.ModelAdmin):
     list_per_page = 20
     list_display = (
         'name',
@@ -281,4 +292,5 @@ class FuelSensorAdmin(admin.ModelAdmin):
 admin.site.register(FuelSensor, FuelSensorAdmin)
 admin.site.register(Sim, SimAdmin)
 admin.site.register(Gps, GpsAdmin)
-admin.site.register(EquipmentAndService,EquipmentAndServiceAdmin)
+admin.site.register(Equipment, EquipmentAdmin)
+admin.site.register(Service, ServiceAdmin)
