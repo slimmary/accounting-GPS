@@ -192,7 +192,7 @@ class Client(models.Model):
         super(Client, self).save(*args, **kwargs)
 
     def __str__(self):
-        return '"{}"  /  логін: {}  '.format(
+        return '"{}"  /  {}  '.format(
             self.name,
             self.login,
 

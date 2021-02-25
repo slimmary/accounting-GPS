@@ -15,6 +15,253 @@ def get_first_name(self):
 User.add_to_class("__str__", get_first_name)
 
 
+class WorkOrder(models.Model):
+    date = models.DateField(verbose_name='Дата ЗН',
+                            help_text='Введіть дату',
+                            )
+    number = models.PositiveIntegerField(null=True,
+                                         verbose_name='№',
+                                         help_text='Номер ЗН',
+                                         blank=True
+                                         )
+
+    class TypeWork:
+        project = 'Проект'
+        service = 'Сервіс'
+
+    TYPE_WORK_CHOICE = (
+        (TypeWork.project, 'Проект'),
+        (TypeWork.service, 'Сервіс'),
+    )
+    type_of_work = models.CharField(max_length=100,
+                                    default=TypeWork.project,
+                                    choices=TYPE_WORK_CHOICE,
+                                    verbose_name='Тип ЗН (Проект/Сервіc)',
+                                    help_text='Оберіть тип',
+
+                                    )
+    project = models.ForeignKey(Project,
+                                null=True,
+                                on_delete=models.CASCADE,
+                                verbose_name='Проект',
+                                related_name='work_orders',
+                                blank=True
+                                )
+
+    executor = models.ForeignKey(User,
+                                 null=True,
+                                 on_delete=models.CASCADE,
+                                 verbose_name='виконавець',
+                                 related_name='work_orders',
+                                 blank=True
+                                 )
+    client = models.ForeignKey(Client,
+                               null=True,
+                               on_delete=models.CASCADE,
+                               verbose_name='клієнт',
+                               related_name='work_orders',
+                               blank=True,
+                               )
+
+    price_of_completed_works = models.PositiveIntegerField(null=True,
+                                                           verbose_name='сума за виконані роботи',
+                                                           help_text='Поле заповниться автоматично, вводити нічого не '
+                                                                     'потрібно',
+                                                           blank=True
+                                                           )
+    price_of_used_equipment = models.PositiveIntegerField(null=True,
+                                                          verbose_name='Сума за використане обладнання',
+                                                          help_text='Поле заповниться автоматично, вводити нічого не '
+                                                                    'потрібно',
+                                                          blank=True
+                                                          )
+
+    class PayForm:
+        taxfree = 'БК'
+        invoice = 'РФ'
+
+    PAY_CHOICE = (
+        (PayForm.taxfree, 'КО'),
+        (PayForm.invoice, 'РФ'),
+    )
+    pay_form = models.CharField(max_length=100,
+                                default=PayForm.taxfree,
+                                choices=PAY_CHOICE,
+                                verbose_name='Форма оплати',
+                                help_text='Оберіть форму оплати',
+                                blank=True
+                                )
+    milege = models.PositiveIntegerField(null=True,
+                                         default=0,
+                                         verbose_name='пробіг (км)',
+                                         blank=True
+                                         )
+    milege_price_executor = models.PositiveIntegerField(null=True,
+                                                        verbose_name='грн за км монтажнику',
+                                                        help_text='Сума компенсації за пробіг монтажнику\nПоле '
+                                                                  'заповниться автоматично, вводити нічого не '
+                                                                  'потрібно',
+                                                        blank=True
+                                                        )
+
+    milege_price_client = models.PositiveIntegerField(null=True,
+                                                      verbose_name='грн за км клієнту',
+                                                      help_text='Вартість пробігу для клієнта\nПоле заповниться '
+                                                                'автоматично, вводити нічого не потрібно',
+                                                      blank=True
+                                                      )
+
+    add_costs_executor = models.PositiveIntegerField(null=True,
+                                                     verbose_name='грн за ДВ \nмонтажнику',
+                                                     help_text='Сума коомпенсації за додаткові витрати монтажнику',
+                                                     blank=True
+                                                     )
+    add_costs_client = models.PositiveIntegerField(null=True,
+                                                   verbose_name='грн за ДВ \nклієнту',
+                                                   help_text='Вартість додаткових витрат для клієнта',
+                                                   blank=True
+                                                   )
+    description_add_costs = models.CharField(null=True,
+                                             max_length=100,
+                                             verbose_name='Список додаткових витрат',
+                                             help_text='',
+                                             blank=True
+                                             )
+    month_executor_pay = models.DateField(null=True,
+                                          verbose_name='місяць/рік ЗП',
+                                          help_text='місяць нарахування ЗП монтажнику',
+                                          blank=True
+                                          )
+    sum_price_client = models.PositiveIntegerField(null=True,
+                                                   verbose_name='сума рахунку',
+                                                   help_text='сума рахунку для клієнта\nПоле заповниться автоматично, '
+                                                             'вводити нічого не потрібно',
+                                                   blank=True
+                                                   )
+
+    amount_gps = models.PositiveIntegerField(null=True,
+                                             default=0,
+                                             verbose_name='кіл-ть СКТ',
+                                             help_text='введіть кількість ТІЛЬКИ ЯКЩО ПРОЕКТ',
+                                             blank=True
+                                             )
+    amount_fuel_sensor = models.PositiveIntegerField(null=True,
+                                                     default=0,
+                                                     verbose_name='кіл-ть ДВРП',
+                                                     help_text='введіть кількість ТІЛЬКИ ЯКЩО ПРОЕКТ',
+                                                     blank=True
+                                                     )
+
+    # date_payment:
+    def clean(self):
+        if (self.amount_gps != 0 or self.amount_fuel_sensor != 0) and self.type_of_work != self.TypeWork.project:
+            raise ValidationError('Кількість СКТ да ДВРП не потрібно рахувати якщо ЗН не Проект')
+        if self.type_of_work != self.TypeWork.project and self.project:
+            raise ValidationError('Не можливо приєднати проект, якщо тип ЗН не Проект')
+
+    def save(self, *args, **kwargs):
+        self.milege_price_executor = self.milege * 4.5
+        if self.pay_form == self.PayForm.taxfree:
+            self.milege_price_client = self.milege * 4.5
+        else:
+            self.milege_price_client = self.milege * 5.4
+
+        super(WorkOrder, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return 'ЗН №{}, від {}'.format(
+            self.number,
+            self.date,
+        )
+
+    class Meta:
+        verbose_name_plural = "Заказ-Наряди"
+
+
+class CompletedWorks(models.Model):
+    work_order = models.ForeignKey(WorkOrder,
+                                   null=True,
+                                   on_delete=models.CASCADE,
+                                   verbose_name='ЗН',
+                                   related_name='list_works',
+                                   blank=True
+                                   )
+
+    car = models.ForeignKey(Vehicle,
+                            null=True,
+                            on_delete=models.CASCADE,
+                            verbose_name='ТЗ',
+                            related_name='service_works',
+                            blank=True
+                            )
+
+    type_service = models.ForeignKey(Service,
+                                     on_delete=models.CASCADE,
+                                     verbose_name='виконані роботи',
+                                     related_name='completed_works'
+                                     )
+
+    used_equipment = models.ManyToManyField(Equipment,
+                                            null=True,
+                                            verbose_name='використане обладнання',
+                                            related_name='used_equipment',
+                                            blank=True
+                                            )
+
+    class Payer:
+        client = 'Клієнт'
+        ckt = 'СКТ'
+        executor = 'монтажник'
+        manufacturer = 'виробник'
+
+    PAYER_CHOICE = (
+        (Payer.client, 'Клієнт'),
+        (Payer.ckt, 'СКТ'),
+        (Payer.executor, 'монтажник'),
+        (Payer.manufacturer, 'виробник'),
+    )
+    payer = models.CharField(max_length=100,
+                             default=Payer.client,
+                             choices=PAYER_CHOICE,
+                             verbose_name='Платник',
+                             help_text='Оберіть платника'
+                             )
+
+    gps = models.ForeignKey(Gps,
+                            null=True,
+                            on_delete=models.CASCADE,
+                            verbose_name='БР',
+                            related_name='gps_project_works',
+                            blank=True
+                            )
+
+    fuel_sensor = models.ForeignKey(FuelSensor,
+                                    null=True,
+                                    on_delete=models.CASCADE,
+                                    verbose_name='ДВРП',
+                                    related_name='fuel_sensor_project_works',
+                                    blank=True
+                                    )
+    info = models.CharField(max_length=100,
+                            null=True,
+                            verbose_name='додаткова інформація\nз протоколу огляду',
+                            blank=True
+                            )
+
+    def __str__(self):
+        return '{} {} {} {} {} {}'.format(
+            self.car,
+            self.type_service,
+            self.gps,
+            self.fuel_sensor,
+            self.used_equipment,
+            self.payer
+        )
+
+    class Meta:
+        verbose_name_plural = "Список виконаних робіт"
+
+
 class ServicePlan(models.Model):
     date_create = models.DateField(verbose_name='Дата',
                                    default=date.today(),
@@ -170,11 +417,12 @@ class ServicePlan(models.Model):
 
     type_of_delivery = models.CharField(max_length=100,
                                         null=True,
+                                        default=Delivery.personal_car,
                                         choices=DELIVERY_CHOICE,
                                         verbose_name='Спосіб проїду',
                                         )
 
-    tasks = models.CharField(max_length=100,
+    tasks = models.TextField(max_length=1000,
                              null=True,
                              verbose_name='Задачі',
                              help_text='Опишіть перелік запланованих робіт',
@@ -215,9 +463,8 @@ class ServicePlan(models.Model):
     respons_manager = models.ForeignKey(User,
                                         null=True,
                                         on_delete=models.CASCADE,
-                                        verbose_name='Відповідальний менеджер',
+                                        verbose_name='Відповідальний',
                                         related_name='wo_plan_response',
-                                        blank=True
                                         )
 
     wo_numb = models.PositiveIntegerField(null=True,
@@ -227,6 +474,7 @@ class ServicePlan(models.Model):
                                           )
 
     date_ex = models.DateField(verbose_name='Дата виконання',
+                               null=True,
                                help_text='Введіть дату',
                                blank=True
                                )
@@ -252,255 +500,19 @@ class ServicePlan(models.Model):
                               null=True,
                               choices=STATUSWOPLAN_CHOICE,
                               verbose_name='Статус виконання',
+                              blank=True
                               )
 
     def clean(self):
         if self.city is None and self.district is None:
-            raise ValidationError('Має бути обране або область або місто')
+            raise ValidationError('Оберіть або область або місто')
         elif self.city and self.district:
             raise ValidationError('Оберіть щось одне або область або місто')
 
-
-class WorkOrder(models.Model):
-    date = models.DateField(verbose_name='Дата ЗН',
-                            help_text='Введіть дату',
-                            )
-    number = models.PositiveIntegerField(null=True,
-                                         verbose_name='№',
-                                         help_text='Номер ЗН',
-                                         blank=True
-                                         )
-
-    class TypeWork:
-        project = 'Проект'
-        service = 'Сервіс'
-
-    TYPE_WORK_CHOICE = (
-        (TypeWork.project, 'Проект'),
-        (TypeWork.service, 'Сервіс'),
-    )
-    type_of_work = models.CharField(max_length=100,
-                                    default=TypeWork.project,
-                                    choices=TYPE_WORK_CHOICE,
-                                    verbose_name='Тип ЗН (Проект/Сервіc)',
-                                    help_text='Оберіть тип',
-
-                                    )
-    project = models.ForeignKey(Project,
-                                null=True,
-                                on_delete=models.CASCADE,
-                                verbose_name='Проект',
-                                related_name='work_orders',
-                                blank=True
-                                )
-
-    executor = models.ForeignKey(User,
-                                 null=True,
-                                 on_delete=models.CASCADE,
-                                 verbose_name='виконавець',
-                                 related_name='work_orders',
-                                 blank=True
-                                 )
-    client = models.ForeignKey(Client,
-                               null=True,
-                               on_delete=models.CASCADE,
-                               verbose_name='клієнт',
-                               related_name='work_orders',
-                               blank=True,
-                               )
-
-    price_of_completed_works = models.PositiveIntegerField(null=True,
-                                                           verbose_name='сума за виконані роботи',
-                                                           help_text='Поле заповниться автоматично, вводити нічого не '
-                                                                     'потрібно',
-                                                           blank=True
-                                                           )
-    price_of_used_equipment = models.PositiveIntegerField(null=True,
-                                                          verbose_name='Сума за використане обладнання',
-                                                          help_text='Поле заповниться автоматично, вводити нічого не '
-                                                                    'потрібно',
-                                                          blank=True
-                                                          )
-
-    class PayForm:
-        taxfree = 'БК'
-        invoice = 'РФ'
-
-    PAY_CHOICE = (
-        (PayForm.taxfree, 'КО'),
-        (PayForm.invoice, 'РФ'),
-    )
-    pay_form = models.CharField(max_length=100,
-                                default=PayForm.taxfree,
-                                choices=PAY_CHOICE,
-                                verbose_name='Форма оплати',
-                                help_text='Оберіть форму оплати',
-                                blank=True
-                                )
-    milege = models.PositiveIntegerField(null=True,
-                                         default=0,
-                                         verbose_name='пробіг (км)',
-                                         blank=True
-                                         )
-    milege_price_executor = models.PositiveIntegerField(null=True,
-                                                        verbose_name='грн за км монтажнику',
-                                                        help_text='Сума компенсації за пробіг монтажнику\nПоле '
-                                                                  'заповниться автоматично, вводити нічого не '
-                                                                  'потрібно',
-                                                        blank=True
-                                                        )
-
-    milege_price_client = models.PositiveIntegerField(null=True,
-                                                      verbose_name='грн за км клієнту',
-                                                      help_text='Вартість пробігу для клієнта\nПоле заповниться '
-                                                                'автоматично, вводити нічого не потрібно',
-                                                      blank=True
-                                                      )
-
-    add_costs_executor = models.PositiveIntegerField(null=True,
-                                                     verbose_name='грн за ДВ \nмонтажнику',
-                                                     help_text='Сума коомпенсації за додаткові витрати монтажнику',
-                                                     blank=True
-                                                     )
-    add_costs_client = models.PositiveIntegerField(null=True,
-                                                   verbose_name='грн за ДВ \nклієнту',
-                                                   help_text='Вартість додаткових витрат для клієнта',
-                                                   blank=True
-                                                   )
-    description_add_costs = models.CharField(null=True,
-                                             max_length=100,
-                                             verbose_name='Список додаткових витрат',
-                                             help_text='',
-                                             blank=True
-                                             )
-    month_executor_pay = models.DateField(verbose_name='місяць/рік ЗП',
-                                          help_text='місяць нарахування ЗП монтажнику',
-                                          )
-    sum_price_client = models.PositiveIntegerField(null=True,
-                                                   verbose_name='сума рахунку',
-                                                   help_text='сума рахунку для клієнта\nПоле заповниться автоматично, '
-                                                             'вводити нічого не потрібно',
-                                                   blank=True
-                                                   )
-
-    amount_gps = models.PositiveIntegerField(null=True,
-                                             default=0,
-                                             verbose_name='кіл-ть СКТ',
-                                             help_text='введіть кількість ТІЛЬКИ ЯКЩО ПРОЕКТ',
-                                             blank=True
-                                             )
-    amount_fuel_sensor = models.PositiveIntegerField(null=True,
-                                                     default=0,
-                                                     verbose_name='кіл-ть ДВРП',
-                                                     help_text='введіть кількість ТІЛЬКИ ЯКЩО ПРОЕКТ',
-                                                     blank=True
-                                                     )
-
-    # date_payment:
-    def clean(self):
-        if (self.amount_gps != 0 or self.amount_fuel_sensor != 0) and self.type_of_work != self.TypeWork.project:
-            raise ValidationError('Кількість СКТ да ДВРП не потрібно рахувати якщо ЗН не Проект')
-        if self.type_of_work != self.TypeWork.project and self.project:
-            raise ValidationError('Не можливо приєднати проект, якщо тип ЗН не Проект')
-
     def save(self, *args, **kwargs):
-        self.milege_price_executor = self.milege * 4.5
-        if self.pay_form == self.PayForm.taxfree:
-            self.milege_price_client = self.milege * 4.5
-        else:
-            self.milege_price_client = self.milege * 5.4
-
-        super(WorkOrder, self).save(*args, **kwargs)
-
-    def __str__(self):
-        return 'ЗН №{}, від {}'.format(
-            self.number,
-            self.date,
-        )
+        if self.status == self.StatusWOPlan.executed:
+            WorkOrder.objects.create(date=self.date_ex, number=self.wo_numb, executor=self.executor)
+        super().save(*args, **kwargs)
 
     class Meta:
-        verbose_name_plural = "Заказ-Наряди"
-
-
-class CompletedWorks(models.Model):
-    work_order = models.ForeignKey(WorkOrder,
-                                   null=True,
-                                   on_delete=models.CASCADE,
-                                   verbose_name='ЗН',
-                                   related_name='list_works',
-                                   blank=True
-                                   )
-
-    car = models.ForeignKey(Vehicle,
-                            null=True,
-                            on_delete=models.CASCADE,
-                            verbose_name='ТЗ',
-                            related_name='service_works',
-                            blank=True
-                            )
-
-    type_service = models.ForeignKey(Service,
-                                     on_delete=models.CASCADE,
-                                     verbose_name='виконані роботи',
-                                     related_name='completed_works'
-                                     )
-
-    used_equipment = models.ManyToManyField(Equipment,
-                                            null=True,
-                                            verbose_name='використане обладнання',
-                                            related_name='used_equipment',
-                                            blank=True
-                                            )
-
-    class Payer:
-        client = 'Клієнт'
-        ckt = 'СКТ'
-        executor = 'монтажник'
-        manufacturer = 'виробник'
-
-    PAYER_CHOICE = (
-        (Payer.client, 'Клієнт'),
-        (Payer.ckt, 'СКТ'),
-        (Payer.executor, 'монтажник'),
-        (Payer.manufacturer, 'виробник'),
-    )
-    payer = models.CharField(max_length=100,
-                             default=Payer.client,
-                             choices=PAYER_CHOICE,
-                             verbose_name='Платник',
-                             help_text='Оберіть платника'
-                             )
-
-    gps = models.ForeignKey(Gps,
-                            null=True,
-                            on_delete=models.CASCADE,
-                            verbose_name='БР',
-                            related_name='gps_project_works',
-                            blank=True
-                            )
-
-    fuel_sensor = models.ForeignKey(FuelSensor,
-                                    null=True,
-                                    on_delete=models.CASCADE,
-                                    verbose_name='ДВРП',
-                                    related_name='fuel_sensor_project_works',
-                                    blank=True
-                                    )
-    info = models.CharField(max_length=100,
-                            null=True,
-                            verbose_name='додаткова інформація\nз протоколу огляду',
-                            blank=True
-                            )
-
-    def __str__(self):
-        return '{} {} {} {} {} {}'.format(
-            self.car,
-            self.type_service,
-            self.gps,
-            self.fuel_sensor,
-            self.used_equipment,
-            self.payer
-        )
-
-    class Meta:
-        verbose_name_plural = "Список виконаних робіт"
+        verbose_name_plural = "План сервісних робіт"

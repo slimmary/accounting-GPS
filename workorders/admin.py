@@ -1,6 +1,42 @@
 from django.contrib import admin
-from .models import CompletedWorks, WorkOrder
+from .models import CompletedWorks, WorkOrder, ServicePlan
 from django.utils.html import format_html
+
+
+class ServicePlanAdmin(admin.ModelAdmin):
+    list_per_page = 50
+    list_display = (
+        'date_create',
+        'type_of_service',
+        'get_distrit_or_city',
+        'type_of_delivery',
+        'tasks',
+        'date_planing',
+        'time',
+        'client',
+        'adress',
+        'get_contacts',
+        'respons_manager',
+        'wo_numb',
+        'date_ex',
+        'executor',
+        'status'
+    )
+
+    def get_contacts(self,obj):
+        if obj.contact_2:
+            return obj.contact, obj.contact_2
+        return obj.contact
+
+    get_contacts.short_description = 'контакти'
+    get_contacts.allow_tags = True
+
+    def get_distrit_or_city(self, obj):
+        if obj.city:
+            return obj.city
+        return obj.district
+
+    get_distrit_or_city.short_description = 'регіон'
 
 
 class CompletedWorksInline(admin.TabularInline):
@@ -71,3 +107,4 @@ class WorkOrderAdmin(admin.ModelAdmin):
 
 admin.site.register(CompletedWorks, CompletedWorksAdmin)
 admin.site.register(WorkOrder, WorkOrderAdmin)
+admin.site.register(ServicePlan, ServicePlanAdmin)
