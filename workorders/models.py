@@ -34,7 +34,7 @@ class WorkOrder(models.Model):
         (TypeWork.service, 'Сервіс'),
     )
     type_of_work = models.CharField(max_length=100,
-                                    default=TypeWork.project,
+                                    default=TypeWork.service,
                                     choices=TYPE_WORK_CHOICE,
                                     verbose_name='Тип ЗН (Проект/Сервіc)',
                                     help_text='Оберіть тип',
@@ -165,6 +165,10 @@ class WorkOrder(models.Model):
             self.milege_price_client = self.milege * 4.5
         else:
             self.milege_price_client = self.milege * 5.4
+        if self.type_of_work == self.TypeWork.project:
+            if self.project:
+                if self.project.project_invoice:
+                    self.pay_form = self.project.project_invoice.pay_form
 
         super(WorkOrder, self).save(*args, **kwargs)
 
@@ -242,6 +246,7 @@ class CompletedWorks(models.Model):
                                     related_name='fuel_sensor_project_works',
                                     blank=True
                                     )
+
     info = models.CharField(max_length=100,
                             null=True,
                             verbose_name='додаткова інформація\nз протоколу огляду',
@@ -508,10 +513,12 @@ class ServicePlan(models.Model):
             raise ValidationError('Оберіть або область або місто')
         elif self.city and self.district:
             raise ValidationError('Оберіть щось одне або область або місто')
+        if self.status and self.date_ex is None:
+            raise ValidationError('Оберіть дату виконання або зміни статусу')
 
     def save(self, *args, **kwargs):
         if self.status == self.StatusWOPlan.executed:
-            WorkOrder.objects.create(date=self.date_ex, number=self.wo_numb, executor=self.executor)
+            WorkOrder.objects.create(date=self.date_ex, number=self.wo_numb, executor=self.executor, client=self.client)
         super().save(*args, **kwargs)
 
     class Meta:
