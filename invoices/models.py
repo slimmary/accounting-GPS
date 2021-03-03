@@ -56,12 +56,12 @@ class Invoices(models.Model):
 
 
 class Invoice(Invoices):
-    work_order = models.ForeignKey(WorkOrder,
-                                   null=True,
-                                   on_delete=models.CASCADE,
-                                   verbose_name='ЗН',
-                                   related_name='invoice_workorder',
-                                   blank=True)
+    wo = models.ForeignKey(WorkOrder,
+                           null=True,
+                           on_delete=models.CASCADE,
+                           verbose_name='ЗН',
+                           related_name='invoice_workorder',
+                           blank=True)
 
     def __str__(self):
         return 'РФ №{} від {} '.format(self.number, self.date)

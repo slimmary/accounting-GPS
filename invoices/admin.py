@@ -20,9 +20,9 @@ class InvoiceAdmin(admin.ModelAdmin):
 
         def queryset(self, request, queryset):
             if self.value() == 'СКТ':
-                return queryset.filter(client=None)
+                return queryset.filter(wo__client=None)
             elif self.value():
-                return queryset.filter(Q(client_id=self.value()))
+                return queryset.filter(Q(wo__client_id=self.value()))
             else:
                 return queryset
 
@@ -39,15 +39,16 @@ class InvoiceAdmin(admin.ModelAdmin):
 
         def queryset(self, request, queryset):
             if self.value() == 'СКТ':
-                return queryset.filter(client=None)
+                return queryset.filter(wo__client=None)
             elif self.value():
-                return queryset.filter(Q(client_id=self.value()))
+                return queryset.filter(Q(wo__client_id=self.value()))
             else:
                 return queryset
 
     list_per_page = 20
     list_display = ('number',
                     'date',
+                    'wo',
                     'get_client_name',
                     'get_client_login',
                     'invoice_sum',
@@ -60,13 +61,13 @@ class InvoiceAdmin(admin.ModelAdmin):
                    )
 
     def get_client_name(self, obj):
-        return obj.subscription.client.name
+        return obj.wo.client.name
 
     get_client_name.admin_order_field = 'client'
     get_client_name.short_description = 'Клієнт'
 
     def get_client_login(self, obj):
-        return obj.subscription.client.login
+        return obj.wo.client.login
 
     get_client_login.admin_order_field = 'client_login'
     get_client_login.short_description = 'Login'
@@ -86,9 +87,9 @@ class SubInvoiceAdmin(admin.ModelAdmin):
 
         def queryset(self, request, queryset):
             if self.value() == 'СКТ':
-                return queryset.filter(client=None)
+                return queryset.filter(subscription__client=None)
             elif self.value():
-                return queryset.filter(Q(client_id=self.value()))
+                return queryset.filter(Q(subscription__client_id=self.value()))
             else:
                 return queryset
 
@@ -105,9 +106,9 @@ class SubInvoiceAdmin(admin.ModelAdmin):
 
         def queryset(self, request, queryset):
             if self.value() == 'СКТ':
-                return queryset.filter(client=None)
+                return queryset.filter(subscription__client=None)
             elif self.value():
-                return queryset.filter(Q(client_id=self.value()))
+                return queryset.filter(Q(subscription__client_id=self.value()))
             else:
                 return queryset
 
@@ -154,9 +155,9 @@ class ProjectInvoiceAdmin(admin.ModelAdmin):
 
         def queryset(self, request, queryset):
             if self.value() == 'СКТ':
-                return queryset.filter(client=None)
+                return queryset.filter(project_to__client=None)
             elif self.value():
-                return queryset.filter(Q(client_id=self.value()))
+                return queryset.filter(Q(project_to__client_id=self.value()))
             else:
                 return queryset
 
@@ -173,9 +174,9 @@ class ProjectInvoiceAdmin(admin.ModelAdmin):
 
         def queryset(self, request, queryset):
             if self.value() == 'СКТ':
-                return queryset.filter(client=None)
+                return queryset.filter(project_to__client=None)
             elif self.value():
-                return queryset.filter(Q(client_id=self.value()))
+                return queryset.filter(Q(project_to__client_id=self.value()))
             else:
                 return queryset
 
@@ -219,5 +220,6 @@ class ProjectInvoiceAdmin(admin.ModelAdmin):
     get_link_client.short_description = 'Платник'
 
 
+admin.site.register(Invoice, InvoiceAdmin)
 admin.site.register(SubInvoice, SubInvoiceAdmin)
 admin.site.register(ProjectInvoice, ProjectInvoiceAdmin)
