@@ -1,12 +1,12 @@
 from django.contrib import admin
-from invoices.models import SubInvoice, ProjectInvoice
+from invoices.models import SubInvoice, ProjectInvoice, Invoice
 from clients.models import Client
 from django.db.models import Q
 from django.utils.html import format_html
 from datetime import date
 
 
-class SubInvoiceAdmin(admin.ModelAdmin):
+class InvoiceAdmin(admin.ModelAdmin):
     class LoginListFilter(admin.SimpleListFilter):
         title = 'login власника'
         parameter_name = 'client_login'
@@ -20,9 +20,9 @@ class SubInvoiceAdmin(admin.ModelAdmin):
 
         def queryset(self, request, queryset):
             if self.value() == 'СКТ':
-                return queryset.filter(client=None)
+                return queryset.filter(wo__client=None)
             elif self.value():
-                return queryset.filter(Q(client_id=self.value()))
+                return queryset.filter(Q(wo__client_id=self.value()))
             else:
                 return queryset
 
@@ -39,9 +39,76 @@ class SubInvoiceAdmin(admin.ModelAdmin):
 
         def queryset(self, request, queryset):
             if self.value() == 'СКТ':
-                return queryset.filter(client=None)
+                return queryset.filter(wo__client=None)
             elif self.value():
-                return queryset.filter(Q(client_id=self.value()))
+                return queryset.filter(Q(wo__client_id=self.value()))
+            else:
+                return queryset
+
+    list_per_page = 20
+    list_display = ('number',
+                    'date',
+                    'wo',
+                    'get_client_name',
+                    'get_client_login',
+                    'invoice_sum',
+                    'status_payment',
+                    )
+    list_filter = ('date',
+                   LoginListFilter,
+                   ClientNameListFilter,
+                   'status_payment',
+                   )
+
+    def get_client_name(self, obj):
+        return obj.wo.client.name
+
+    get_client_name.admin_order_field = 'client'
+    get_client_name.short_description = 'Клієнт'
+
+    def get_client_login(self, obj):
+        return obj.wo.client.login
+
+    get_client_login.admin_order_field = 'client_login'
+    get_client_login.short_description = 'Login'
+
+
+class SubInvoiceAdmin(admin.ModelAdmin):
+    class LoginListFilter(admin.SimpleListFilter):
+        title = 'login власника'
+        parameter_name = 'client_login'
+
+        def lookups(self, request, model_admin):
+            list_tuple = []
+            for client in Client.objects.all():
+                list_tuple.append((client.id, client.login.title()))
+            list_tuple.append(('СКТ', 'СКТ'))
+            return list_tuple
+
+        def queryset(self, request, queryset):
+            if self.value() == 'СКТ':
+                return queryset.filter(subscription__client=None)
+            elif self.value():
+                return queryset.filter(Q(subscription__client_id=self.value()))
+            else:
+                return queryset
+
+    class ClientNameListFilter(admin.SimpleListFilter):
+        title = 'Назві власника'
+        parameter_name = 'clients_name'
+
+        def lookups(self, request, model_admin):
+            list_tuple = []
+            for client in Client.objects.all():
+                list_tuple.append((client.id, client.name.title()))
+            list_tuple.append(('СКТ', 'СКТ'))
+            return list_tuple
+
+        def queryset(self, request, queryset):
+            if self.value() == 'СКТ':
+                return queryset.filter(subscription__client=None)
+            elif self.value():
+                return queryset.filter(Q(subscription__client_id=self.value()))
             else:
                 return queryset
 
@@ -88,9 +155,9 @@ class ProjectInvoiceAdmin(admin.ModelAdmin):
 
         def queryset(self, request, queryset):
             if self.value() == 'СКТ':
-                return queryset.filter(client=None)
+                return queryset.filter(project_to__client=None)
             elif self.value():
-                return queryset.filter(Q(client_id=self.value()))
+                return queryset.filter(Q(project_to__client_id=self.value()))
             else:
                 return queryset
 
@@ -107,9 +174,9 @@ class ProjectInvoiceAdmin(admin.ModelAdmin):
 
         def queryset(self, request, queryset):
             if self.value() == 'СКТ':
-                return queryset.filter(client=None)
+                return queryset.filter(project_to__client=None)
             elif self.value():
-                return queryset.filter(Q(client_id=self.value()))
+                return queryset.filter(Q(project_to__client_id=self.value()))
             else:
                 return queryset
 
@@ -153,5 +220,6 @@ class ProjectInvoiceAdmin(admin.ModelAdmin):
     get_link_client.short_description = 'Платник'
 
 
+admin.site.register(Invoice, InvoiceAdmin)
 admin.site.register(SubInvoice, SubInvoiceAdmin)
 admin.site.register(ProjectInvoice, ProjectInvoiceAdmin)

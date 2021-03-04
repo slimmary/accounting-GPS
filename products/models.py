@@ -40,7 +40,6 @@ class ServiceAndEquipment(models.Model):
 
 
 class Equipment(ServiceAndEquipment):
-
     class Meta:
         verbose_name_plural = "Комплектуючі"
 
@@ -68,11 +67,13 @@ class Sim(models.Model):
         kiyvstar = 'Київстар'
         lifecell = 'Лайфсел'
         travelsim = 'Тревел-сім'
+        goodline = 'Гудлайн'
 
     OPERATOR_CHOICE = (
         (Operator.kiyvstar, 'Київстар'),
         (Operator.lifecell, 'Лайфсел'),
         (Operator.travelsim, 'Тревел-сім'),
+        (Operator.goodline, 'Гудлайн'),
     )
     operator = models.CharField(max_length=100,
                                 default=Operator.kiyvstar,
@@ -169,36 +170,27 @@ class Gps(models.Model):
         (Rate.own_sim, 'Власна сім'),
     )
 
-    sim_1 = models.OneToOneField(Sim,
-                                 null=True,
-                                 on_delete=models.CASCADE,
-                                 verbose_name='Сім_1',
-                                 related_name='gps_1',
-                                 blank=True
-                                 )
-
-    sim_2 = models.OneToOneField(Sim,
-                                 null=True,
-                                 on_delete=models.CASCADE,
-                                 verbose_name='Сім_2',
-                                 related_name='gps_2',
-                                 blank=True
-                                 )
-
-    rate_client_1 = models.CharField(null=True,
-                                     max_length=100,
-                                     default=Rate.own_sim,
-                                     verbose_name='Тариф 1',
-                                     help_text='Тариф заповниться автоматично нічого не потрібно вводити',
-                                     blank=True
-                                     )
-
-    rate_client_2 = models.CharField(null=True,
-                                     max_length=100,
-                                     verbose_name='Тариф 2',
-                                     help_text='Тариф заповниться автоматично нічого не потрібно вводити',
-                                     blank=True
-                                     )
+    sim_1 = models.ForeignKey(Sim,
+                              null=True,
+                              on_delete=models.CASCADE,
+                              verbose_name='Сім 1',
+                              related_name='gps_sim_1',
+                              blank=True
+                              )
+    sim_2 = models.ForeignKey(Sim,
+                              null=True,
+                              on_delete=models.CASCADE,
+                              verbose_name='Сім 2',
+                              related_name='gps_sim_2',
+                              blank=True
+                              )
+    rate_client = models.CharField(null=True,
+                                   choices=RATE_CHOICE,
+                                   max_length=100,
+                                   verbose_name='Тариф',
+                                   help_text='Тариф заповниться автоматично нічого не потрібно вводити',
+                                   blank=True
+                                   )
 
     rate_price = models.IntegerField(null=True,
                                      default=0,
@@ -208,86 +200,78 @@ class Gps(models.Model):
                                      )
 
     def clean(self):
-        # all_gps = Gps.objects.all()
-        # for gps in all_gps:
-        #     if self.number == gps.number:
-        #         raise ValidationError('БР з таким номером вже існує')
-        if self.sim_2 is not None:
-            if self.sim_1 is None:
-                if self.sim_2.operator != self.sim_2.Operator.travelsim:
-                    raise ValidationError('Сім_2 може бути тільки оператора "тревел-сім"')
-            else:
-                if self.sim_2.operator != self.sim_2.Operator.travelsim:
-                    raise ValidationError('Сім_2 може бути тільки оператора "тревел-сім" і тоді тариф_2 буде "Світ"')
-                elif self.sim_1.operator == self.sim_1.Operator.travelsim and self.sim_2.operator == self.sim_2.Operator.travelsim:
-                    raise ValidationError('Сім_1 та Сім_2 не можуть бути одночасно оператора "тревел-сім"')
+        if self.sim_1:
+            if self.sim_2:
+                if self.sim_2.operator == self.sim_2.Operator.lifecell or self.sim_2.operator == self.sim_2.Operator.kiyvstar:
+                    raise ValidationError('Сім 2 може бути тільки операторів Тревелсім або Гудлайн')
+                elif self.sim_1.operator == self.sim_1.Operator.travelsim or self.sim_1.operator == self.sim_1.Operator.goodline:
+                    raise ValidationError('Сім 1 не може бути операторів Тревелсім або Гудлайн, якщо Сім 2 додана')
+        else:
+            if self.sim_2:
+                raise ValidationError('Сім 2 може бути додана якщо Сім 1 не додана')
+        # if self.sim_1.gps_sim_1 or self.sim_1.gps_sim_2:
+        #     raise ValidationError('Сім 1 вже закріплена за іншим реєстратором')
+        # elif self.sim_2.gps_sim_1 or self.sim_2.gps_sim_2:
+        #     raise ValidationError('Сім 2 вже закріплена за іншим реєстратором')
 
     def save(self, *args, **kwargs):
-        # all_gps = Gps.objects.all()
-        try:
-            # for gps in all_gps:
-            #     if self.number != gps.number:
-            if self.rate_client_1 == self.Rate.pause and self.rate_client_2 == self.Rate.pause:
-                if self.owner.provider == self.owner.Provider.dyachuk or \
-                        self.owner.provider == self.owner.Provider.card:
-                    self.rate_price = 30
-                else:
-                    self.rate_price = 36
-            else:
+        if self.owner is None:
+            self.rate_client = 0
+        else:
+            if self.rate_client is None:
                 if self.sim_1 is None and self.sim_2 is None:
-                    self.rate_client_1 = self.Rate.own_sim
-                    self.rate_client_2 = None
-                elif self.sim_1 is not None and self.sim_2 is None:
-                    if self.sim_1.operator == self.sim_1.Operator.travelsim:
-                        self.rate_client_1 = self.Rate.ua
-                        self.rate_client_2 = self.Rate.world
+                    self.rate_client = self.Rate.own_sim
+                    if self.owner.provider == self.owner.Provider.dyachuk or self.owner.provider == self.owner.Provider.card:
+                        self.rate_price = 60
                     else:
-                        self.rate_client_1 = self.Rate.ua
-                        self.rate_client_2 = None
-                elif self.sim_1 is not None and self.sim_2 is not None:
-                    if self.sim_1.operator != self.sim_1.Operator.travelsim and self.sim_2.operator == self.sim_2.Operator.travelsim:
-                        self.rate_client_1 = self.Rate.ua
-                        self.rate_client_2 = self.Rate.world
-                    else:
-                        self.rate_client_1 = self.Rate.world
-                        self.rate_client_2 = None
+                        self.rate_price = 72
                 else:
-                    self.rate_client_1 = None
-                    self.rate_client_2 = self.Rate.world
-                if self.owner is None:
-                    self.rate_price = 0
-                else:
-                    if self.owner.provider == self.owner.Provider.dyachuk or \
-                            self.owner.provider == self.owner.Provider.card:
-                        if self.rate_client_1 == self.Rate.ua:
-                            price_1 = 120
-                        elif self.rate_client_1 == self.Rate.world:
-                            price_1 = 150
-                        elif self.rate_client_1 == self.Rate.own_sim:
-                            price_1 = 60
+                    if self.sim_2 is None:
+                        if self.owner.provider == self.owner.Provider.dyachuk or self.owner.provider == self.owner.Provider.card:
+                            if self.sim_1.operator == self.sim_1.Operator.travelsim or self.sim_1.operator ==  self.sim_1.Operator.goodline:
+                                self.rate_client = self.Rate.world
+                                self.rate_price = 270
+                            else:
+                                self.rate_client = self.Rate.ua
+                                self.rate_price = 120
                         else:
-                            price_1 = 0
-                        if self.rate_client_2 == self.Rate.world:
-                            price_2 = 150
-                        else:
-                            price_2 = 0
-                        self.rate_price = sum(price_1, price_2)
+                            if self.sim_1.operator == self.sim_1.Operator.travelsim or self.sim_1.operator == self.sim_1.Operator.goodline:
+                                self.rate_client = self.Rate.world
+                                self.rate_price =324
+                            else:
+                                self.rate_client = self.Rate.ua
+                                self.rate_price = 144
                     else:
-                        if self.rate_client_1 == self.Rate.ua:
-                            price_1 = 144
-                        elif self.rate_client_1 == self.Rate.world:
-                            price_1 = 180
-                        elif self.rate_client_1 == self.Rate.own_sim:
-                            price_1 = 72
+                        self.rate_client = self.Rate.world
+                        if self.owner.provider == self.owner.Provider.dyachuk or self.owner.provider == self.owner.Provider.card:
+                            self.rate_price = 270
                         else:
-                            price_1 = 0
-                        if self.rate_client_2 == self.Rate.world:
-                            price_2 = 180
-                        else:
-                            price_2 = 0
-                        self.rate_price = price_1 + price_2
-        except ValidationError:
-            raise ValidationError
+                            self.rate_price = 324
+            else:
+                if self.owner.provider == self.owner.Provider.dyachuk or self.owner.provider == self.owner.Provider.card:
+                    if self.rate_client == self.Rate.pause:
+                        self.rate_price = 30
+                    elif self.rate_client == self.Rate.world:
+                        self.rate_price = 270
+                    elif self.rate_client == self.Rate.ua:
+                        self.rate_price = 120
+                    elif self.rate_client == self.Rate.own_sim:
+                        self.rate_price = 60
+                    else:
+                        self.rate_price = 0
+
+                else:
+                    if self.rate_client == self.Rate.pause:
+                        self.rate_price = 36
+                    elif self.rate_client == self.Rate.world:
+                        self.rate_price = 324
+                    elif self.rate_client == self.Rate.ua:
+                        self.rate_price = 144
+                    elif self.rate_client == self.Rate.own_sim:
+                        self.rate_price = 72
+                    else:
+                        self.rate_price = 0
+
         super(Gps, self).save(*args, **kwargs)
 
     class Meta:
@@ -298,14 +282,70 @@ class Gps(models.Model):
 
 
 class FuelSensor(models.Model):
-    serial = models.CharField(max_length=128, verbose_name='Серія')
+    class Fuel_Type:
+        analog = 'аналоговый'
+        chastot = 'частотный'
+        cyfra = 'цифровой'
+
+    FUEL_TYPE = (
+        (Fuel_Type.analog, 'аналоговый'),
+        (Fuel_Type.chastot, 'частотный'),
+        (Fuel_Type.cyfra, 'цифровой'),
+    )
+    type = models.CharField(null=True,
+                            default=Fuel_Type.cyfra,
+                            choices=FUEL_TYPE,
+                            max_length=100,
+                            verbose_name='Тип датчика',
+                            help_text='Оберіть тип',
+                            blank=True
+                            )
+
+    class Serial:
+        h2 = '2'
+        h4 = '4'
+        h7 = '7'
+        h10 = '10'
+        h15 = '15'
+        h20 = '20'
+
+    FUEL_SERIAL = (
+        (Serial.h2, '2'),
+        (Serial.h4, '4'),
+        (Serial.h7, '7'),
+        (Serial.h10, '10'),
+        (Serial.h15, '15'),
+        (Serial.h20, '20'),
+    )
+    serial = models.CharField(null=True,
+                              default=Serial.h7,
+                              choices=FUEL_SERIAL,
+                              max_length=100,
+                              verbose_name='Серія',
+                              help_text='Оберіть серію (висоту)',
+                              blank=True
+                              )
     number = models.PositiveIntegerField(verbose_name="Номер", help_text='Введіть номер', )
     date_manufacturing = models.DateField(verbose_name='Дата виробництва', null=True, help_text='Оберіть дату',
                                           blank=True)
-    gps = models.ForeignKey(Gps, null=True, on_delete=models.CASCADE, verbose_name='БР', related_name='fuel_sensor', )
+    gps = models.ForeignKey(Gps,
+                            null=True,
+                            on_delete=models.CASCADE,
+                            verbose_name='БР',
+                            related_name='fuel_sensor',
+                            )
+    comments = models.CharField(null=True,
+                                verbose_name='Висота та інше',
+                                max_length=200,
+                                blank=True
+                                )
 
     class Meta:
         verbose_name_plural = "Датчики Вимірювання Рівня Пального (ДВРП)"
 
     def __str__(self):
-        return '{}-{}'.format(self.serial, self.number)
+        if self.type == self.Fuel_Type.cyfra:
+            return 'D{}-{}'.format(self.serial, self.number)
+        elif self.type == self.Fuel_Type.chastot:
+            return 'H{}-{}'.format(self.serial, self.number)
+        return 'стріла{}-{}'.format(self.serial, self.number)

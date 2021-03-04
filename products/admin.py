@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import Sim, Gps, FuelSensor, Equipment, Service
 from clients.models import Client
 from django.utils.html import format_html
+from django.urls import reverse
 from django.db.models import Q
 
 
@@ -38,10 +39,8 @@ class GpsAdmin(admin.ModelAdmin):
         'link_to_owner_name',
         'link_to_owner_login',
 
-        'sim_1',
-        'sim_2',
-        'rate_client_1',
-        'rate_client_2',
+        'get_link_sim',
+        'rate_client',
     )
 
     list_filter = (
@@ -58,10 +57,24 @@ class GpsAdmin(admin.ModelAdmin):
         'sim_2',
     ]
 
+    def get_link_sim(self, obj):
+        list_sim = []
+        if obj.sim_1:
+            list_sim.append(obj.sim_1)
+            if obj.sim_2:
+                list_sim.append(obj.sim_2)
+        else:
+            if obj.sim_2:
+                list_sim.append(obj.sim_2)
+        return format_html(", ".join(["<a href={}> {} \n</a>".format(reverse(
+                'admin:products_sim_change', args=(sim.pk,)), str(sim)) for sim in list_sim]))
+
+    get_link_sim.allow_tags = True
+    get_link_sim.short_description = 'сім'
+
     def rate_client_pause(self, request, queryset):
         for gps in queryset:
-            gps.rate_client_1 = gps.Rate.pause
-            gps.rate_client_2 = gps.Rate.pause
+            gps.rate_client = gps.Rate.pause
             gps.save()
 
     rate_client_pause.short_description = 'Встановити тариф "Пауза"'
@@ -90,13 +103,6 @@ class GpsAdmin(admin.ModelAdmin):
     link_to_owner_login.allow_tags = True
     link_to_owner_login.short_description = 'Власник Login'
 
-    def get_sim_numb(self, obj):
-        queryset = obj.sim.all()
-        sim = [i.number for i in queryset]
-        return sim
-
-    get_sim_numb.short_description = 'Сім-Картки номер'
-
     def get_gps_fuel(self, obj):
         queryset = obj.fuel_sensor.all()
         fuel = [i for i in queryset]
@@ -119,9 +125,9 @@ class SimAdmin(admin.ModelAdmin):
 
         def queryset(self, request, queryset):
             if self.value() == 'СКТ':
-                return queryset.filter(gps_1__owner=None)
+                return queryset.filter(Q(gps_sim_1__owner=None) | Q(gps_sim_2__owner=None))
             elif self.value():
-                return queryset.filter(Q(gps_1__owner__id=self.value()) | Q(gps_2__owner__id=self.value()))
+                return queryset.filter(Q(gps_sim_1__owner__id=self.value()) | Q(gps_sim_2__owner__id=self.value()))
             else:
                 return queryset
 
@@ -138,9 +144,9 @@ class SimAdmin(admin.ModelAdmin):
 
         def queryset(self, request, queryset):
             if self.value() == 'СКТ':
-                return queryset.filter(gps_1__owner=None)
+                return queryset.filter(Q(gps_sim_1__owner=None) | Q(gps_sim_2__owner=None))
             elif self.value():
-                return queryset.filter(Q(gps_1__owner__id=self.value()) | Q(gps_2__owner__id=self.value()))
+                return queryset.filter(Q(gps_sim_1__owner__id=self.value()) | Q(gps_sim_2__owner__id=self.value()))
             else:
                 return queryset
 
@@ -150,12 +156,12 @@ class SimAdmin(admin.ModelAdmin):
         'account_number',
         'installer',
         'date_given',
-        'gps_1',
-        'gps_2',
+        'gps_sim_1',
+        'gps_sim_2',
         LoginListFilter,
         ClientNameListFilter,
     )
-    search_fields = ['number', 'gps__number']
+    search_fields = ['number', 'gps_sim_1__number', 'gps_sim_2__number',]
     list_display = (
         'operator',
         'number',
@@ -163,62 +169,46 @@ class SimAdmin(admin.ModelAdmin):
         'date_receive',
         'installer',
         'date_given',
-        'link_to_gps_1',
-        'link_to_gps_2',
+        'link_to_gps',
         'link_to_owner_name',
         'link_to_owner_login',
     )
 
-    def link_to_gps_1(self, obj):
-        return format_html("<a href='../../products/gps/%s/change/' >%s</a>" % (str(obj.gps_1.id), str(obj.gps_1.number)))
+    def link_to_gps(self, obj):
+        if obj.gps_sim_1:
+            return format_html(", ".join(["<a href={}> {} \n</a>".format(reverse(
+                'admin:products_gps_change', args=(gps.pk,)), gps.number) for gps in obj.gps_sim_1.all()]))
+        elif obj.gps_sim_2:
+            return format_html(", ".join(["<a href={}> {} \n</a>".format(reverse(
+                'admin:products_gps_change', args=(gps.pk,)), gps.number) for gps in obj.gps_sim_2.all()]))
+        else:
+            return 'CKT'
 
-    link_to_gps_1.short_description = 'БР'
-
-    def link_to_gps_2(self, obj):
-        return format_html("<a href='../../products/gps/%s/change/' >%s</a>" % (str(obj.gps_2.id), str(obj.gps_2.number)))
-
-    link_to_gps_2.short_description = 'БР'
+    link_to_gps.allow_tags = True
+    link_to_gps.short_description = 'БР'
 
     def link_to_owner_name(self, obj):
-        if obj.gps_1 is None:
-            if obj.gps_2 is None:
-                return 'CKT'
-            else:
-                if obj.gps_2.owner is None:
-                    return 'CKT'
-                else:
-                    return format_html("<a href='../../clients/client/%s/change/' >%s</a>" % (
-                        str(obj.gps_2.owner.id), str(obj.gps_2.owner.name)))
+        if obj.gps_sim_1:
+            return format_html(", ".join(["<a href={}> {} \n</a>".format(reverse(
+                'admin:clients_client_change', args=(gps.owner.pk,)), gps.owner.name) for gps in obj.gps_sim_1.all()]))
+        elif obj.gps_sim_2:
+            return format_html(", ".join(["<a href={}> {} \n</a>".format(reverse(
+                'admin:clients_client_change', args=(gps.owner.pk,)), gps.owner.name) for gps in obj.gps_sim_2.all()]))
         else:
-            if obj.gps_1.owner is None:
-                return 'CKT'
-            else:
-                return format_html("<a href='../../clients/client/%s/change/' >%s</a>" % (
-                    str(obj.gps_1.owner.id), str(obj.gps_1.owner.name)))
+            return 'CKT'
 
     link_to_owner_name.allow_tags = True
     link_to_owner_name.short_description = 'Власник'
 
     def link_to_owner_login(self, obj):
-        if obj.gps_1 is None:
-            if obj.gps_2 is None:
-                return 'CKT'
-            else:
-                if obj.gps_2 is not None:
-                    if obj.gps_2.owner is None:
-                        return 'CKT'
-                    else:
-                        return format_html("<a href='../../clients/client/%s/change/' >%s</a>" % (
-                            str(obj.gps_2.owner.id), str(obj.gps_2.owner.login)))
+        if obj.gps_sim_1:
+            return format_html(", ".join(["<a href={}> {} \n</a>".format(reverse(
+                'admin:clients_client_change', args=(gps.owner.pk,)), gps.owner.login) for gps in obj.gps_sim_1.all()]))
+        elif obj.gps_sim_2:
+            return format_html(", ".join(["<a href={}> {} \n</a>".format(reverse(
+                'admin:clients_client_change', args=(gps.owner.pk,)), gps.owner.login) for gps in obj.gps_sim_2.all()]))
         else:
-            if obj.gps_1 is not None:
-                if obj.gps_1.owner is None:
-                    return 'CKT'
-                else:
-                    return format_html("<a href='../../clients/client/%s/change/' >%s</a>" % (
-                        str(obj.gps_1.owner.id), str(obj.gps_1.owner.login)))
-            else:
-                return 'CKT'
+            return 'CKT'
 
     link_to_owner_login.allow_tags = True
     link_to_owner_login.short_description = 'Login'
@@ -226,17 +216,18 @@ class SimAdmin(admin.ModelAdmin):
 
 class FuelSensorAdmin(admin.ModelAdmin):
     list_per_page = 20
-    fields = ('serial', 'number', 'date_manufacturing', 'gps')
     list_display = (
-        'serial',
-        'number',
+        'type',
+        'get_all_number',
         'date_manufacturing',
         'get_gps_number',
         'get_gps_vehicle',
         'link_to_owner_name',
         'link_to_owner_login',
+        'comments'
     )
     list_filter = (
+        'type',
         'date_manufacturing',
         'gps',
         'gps__owner__name',
@@ -247,6 +238,15 @@ class FuelSensorAdmin(admin.ModelAdmin):
         'gps__number',
         'gps__owner__login',
     ]
+
+    def get_all_number(self, obj):
+        if obj.type == obj.Fuel_Type.cyfra:
+            return 'D{}-{}'.format(obj.serial, obj.number)
+        elif obj.type == obj.Fuel_Type.chastot:
+            return 'H{}-{}'.format(obj.serial, obj.number)
+        return '{}-{}'.format(obj.serial, obj.number)
+
+    get_all_number.short_description = '№ ДВРП'
 
     def get_gps_number(self, obj):
         return obj.gps.number

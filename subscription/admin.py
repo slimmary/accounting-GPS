@@ -133,7 +133,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
 
     def get_invoice(self, obj):
         invoices = ''
-        queryset = obj.invoice.all()
+        queryset = obj.sub_invoice.all()
         for invoice in queryset:
             invoices += '№{} від {} на сумму {}грн ----|'.format(invoice.number, invoice.date, invoice.invoice_sum)
         return invoices

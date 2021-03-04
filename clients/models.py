@@ -192,7 +192,7 @@ class Client(models.Model):
         super(Client, self).save(*args, **kwargs)
 
     def __str__(self):
-        return '"{}"  /  логін: {}  '.format(
+        return '"{}"  /  {}  '.format(
             self.name,
             self.login,
 
@@ -200,6 +200,13 @@ class Client(models.Model):
 
     class Meta:
         verbose_name_plural = "Клієнти"
+
+
+class ClientProxyPayment(Client):
+
+    class Meta:
+        verbose_name_plural = "Клієнт зведені дані по оплатах"
+        proxy = True
 
 
 class ClientLegalDetail(models.Model):

@@ -1,8 +1,10 @@
 from django.contrib import admin
 from contracts.models import Contract
-from .models import Client, ClientAddress, ContactProfile, ClientLegalDetail
+from .models import Client, ClientAddress, ContactProfile, ClientLegalDetail, ClientProxyPayment
 from products.models import Gps
 from django.utils.html import format_html
+from django.urls import reverse
+from django.db.models import Q
 
 
 class ContactInline(admin.TabularInline):
@@ -19,7 +21,7 @@ class ClientLegalDetailInline(admin.StackedInline):
 class GpsInline(admin.StackedInline):
     list_per_page = 20
     model = Gps
-    fields = ('number', 'vehicle', 'rate_client_1', 'rate_client_2', 'rate_price')
+    fields = ('number', 'vehicle', 'rate_client', 'rate_price')
 
 
 class ContractInline(admin.StackedInline):
@@ -30,7 +32,7 @@ class ContractInline(admin.StackedInline):
 class ClientAdmin(admin.ModelAdmin):
     list_per_page = 20
     inlines = [ContractInline, GpsInline, ClientLegalDetailInline, ContactInline, ]
-    exclude = ('contacts', )
+    exclude = ('contacts',)
     list_display = (
         'name',
         'login',
@@ -46,7 +48,7 @@ class ClientAdmin(admin.ModelAdmin):
     )
 
     list_filter = ('type_notification_2', 'type_notification_1', 'status', 'name', 'login',)
-    search_fields = ['name', 'login', 'edrpou', 'login' ]
+    search_fields = ['name', 'login', 'edrpou', 'login']
 
     def get_all_gps(self, obj):
         queryset = obj.gps.all().count()
@@ -106,7 +108,7 @@ class ClientAddressAdmin(admin.ModelAdmin):
 
 
 class ContactProfileAdmin(admin.ModelAdmin):
-    inlines = [ContactInline,]
+    inlines = [ContactInline, ]
     list_per_page = 20
     list_display_links = ['get_clients', 'firstname', 'surname', 'patronymic', ]
     list_display = ('get_clients', 'firstname', 'surname', 'patronymic', 'position', 'phone', 'phone_2', 'email',)
@@ -123,6 +125,93 @@ class ContactProfileAdmin(admin.ModelAdmin):
     get_clients.allow_tags = True
 
 
+class ClientPaymentAdmin(admin.ModelAdmin):
+    inlines = [ContractInline, GpsInline, ClientLegalDetailInline, ContactInline, ]
+    list_per_page = 20
+    list_filter = ('name',
+                   'login'
+                   )
+    list_display = (
+        'name',
+        'login',
+        'get_non_payed_invoices',
+        'get_non_contracts',
+    )
+
+    def get_non_contracts(self, obj):
+        contacts_result = []
+        additions_result = []
+        for cont in obj.contracts_all.all().filter(
+                Q(status='Створений') | Q(status='Відправлений укрпоштою') |
+                Q(status='Відправлений НП') | Q(status='Відправлений на електронну пошту')):
+            contacts_result.append(cont)
+        display_text_1 = ", ".join([
+            "<a href={}>Дог.№{} від {} {} з {} {} \n</a>".format(
+                reverse('admin:contracts_contract_change', args=(cont.pk,)), cont.number,
+                cont.contract_date, cont.type, cont.provider, cont.status, )
+            for cont in contacts_result])
+        for cont in obj.contracts_all.all():
+            for add in cont.additions.all().filter(
+                    Q(status='Створений') | Q(status='Відправлений укрпоштою') |
+                    Q(status='Відправлений НП') | Q(status='Відправлений на електронну пошту')):
+                additions_result.append(add)
+        display_text_2 = ", ".join([
+            "<a href={}>ДУ №{} від {} до Дог.№{}від {} {} з {} {} \n</a>".format(
+                reverse('admin:contracts_additions_change', args=(add.pk,)), add.number,
+                add.contract_date, add.contract_to.number, add.contract_to.contract_date, add.contract_to,
+                add.contract_to.provider, add.status, )
+            for add in additions_result])
+
+        if display_text_1 or display_text_2:
+            return format_html(display_text_1 + display_text_2)
+        return '-'
+
+    get_non_contracts.short_description = "Договори та ДУ"
+    get_non_contracts.allow_tags = True
+
+    def get_non_payed_invoices(self, obj):
+        result_list_1 = []
+        result_list_2 = []
+        result_list_3 = []
+        for wo in obj.work_orders.all():
+            for inv in wo.invoice_workorder.all().filter(
+                    Q(status_payment='НЕ сплачено') | Q(status_payment='Частково сплачено')):
+                result_list_1.append(inv)
+        display_text_1 = ", ".join([
+            "<a href={}> №{} від {} на {}грн. за ремонтні роботи {} \n</a>".format(
+                reverse('admin:invoices_invoice_change', args=(inv.pk,)), inv.number, inv.date, inv.invoice_sum,
+                inv.status_payment, )
+            for inv in result_list_1])
+
+        for invoices in obj.proj_invoice.all().filter(
+                Q(status_payment='НЕ сплачено') | Q(status_payment='Частково сплачено')):
+            result_list_2.append(invoices)
+        display_text_2 = ", ".join([
+            "<a href={}> №{} від {} на {}грн. за придбання обладнання {} \n</a>".format(
+                reverse('admin:invoices_projectinvoice_change', args=(invoices.pk,)), invoices.number, invoices.date,
+                invoices.invoice_sum,
+                invoices.status_payment, )
+            for invoices in result_list_2])
+
+        for sub in obj.subscription.all():
+            for sub_inv in sub.sub_invoice.all().filter(
+                    Q(status_payment='НЕ сплачено') | Q(status_payment='Частково сплачено')):
+                result_list_3.append(sub_inv)
+        display_text_3 = ", ".join([
+            "<a href={}> №{} від {} на {}грн. за абонентське обслуговування {} \n</a>".format(
+                reverse('admin:invoices_subinvoice_change', args=(sub_inv.pk,)), sub_inv.number, sub_inv.date,
+                sub_inv.invoice_sum,
+                sub_inv.status_payment, )
+            for sub_inv in result_list_3])
+        if display_text_1 or display_text_2 or display_text_3:
+            return format_html(display_text_1 + display_text_2 + display_text_3)
+        return '-'
+
+    get_non_payed_invoices.short_description = "РФ до сплати"
+    get_non_payed_invoices.allow_tags = True
+
+
 admin.site.register(Client, ClientAdmin)
+admin.site.register(ClientProxyPayment, ClientPaymentAdmin)
 admin.site.register(ClientAddress, ClientAddressAdmin)
 admin.site.register(ContactProfile, ContactProfileAdmin)
