@@ -5,7 +5,6 @@ from projects.models import Project
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
 
-
 class AbstractContract(models.Model):
     number = models.IntegerField(verbose_name='Номер №',
                                  help_text='Введіть номер'
@@ -82,7 +81,7 @@ class Contract(AbstractContract):
                                 default=ProviderChoice.ckt,
                                 help_text='Оберіть постачальника', blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name='Покупець/Абонент',
-                               related_name='contracts')
+                               related_name='contracts_all')
     contract_project_to = models.OneToOneField(Project,
                                                null=True,
                                                on_delete=models.CASCADE,
@@ -132,7 +131,7 @@ class Additions(AbstractContract):
     #             raise ValidationError("до проекту не можливо додати ДУ, яка не відноситься до договору поставки")
 
     def __str__(self):
-        return '№{} від {}'.format(self.number, self.date)
+        return '№{} від {}'.format(self.number, self.contract_date)
 
     class Meta:
         verbose_name_plural = "Додаткові Угоди"

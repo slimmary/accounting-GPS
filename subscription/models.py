@@ -241,20 +241,19 @@ class Subscription(models.Model):
 
         def get_rate_ua(all_gps):
             for i in all_gps:
-                return all_gps.filter(rate_client_1=i.Rate.ua).count()
+                return all_gps.filter(rate_client=i.Rate.ua).count()
 
         def get_world(all_gps):
             for i in all_gps:
-                return all_gps.filter(rate_client_1=i.Rate.world).count() + all_gps.filter(
-                    rate_client_2=i.Rate.world).count()
+                return all_gps.filter(rate_client=i.Rate.world).count()
 
         def get_pause(all_gps):
             for i in all_gps:
-                return all_gps.filter(rate_client_1=i.Rate.pause).count()
+                return all_gps.filter(rate_client=i.Rate.pause).count()
 
         def get_own_sim(all_gps):
             for i in all_gps:
-                return all_gps.filter(rate_client_1=i.Rate.own_sim).count()
+                return all_gps.filter(rate_client=i.Rate.own_sim).count()
 
         def get_price(all_gps):
             return sum((gps.rate_price for gps in all_gps))
@@ -397,14 +396,12 @@ class Letters(models.Model):
     class Rate:
         ua = 'Україна'
         world = 'Світ'
-        ua_world = 'Україна+Світ'
         pause = 'Пауза'
         own_sim = 'Власна сім'
 
     RATE_CHOICE = (
         (Rate.ua, 'Україна'),
         (Rate.world, 'Світ'),
-        (Rate.ua_world, 'Україна+Світ'),
         (Rate.pause, 'Пауза'),
         (Rate.own_sim, 'Власна сім'),
     )

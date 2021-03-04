@@ -132,6 +132,7 @@ class ProjectInvoice(Invoices):
                                null=True,
                                on_delete=models.CASCADE,
                                verbose_name='Клієнт',
+                               related_name='proj_invoice',
                                help_text='Поле заповниться автоматично, вводити нічого не потрібно',
                                blank=True
                                )

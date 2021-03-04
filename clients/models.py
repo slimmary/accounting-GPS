@@ -202,6 +202,13 @@ class Client(models.Model):
         verbose_name_plural = "Клієнти"
 
 
+class ClientProxyPayment(Client):
+
+    class Meta:
+        verbose_name_plural = "Клієнт зведені дані по оплатах"
+        proxy = True
+
+
 class ClientLegalDetail(models.Model):
     IPN = models.CharField(null=True,
                            default=123456789012,

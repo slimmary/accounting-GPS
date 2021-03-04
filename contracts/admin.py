@@ -9,17 +9,30 @@ class AdditionsInline(admin.TabularInline):
 
 class AdditionsAdmin(admin.ModelAdmin):
     list_display = (
-        'contract_to',
         'number',
         'contract_date',
+        'get_contract_to_provider',
+        'get_contract_to',
         'get_client_name',
         'get_project',
 
     )
 
+    def get_contract_to(self, obj):
+        return '{} №{} від {} '.format(obj.contract_to.type, obj.contract_to.number, obj.contract_to.contract_date)
+
+    get_contract_to.allow_tags = True
+    get_contract_to.short_description = 'Договір до якого ДУ'
+
+    def get_contract_to_provider(self, obj):
+        return '{}'.format(obj.contract_to.provider)
+
+    get_contract_to_provider.allow_tags = True
+    get_contract_to_provider.short_description = 'Постачальник'
+
     def get_project(self, obj):
         if obj.contract_to.type == obj.contract_to.TypeChoice.project:
-            return obj.project_to
+            return obj.contract_to.contract_project_to
         return '-'
 
     get_project.short_description = 'проект'
