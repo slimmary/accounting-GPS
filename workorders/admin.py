@@ -1,6 +1,13 @@
 from django.contrib import admin
 from .models import CompletedWorks, WorkOrder, ServicePlan
 from django.utils.html import format_html
+from invoices.models import ProjectInvoice, Invoice
+
+
+class InvoiceInline(admin.TabularInline):
+    list_per_page = 20
+    model = Invoice
+    verbose_name_plural = 'РФ засервісні роботи'
 
 
 class ServicePlanAdmin(admin.ModelAdmin):
@@ -83,7 +90,7 @@ class CompletedWorksAdmin(admin.ModelAdmin):
 
 
 class WorkOrderAdmin(admin.ModelAdmin):
-    inlines = [CompletedWorksInline]
+    inlines = [CompletedWorksInline, InvoiceInline]
     list_per_page = 20
     list_filter = (
         'date',

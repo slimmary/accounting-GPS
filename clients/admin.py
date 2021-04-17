@@ -4,12 +4,15 @@ from .models import Client, ClientAddress, ContactProfile, ClientLegalDetail, Cl
 from products.models import Gps
 from django.utils.html import format_html
 from django.urls import reverse
+from django.utils.http import urlencode
 from django.db.models import Q
+from jet.admin import CompactInline
 
 
-class ContactInline(admin.TabularInline):
+class ContactInline(CompactInline):
     model = Client.contacts.through
     verbose_name_plural = "контактні особи < --- > клієнти"
+    show_change_link = True
 
 
 class ClientLegalDetailInline(admin.StackedInline):
@@ -134,9 +137,21 @@ class ClientPaymentAdmin(admin.ModelAdmin):
     list_display = (
         'name',
         'login',
+        'get_to_letters',
         'get_non_payed_invoices',
         'get_non_contracts',
     )
+
+    def get_to_letters(self, obj):
+        count = obj.letters.count()
+        url = (
+                reverse("admin:subscription_letters_changelist")
+                + "?"
+                + urlencode({"client__id": f"{obj.id}"})
+        )
+        return format_html('<a href="{}">{} звернень </a>', url, count)
+
+    get_to_letters.short_description = "звернення"
 
     def get_non_contracts(self, obj):
         contacts_result = []
@@ -166,7 +181,7 @@ class ClientPaymentAdmin(admin.ModelAdmin):
             return format_html(display_text_1 + display_text_2)
         return '-'
 
-    get_non_contracts.short_description = "Договори та ДУ"
+    get_non_contracts.short_description = "Дог./ДУ немає наявності"
     get_non_contracts.allow_tags = True
 
     def get_non_payed_invoices(self, obj):
@@ -207,7 +222,7 @@ class ClientPaymentAdmin(admin.ModelAdmin):
             return format_html(display_text_1 + display_text_2 + display_text_3)
         return '-'
 
-    get_non_payed_invoices.short_description = "РФ до сплати"
+    get_non_payed_invoices.short_description = "не сплачені РФ"
     get_non_payed_invoices.allow_tags = True
 
 

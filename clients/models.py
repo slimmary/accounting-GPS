@@ -104,7 +104,7 @@ class Client(models.Model):
     )
     provider = models.CharField(null=True,
                                 max_length=100,
-                                default=Provider.shevchuk,
+                                default=Provider.card,
                                 choices=PROVIDER_CHOICE,
                                 verbose_name='Постачальник з АП',
                                 help_text='Оберіть постачальника з абонплати'
@@ -205,7 +205,7 @@ class Client(models.Model):
 class ClientProxyPayment(Client):
 
     class Meta:
-        verbose_name_plural = "Клієнт зведені дані по оплатах"
+        verbose_name_plural = "Клієнт зведені дані"
         proxy = True
 
 
