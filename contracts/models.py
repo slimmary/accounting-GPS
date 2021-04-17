@@ -103,7 +103,6 @@ class Contract(AbstractContract):
         super(Contract, self).save(*args, **kwargs)
         Project.save(self.contract_project_to, *args, **kwargs)
 
-
     def __str__(self):
         return 'Договір {} №{} від {} між {} та {} {}'.format(
             self.type,
@@ -133,6 +132,14 @@ class Additions(AbstractContract):
                                     verbose_name='Основний договір до якого створено ДУ',
                                     related_name='additions',
                                     blank=True)
+
+    def save(self, *args, **kwargs):
+        if self.add_project_to is not None:
+            if self.status == self.StatusChoice.in_stock:
+                self.add_project_to.date_receipt_contract = self.status_date
+
+        super(Additions, self).save(*args, **kwargs)
+        Project.save(self.add_project_to, *args, **kwargs)
     #
     # def clean(self):
     #     if self.add_project_to:

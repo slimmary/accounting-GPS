@@ -1,7 +1,7 @@
 from django.db import models
 from datetime import date
 from clients.models import Client
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
 
 class Project(models.Model):
@@ -102,16 +102,6 @@ class Project(models.Model):
                 self.execution_status = self.ExecutionStatus.finished
             elif self.amount_gps > wo_amount_gps > 0 or self.amount_fuel_sensor > wo_amount_fuel_sensor > 0:
                 self.execution_status = self.ExecutionStatus.partly_executed
-        # try:
-        #     if self.project_contract is not None:
-        #         if self.project_contract.status == self.project_contract.StatusChoice.in_stock:
-        #             self.date_receipt_contract = self.project_contract.status_date
-        #     else:
-        #         if self.project_add_contract is not None:
-        #             if self.project_add_contract.status == self.project_add_contract.StatusChoice.in_stock:
-        #                 self.date_receipt_contract = self.project_add_contract.status_date
-        # except ObjectDoesNotExist:
-        #     pass
 
         super(Project, self).save(*args, **kwargs)
 
