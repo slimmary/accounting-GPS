@@ -42,7 +42,7 @@ class Invoices(models.Model):
     sum_payment = models.PositiveIntegerField(null=True,
                                               default=0,
                                               verbose_name='сума оплати',
-                                              help_text='Ведіть суму, якщо оплата часткова',
+                                              help_text='Ведіть суму',
                                               blank=True
                                               )
     date_payment = models.DateField(null=True,

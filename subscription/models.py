@@ -357,6 +357,7 @@ class Subscription(models.Model):
 
 
 class Letters(models.Model):
+
     date_letter = models.DateField(null=True,
                                    verbose_name='Дата листа',
                                    help_text='Оберіть дату'
@@ -419,10 +420,28 @@ class Letters(models.Model):
                                 help_text='Оберіть тариф на який змінюється',
                                 blank=True)
 
+    class Status:
+        finished = 'оброблено'
+        in_process = 'передано на обробку сервісний відділ'
+
+    STATUS_CHOICE = (
+         (Status.finished, 'оброблено'),
+         (Status.in_process, 'передано на обробку')
+    )
+
+    status = models.CharField(default=Status.in_process,
+                              max_length=100,
+                              choices=STATUS_CHOICE,
+                              verbose_name='Статус',
+                              help_text='Оберіть статус "оброблено", якщо не потрібно більше ніяких дій з '
+                                        'реєстратором на сервері')
+
     def clean(self):
         if self.gps.owner != self.client:
             raise ValidationError('Реєстратор не належить клієнту, ці данні не будуть збережені, оберіть реєстратор, '
                                   'який належить клієнту')
+        if self.gps_rate is not None and self.gps_rate == self.new_rate:
+            raise ValidationError('Тариф не змінено, оберіть тариф, який не встановлено на реєстратор')
 
     def save(self, *args, **kwargs):
         try:

@@ -111,10 +111,6 @@ class Project(models.Model):
                 if self.project_add_contract is not None:
                     if self.project_add_contract.status == self.project_add_contract.StatusChoice.in_stock:
                         self.date_receipt_contract = self.project_add_contract.status_date
-            if self.project_invoice.pay_form == self.project_invoice.PayForm.tax:
-                self.sum = self.amount_gps * 4200 + self.amount_fuel_sensor * 3240 + self.add_costs
-            else:
-                self.sum = self.amount_gps * 3500 + self.amount_fuel_sensor * 2700 + self.add_costs
         except ObjectDoesNotExist:
             pass
 

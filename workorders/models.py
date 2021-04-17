@@ -77,7 +77,7 @@ class WorkOrder(models.Model):
                                                           )
 
     class PayForm:
-        taxfree = 'БК'
+        taxfree = 'КО'
         invoice = 'РФ'
 
     PAY_CHOICE = (
@@ -160,11 +160,12 @@ class WorkOrder(models.Model):
             raise ValidationError('Не можливо приєднати проект, якщо тип ЗН не Проект')
 
     def save(self, *args, **kwargs):
-        self.milege_price_executor = self.milege * 4.5
-        if self.pay_form == self.PayForm.taxfree:
-            self.milege_price_client = self.milege * 4.5
-        else:
-            self.milege_price_client = self.milege * 5.4
+        if self.milege:
+            self.milege_price_executor = self.milege * 4.5
+            if self.pay_form == self.PayForm.taxfree:
+                self.milege_price_client = self.milege * 4.5
+            else:
+                self.milege_price_client = self.milege * 5.4
         if self.type_of_work == self.TypeWork.project:
             if self.project:
                 if self.project.project_invoice:

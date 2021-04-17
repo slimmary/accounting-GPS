@@ -14,10 +14,13 @@ class LettersAdmin(admin.ModelAdmin):
                     'get_action',
                     'gps_rate',
                     'get_new_rate',
+                    'status',
                     )
     list_filter = ('gps',
                    'date_letter',
                    'action',
+                   'status',
+                   'client__login',
                    )
     search_fields = ['get_client_name',
                      'get_client_login',
