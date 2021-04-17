@@ -40,7 +40,7 @@ class ProjectAdmin(admin.ModelAdmin):
         'client__name',
         'client__login',
         'project_invoice__number'
-                     ]
+    ]
     list_display = (
         'number',
         'project_status',
@@ -48,7 +48,8 @@ class ProjectAdmin(admin.ModelAdmin):
         'client',
         'amount_gps',
         'amount_fuel_sensor',
-        # 'get_amount_gps_wo',
+        'get_amount_gps_wo',
+        'get_amount_fuel_sensor_wo',
         'add_costs',
         'sum',
         'get_link_invoice',
@@ -64,19 +65,28 @@ class ProjectAdmin(admin.ModelAdmin):
         'notes'
     )
 
-    # def get_amount_gps_wo(self, obj):
-    #     sum_amount = 0
-    #     for i in obj.work_orders.all():
-    #         sum_amount += i.amount_gps
-    #     return sum_amount
-    #
-    # get_amount_gps_wo.short_description = 'встановлено СКТ'
+    def get_amount_gps_wo(self, obj):
+        sum_amount_gps = 0
+        for i in obj.work_orders.all():
+            sum_amount_gps += i.amount_gps
+            return sum_amount_gps
+
+    get_amount_gps_wo.short_description = 'встановлено СКТ'
+
+    def get_amount_fuel_sensor_wo(self, obj):
+        sum_amount_fuel_sensor = 0
+        for i in obj.work_orders.all():
+            sum_amount_fuel_sensor += i.amount_fuel_sensor
+        return sum_amount_fuel_sensor
+
+    get_amount_fuel_sensor_wo.short_description = 'встановлено ДВРП'
 
     def get_link_contract(self, obj):
 
         return format_html(
             "<a href='../../contracts/contract/%s/change/' >%s</a>" % (
-                str(obj.project_contract.id), 'Дог. №{} від {}'.format(obj.project_contract.number, obj.project_contract.contract_date,)))
+                str(obj.project_contract.id),
+                'Дог. №{} від {}'.format(obj.project_contract.number, obj.project_contract.contract_date, )))
 
     get_link_contract.admin_order_field = 'contract'
     get_link_contract.short_description = 'Договір'
@@ -126,15 +136,11 @@ class ProjectAdmin(admin.ModelAdmin):
     get_sum_payment.short_description = 'Сума оплати'
 
     def get_link_work_orders(self, obj):
-        sum_amount_gps = 0
-        sum_amount_fuel_sensor = 0
-        for i in obj.work_orders.all():
-            sum_amount_gps += i.amount_gps
-            sum_amount_fuel_sensor += i.amount_fuel_sensor
 
         display_text = ", ".join([
             "<a href={}>{} \nСКТ-{} ДВРП -{}\n</a>".format(
-                reverse('admin:workorders_workorder_change', args=(work_orders.pk,)), str(work_orders), sum_amount_gps, sum_amount_fuel_sensor )
+                reverse('admin:workorders_workorder_change', args=(work_orders.pk,)), str(work_orders),
+                work_orders.amount_gps, work_orders.amount_fuel_sensor)
             for work_orders in obj.work_orders.all()
         ])
         if display_text:
