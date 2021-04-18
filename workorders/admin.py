@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import CompletedWorks, WorkOrder, ServicePlan
 from django.utils.html import format_html
+from django.urls import reverse
 from invoices.models import ProjectInvoice, Invoice
 
 
@@ -57,27 +58,66 @@ class CompletedWorksAdmin(admin.ModelAdmin):
     list_display = (
         'work_order',
         'get_executor',
-        'get_client',
-        'car',
+        'get_link_client',
+        'get_link_vehicle',
         'type_service',
-        'gps',
-        'fuel_sensor',
+        'get_link_gps',
+        'get_link_fuelsensor',
         'get_used_equipment',
         'info',
         'payer',
     )
 
-    def get_client(self, obj):
-        return obj.work_order.client
+    list_filter = (
+        'gps',
+        'work_order__client',
+        'work_order__executor',
+        'work_order__date',
+        'type_service',
+    )
+    search_fields = [
+        'gps__number',
+        'fuel_sensor__number',
+        'work_order__number',
+    ]
 
-    get_client.short_description = 'Клієнт'
-    get_client.allow_tags = True
+    def get_link_fuelsensor(self, obj):
+        if obj.fuel_sensor:
+            return format_html(
+                "<a href='../../products/fuelsensor/%s/change/' >%s</a>" % (
+                    str(obj.fuel_sensor.id), str(obj.fuel_sensor)))
+        return "-"
+
+    get_link_fuelsensor.short_description = 'ДВРП'
+    get_link_fuelsensor.allow_tags = True
+
+    def get_link_gps(self, obj):
+        if obj.gps:
+            return format_html(
+                "<a href='../../products/gps/%s/change/' >%s</a>" % (
+                    str(obj.gps.id), str(obj.gps)))
+        return "-"
+
+    get_link_gps.short_description = 'БР'
+
+    def get_link_vehicle(self, obj):
+        return format_html(
+            "<a href='../../vehicle/vehicle/%s/change/' >%s</a>" % (
+                str(obj.car.id), str(obj.car)))
+
+    get_link_vehicle.short_description = 'Транспортний засіб'
+
+    def get_link_client(self, obj):
+        return format_html(
+            "<a href='../../clients/client/%s/change/' >%s</a>" % (
+                str(obj.work_order.client.id), str(obj.work_order.client)))
+
+    get_link_client.short_description = 'Клієнт'
 
     def get_executor(self, obj):
         return obj.work_order.executor
 
     get_executor.short_description = 'виконавець'
-    get_executor.allow_tags = True
 
     def get_used_equipment(self, obj):
         list_equipment = []
@@ -94,16 +134,20 @@ class WorkOrderAdmin(admin.ModelAdmin):
     list_per_page = 20
     list_filter = (
         'date',
-        'number',
         'type_of_work',
         'client',
         'pay_form',
+        'executor',
     )
+    search_fields = [
+        'number',
+    ]
+
     list_display = (
         'date',
         'number',
         'type_of_work',
-        'client',
+        'get_link_to_client',
         'get_link_project',
         'executor',
         'get_list_of_work',
@@ -116,23 +160,33 @@ class WorkOrderAdmin(admin.ModelAdmin):
         'add_costs_client',
         'description_add_costs',
         'sum_price_client',
-        'get_invoices'
+        'get_link_invoices'
     )
 
-    def get_invoices(self, obj):
-        if obj.type_of_work == obj.TypeWork.service:
-            invoices_list = []
-            for invoices in obj.invoice_workorder.all():
-                invoices_list.append(invoices)
-                return "\n".join(invoices_list)
-        elif obj.type_of_work == obj.TypeWork.project:
-            if obj.project is None:
-                return "-"
-            return obj.project.project_invoice
+    def get_link_to_client(self, obj):
+        if obj.client:
+            return format_html(
+                "<a href='../../clients/client/%s/change/' >%s</a>" % (
+                    str(obj.client.id), str(obj.client)))
         return "-"
 
-    get_invoices.short_description = 'РФ/KO'
-    get_invoices.allow_tags = True
+    get_link_to_client.short_description = 'клієнт'
+
+    def get_link_invoices(self, obj):
+        if obj.type_of_work == obj.TypeWork.service:
+            return format_html(", ".join(["<a href={}> {} \n</a>".format(reverse(
+                'admin:invoices_invoice_change', args=(invoices.pk,)), str(invoices)) for invoices in obj.invoice_workorder.all()]))
+        elif obj.type_of_work == obj.TypeWork.project:
+            if obj.project:
+                if obj.project.project_invoice:
+                    return format_html(", ".join(["<a href={}> {} \n</a>".format(reverse(
+                        'admin:invoices_projectinvoice_change', args=(obj.project.project_invoice.pk,)), str(obj.project.project_invoice))]))
+                return "-"
+            return "-"
+        return "-"
+
+    get_link_invoices.short_description = 'РФ/KO'
+    get_link_invoices.allow_tags = True
 
     def get_link_project(self, obj):
         if obj.project:

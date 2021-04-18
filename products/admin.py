@@ -34,28 +34,31 @@ class GpsAdmin(admin.ModelAdmin):
     actions = ['rate_client_pause']
     list_display = (
         'number',
-        'get_gps_fuel',
-        'vehicle',
+        'get_link_gps_fuel',
+        'get_link_vehicle',
         'link_to_owner_name',
         'link_to_owner_login',
-
         'get_link_sim',
         'rate_client',
     )
 
     list_filter = (
-        'number',
         'owner__name',
         'owner__login',
+        'rate_client',
     )
     search_fields = [
-        'number',
-        'owner__name',
-        'owner__login',
         'number',
         'sim_1',
         'sim_2',
     ]
+
+    def get_link_vehicle(self,obj):
+        if obj.vehicle:
+            return format_html(", ".join(["<a href={}> {} \n</a>".format(reverse(
+                'admin:vehicle_vehicle_change', args=(obj.vehicle.pk,)), str(obj.vehicle))]))
+
+    get_link_vehicle.short_description = 'транспортний засіб'
 
     def get_link_sim(self, obj):
         list_sim = []
@@ -103,12 +106,17 @@ class GpsAdmin(admin.ModelAdmin):
     link_to_owner_login.allow_tags = True
     link_to_owner_login.short_description = 'Власник Login'
 
-    def get_gps_fuel(self, obj):
-        queryset = obj.fuel_sensor.all()
-        fuel = [i for i in queryset]
-        return fuel
+    def get_link_gps_fuel(self, obj):
+        display_text = ", ".join([
+            "<a href={}>{} \n</a>".format(
+                reverse('admin:products_fuelsensor_change', args=(fuel_sensor.id,)), str(fuel_sensor),
+            ) for fuel_sensor in obj.fuel_sensor.all()
+        ])
+        if display_text:
+            return format_html(display_text)
+        return "-"
 
-    get_gps_fuel.short_description = 'ДВРП'
+    get_link_gps_fuel.short_description = 'ДВРП'
 
 
 class SimAdmin(admin.ModelAdmin):
@@ -217,11 +225,11 @@ class SimAdmin(admin.ModelAdmin):
 class FuelSensorAdmin(admin.ModelAdmin):
     list_per_page = 20
     list_display = (
-        'type',
         'get_all_number',
+        'type',
         'date_manufacturing',
-        'get_gps_number',
-        'get_gps_vehicle',
+        'get_link_gps_number',
+        'get_link_gps_vehicle',
         'link_to_owner_name',
         'link_to_owner_login',
         'comments'
@@ -236,7 +244,6 @@ class FuelSensorAdmin(admin.ModelAdmin):
     search_fields = [
         'number',
         'gps__number',
-        'gps__owner__login',
     ]
 
     def get_all_number(self, obj):
@@ -248,17 +255,25 @@ class FuelSensorAdmin(admin.ModelAdmin):
 
     get_all_number.short_description = '№ ДВРП'
 
-    def get_gps_number(self, obj):
-        return obj.gps.number
+    def get_link_gps_number(self, obj):
+        if obj.gps:
+            return format_html(
+                "<a href='../../products/gps/%s/change/' >%s</a>" % (
+                    str(obj.gps.id), str(obj.gps)))
+        return '-'
 
-    get_gps_number.admin_order_field = 'gps_number'
-    get_gps_number.short_description = 'БР'
+    get_link_gps_number.admin_order_field = 'gps_number'
+    get_link_gps_number.short_description = 'БР'
 
-    def get_gps_vehicle(self, obj):
-        return obj.gps.vehicle
+    def get_link_gps_vehicle(self, obj):
+        if obj.gps.vehicle:
+            return format_html(
+                "<a href='../../vehicle/vehicle/%s/change/' >%s</a>" % (
+                    str(obj.gps.vehicle.id), str(obj.gps.vehicle)))
+        return '-'
 
-    get_gps_vehicle.admin_order_field = 'gps_vehicle'
-    get_gps_vehicle.short_description = 'ТЗ'
+    get_link_gps_vehicle.admin_order_field = 'gps_vehicle'
+    get_link_gps_vehicle.short_description = 'ТЗ'
 
     def link_to_owner_name(self, obj):
         if obj.gps.owner is None:

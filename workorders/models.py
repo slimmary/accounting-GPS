@@ -36,7 +36,7 @@ class WorkOrder(models.Model):
     type_of_work = models.CharField(max_length=100,
                                     default=TypeWork.service,
                                     choices=TYPE_WORK_CHOICE,
-                                    verbose_name='Тип ЗН (Проект/Сервіc)',
+                                    verbose_name='Тип ЗН',
                                     help_text='Оберіть тип',
 
                                     )

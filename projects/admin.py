@@ -45,7 +45,7 @@ class ProjectAdmin(admin.ModelAdmin):
         'number',
         'project_status',
         'date_start',
-        'client',
+        'get_link_client_name',
         'amount_gps',
         'amount_fuel_sensor',
         'get_amount_gps_wo',
@@ -64,6 +64,14 @@ class ProjectAdmin(admin.ModelAdmin):
         'get_link_work_orders',
         'notes'
     )
+
+    def get_link_client_name(self, obj):
+        return format_html(
+            "<a href='../../clients/client/%s/change/' >%s</a>" % (
+                str(obj.client.id), str(obj.client)))
+
+    get_link_client_name.admin_order_field = 'client'
+    get_link_client_name.short_description = 'Клієнт'
 
     def get_amount_gps_wo(self, obj):
         sum_amount_gps = 0
