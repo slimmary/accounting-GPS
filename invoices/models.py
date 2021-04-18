@@ -107,7 +107,7 @@ class ProjectInvoice(Invoices):
     project_to = models.OneToOneField(Project,
                                       null=True,
                                       on_delete=models.CASCADE,
-                                      verbose_name='РФ/КО',
+                                      verbose_name='Проект',
                                       related_name='project_invoice',
                                       blank=True
                                       )

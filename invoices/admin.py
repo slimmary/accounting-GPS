@@ -48,9 +48,9 @@ class InvoiceAdmin(admin.ModelAdmin):
     list_per_page = 20
     list_display = ('number',
                     'date',
-                    'wo',
-                    'get_client_name',
-                    'get_client_login',
+                    'get_link_wo',
+                    'get_link_client_name',
+                    'get_link_client_login',
                     'invoice_sum',
                     'status_payment',
                     )
@@ -60,17 +60,33 @@ class InvoiceAdmin(admin.ModelAdmin):
                    'status_payment',
                    )
 
-    def get_client_name(self, obj):
-        return obj.wo.client.name
+    search_fields = [
+        'wo__number',
+    ]
 
-    get_client_name.admin_order_field = 'client'
-    get_client_name.short_description = 'Клієнт'
+    def get_link_wo(self, obj):
+        return format_html(
+            "<a href='../../clients/client/%s/change/' >%s</a>" % (
+                str(obj.wo.id), str(obj.wo)))
 
-    def get_client_login(self, obj):
-        return obj.wo.client.login
+    get_link_wo.admin_order_field = 'wo'
+    get_link_wo.short_description = 'ЗН'
 
-    get_client_login.admin_order_field = 'client_login'
-    get_client_login.short_description = 'Login'
+    def get_link_client_name(self, obj):
+        return format_html(
+            "<a href='../../clients/client/%s/change/' >%s</a>" % (
+                str(obj.wo.client.id), str(obj.wo.client.name)))
+
+    get_link_client_name.admin_order_field = 'client'
+    get_link_client_name.short_description = 'Клієнт'
+
+    def get_link_client_login(self, obj):
+        return format_html(
+            "<a href='../../clients/client/%s/change/' >%s</a>" % (
+                str(obj.wo.client.id), str(obj.wo.client.login)))
+
+    get_link_client_login.admin_order_field = 'client_login'
+    get_link_client_login.short_description = 'Login'
 
 
 class SubInvoiceAdmin(admin.ModelAdmin):
@@ -116,32 +132,47 @@ class SubInvoiceAdmin(admin.ModelAdmin):
     list_display = ('provider',
                     'number',
                     'date',
-                    'subscription',
-                    'get_client_name',
-                    'get_client_login',
+                    'get_link_subscription',
+                    'get_link_client_name',
+                    'get_link_client_login',
                     'invoice_sum',
                     )
+    search_fields = [
+        'number',
+    ]
+
     list_filter = ('date',
                    'subscription',
                    LoginListFilter,
                    ClientNameListFilter,
                    )
 
-    def get_client_name(self, obj):
-        return obj.subscription.client.name
+    def get_link_subscription(self, obj):
+        return format_html(
+            "<a href='../../subscription/subscription/%s/change/' >%s</a>" % (
+                obj.subscription.id, str(obj.subscription)))
 
-    get_client_name.admin_order_field = 'client'
-    get_client_name.short_description = 'Клієнт'
+    get_link_subscription.admin_order_field = 'subscription'
+    get_link_subscription.short_description = 'АП'
 
-    def get_client_login(self, obj):
-        return obj.subscription.client.login
+    def get_link_client_name(self, obj):
+        return format_html(
+            "<a href='../../clients/client/%s/change/' >%s</a>" % (
+                obj.subscription.client.id, str(obj.subscription.client.name)))
 
-    get_client_login.admin_order_field = 'client_login'
-    get_client_login.short_description = 'Login'
+    get_link_client_name.admin_order_field = 'client'
+    get_link_client_name.short_description = 'Клієнт'
+
+    def get_link_client_login(self, obj):
+        return format_html(
+            "<a href='../../clients/client/%s/change/' >%s</a>" % (
+                obj.subscription.client.id, str(obj.subscription.client.login)))
+
+    get_link_client_login.admin_order_field = 'client_login'
+    get_link_client_login.short_description = 'Login'
 
 
 class ProjectInvoiceAdmin(admin.ModelAdmin):
-
     class LoginListFilter(admin.SimpleListFilter):
         title = 'login власника'
         parameter_name = 'client_login'
@@ -190,10 +221,15 @@ class ProjectInvoiceAdmin(admin.ModelAdmin):
                     'sum_payment',
                     'date_payment'
                     )
-    list_filter = ('date',
-                   LoginListFilter,
+    list_filter = (LoginListFilter,
                    ClientNameListFilter,
+                   'date_payment',
+                   'date',
                    )
+    search_fields = [
+        'number',
+    ]
+
     actions = ['update_status_payment']
 
     def update_status_payment(self, request, queryset):
@@ -206,14 +242,15 @@ class ProjectInvoiceAdmin(admin.ModelAdmin):
 
     def get_link_project_invoice(self, obj):
         return format_html("<a href='../../projects/project/%s/change/' >%s</a>" % (str(obj.project_to.id),
-                                                                                     str(obj.project_to)))
+                                                                                    str(obj.project_to)))
 
     get_link_project_invoice.allow_tags = True
     get_link_project_invoice.admin_order_field = 'project_to'
     get_link_project_invoice.short_description = 'Проект'
 
     def get_link_client(self, obj):
-        return format_html("<a href='../../clients/client/%s/change/' >%s</a>" % (str(obj.client.id), str(obj.client.name)))
+        return format_html(
+            "<a href='../../clients/client/%s/change/' >%s</a>" % (str(obj.client.id), str(obj.client.name)))
 
     get_link_project_invoice.allow_tags = True
     get_link_client.admin_order_field = 'client_invoice'

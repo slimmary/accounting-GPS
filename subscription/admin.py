@@ -1,5 +1,7 @@
 from django.contrib import admin
 from .models import Subscription, Letters, Client
+from django.utils.html import format_html
+from django.urls import reverse
 from django.shortcuts import render
 from django.db.models import Q
 
@@ -8,9 +10,9 @@ class LettersAdmin(admin.ModelAdmin):
 
     list_per_page = 20
     list_display = ('date_letter',
-                    'get_client_name',
-                    'get_client_login',
-                    'get_gps',
+                    'get_link_client_name',
+                    'get_link_client_login',
+                    'get_link_gps',
                     'get_action',
                     'gps_rate',
                     'get_new_rate',
@@ -22,29 +24,33 @@ class LettersAdmin(admin.ModelAdmin):
                    'status',
                    'client__login',
                    )
-    search_fields = ['get_client_name',
-                     'get_client_login',
-                     'get_action',
-                     'get_gps'
+    search_fields = [
+                     'gps__number',
                      ]
 
-    def get_client_name(self, obj):
-        return obj.client.name
+    def get_link_client_name(self, obj):
+        return format_html(
+            "<a href='../../clients/client/%s/change/' >%s</a>" % (
+                str(obj.client.id), str(obj.client.name)))
 
-    get_client_name.admin_order_field = 'client'
-    get_client_name.short_description = 'Клієнт'
+    get_link_client_name.admin_order_field = 'client'
+    get_link_client_name.short_description = 'Клієнт'
 
-    def get_client_login(self, obj):
-        return obj.client.login
+    def get_link_client_login(self, obj):
+        return format_html(
+            "<a href='../../clients/client/%s/change/' >%s</a>" % (
+                str(obj.client.id), str(obj.client.login)))
 
-    get_client_login.admin_order_field = 'client_login'
-    get_client_login.short_description = 'Login'
+    get_link_client_login.admin_order_field = 'client_login'
+    get_link_client_login.short_description = 'Login'
 
-    def get_gps(self, obj):
-        return obj.gps.number
+    def get_link_gps(self, obj):
+        return format_html(
+            "<a href='../../products/gps/%s/change/' >%s</a>" % (
+                str(obj.gps.id), str(obj.gps.number)))
 
-    get_gps.admin_order_field = 'gps_number'
-    get_gps.short_description = 'БР'
+    get_link_gps.admin_order_field = 'gps_number'
+    get_link_gps.short_description = 'БР'
 
     def get_action(self, obj):
         return obj.get_action_display()
@@ -87,24 +93,21 @@ class SubscriptionAdmin(admin.ModelAdmin):
         'quarter',
         'client__login',
         'client__name',
+        'client__provider',
         'status',
         'activation',
     )
-    search_fields = [
-        'get_client_name',
-        'get_provider',
-        'get_client_login',
-    ]
+
     list_display = (
         'get_date_init',
         'get_quarter',
         'get_year',
-        'get_client_name',
-        'get_client_login',
+        'get_link_client_name',
+        'get_link_client_login',
         'get_provider',
         'price_quarter',
         'sum_payment',
-        'get_invoice',
+        'get_link_invoice',
         'sum_to_pay',
         'status',
         'activation',
@@ -134,15 +137,18 @@ class SubscriptionAdmin(admin.ModelAdmin):
 
     )
 
-    def get_invoice(self, obj):
-        invoices = ''
-        queryset = obj.sub_invoice.all()
-        for invoice in queryset:
-            invoices += '№{} від {} на сумму {}грн ----|'.format(invoice.number, invoice.date, invoice.invoice_sum)
-        return invoices
+    def get_link_invoice(self, obj):
+        display_text = ", ".join([
+            "<a href={}>{} \nна сумму {}грн\n</a>".format(
+                reverse('admin:invoices_subinvoice_change', args=(sub_invoice.pk,)), str(sub_invoice), sub_invoice.invoice_sum,)
+            for sub_invoice in obj.sub_invoice.all()
+        ])
+        if display_text:
+            return format_html(display_text)
+        return "-"
 
-    get_invoice.short_description = 'Рах.фактура'
-    get_invoice.allow_tags = True
+    get_link_invoice.short_description = 'Рах.фактура'
+    get_link_invoice.allow_tags = True
 
     def get_date_init(self, obj):
         return obj.date_init
@@ -161,17 +167,21 @@ class SubscriptionAdmin(admin.ModelAdmin):
     get_year.admin_order_field = 'year'
     get_year.short_description = 'Рік'
 
-    def get_client_name(self, obj):
-        return obj.client.name
+    def get_link_client_name(self, obj):
+        return format_html(
+            "<a href='../../clients/client/%s/change/' >%s</a>" % (
+                str(obj.client.id), str(obj.client.name)))
 
-    get_client_name.admin_order_field = 'client_name'
-    get_client_name.short_description = 'Платник'
+    get_link_client_name.admin_order_field = 'client_name'
+    get_link_client_name.short_description = 'Платник'
 
-    def get_client_login(self, obj):
-        return obj.client.login
+    def get_link_client_login(self, obj):
+        return format_html(
+            "<a href='../../clients/client/%s/change/' >%s</a>" % (
+                str(obj.client.id), str(obj.client.login)))
 
-    get_client_login.admin_order_field = 'client'
-    get_client_login.short_description = 'Login'
+    get_link_client_login.admin_order_field = 'client'
+    get_link_client_login.short_description = 'Login'
 
     def get_quarter(self, obj):
         return obj.get_quarter_display()
