@@ -522,5 +522,13 @@ class ServicePlan(models.Model):
             WorkOrder.objects.create(date=self.date_ex, number=self.wo_numb, executor=self.executor, client=self.client)
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return '{} заплановано {} на {} за адресою {}'.format(
+            self.tasks,
+            self.respons_manager,
+            self.date_planing,
+            self.adress,
+        )
+
     class Meta:
         verbose_name_plural = "План сервісних робіт"
