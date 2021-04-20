@@ -140,7 +140,27 @@ class ClientPaymentAdmin(admin.ModelAdmin):
         'get_to_letters',
         'get_non_payed_invoices',
         'get_non_contracts',
+        'get_to_wo_plan',
+        'get_to_projects'
     )
+
+    def get_to_projects(self, obj):
+        display_text = ",----------".join([
+            "<a href={}>{}\n</a>".format(
+                reverse('admin:projects_project_change', args=(project.pk,)), project, )
+            for project in obj.project.all().filter(project_status='НЕ завершено')])
+        return format_html(display_text)
+
+    get_to_projects.short_description = 'НЕ завершені проекти'
+
+    def get_to_wo_plan(self, obj):
+        display_text = ",----------".join([
+            "<a href={}>{}\n</a>".format(
+                reverse('admin:workorders_serviceplan_change', args=(work_orders_plan.pk,)), work_orders_plan, )
+            for work_orders_plan in obj.work_orders_plan.all().filter(status=None)])
+        return format_html(display_text)
+
+    get_to_wo_plan.short_description = 'заплановані роботи'
 
     def get_to_letters(self, obj):
         count = obj.letters.count()
@@ -152,6 +172,7 @@ class ClientPaymentAdmin(admin.ModelAdmin):
         return format_html('<a href="{}">{} звернень </a>', url, count)
 
     get_to_letters.short_description = "звернення"
+    get_to_letters.allow_tags = True
 
     def get_non_contracts(self, obj):
         contacts_result = []
@@ -160,8 +181,8 @@ class ClientPaymentAdmin(admin.ModelAdmin):
                 Q(status='Створений') | Q(status='Відправлений укрпоштою') |
                 Q(status='Відправлений НП') | Q(status='Відправлений на електронну пошту')):
             contacts_result.append(cont)
-        display_text_1 = ", ".join([
-            "<a href={}>Дог.№{} від {} {} з {} {} \n</a>".format(
+        display_text_1 = ",".join([
+            "<a href={}>Дог.№{} від {} {} з {} {} ---------\n</a>".format(
                 reverse('admin:contracts_contract_change', args=(cont.pk,)), cont.number,
                 cont.contract_date, cont.type, cont.provider, cont.status, )
             for cont in contacts_result])
@@ -170,8 +191,8 @@ class ClientPaymentAdmin(admin.ModelAdmin):
                     Q(status='Створений') | Q(status='Відправлений укрпоштою') |
                     Q(status='Відправлений НП') | Q(status='Відправлений на електронну пошту')):
                 additions_result.append(add)
-        display_text_2 = ", ".join([
-            "<a href={}>ДУ №{} від {} до Дог.№{}від {} {} з {} {} \n</a>".format(
+        display_text_2 = ",".join([
+            "<a href={}>ДУ №{} від {} до Дог.№{}від {} {} з {} {} ----------\n</a>".format(
                 reverse('admin:contracts_additions_change', args=(add.pk,)), add.number,
                 add.contract_date, add.contract_to.number, add.contract_to.contract_date, add.contract_to,
                 add.contract_to.provider, add.status, )
@@ -192,8 +213,8 @@ class ClientPaymentAdmin(admin.ModelAdmin):
             for inv in wo.invoice_workorder.all().filter(
                     Q(status_payment='НЕ сплачено') | Q(status_payment='Частково сплачено')):
                 result_list_1.append(inv)
-        display_text_1 = ", ".join([
-            "<a href={}> №{} від {} на {}грн. за ремонтні роботи {} \n</a>".format(
+        display_text_1 = ",".join([
+            "<a href={}> №{} від {} на {}грн. за ремонтні роботи {} ----------\n</a>".format(
                 reverse('admin:invoices_invoice_change', args=(inv.pk,)), inv.number, inv.date, inv.invoice_sum,
                 inv.status_payment, )
             for inv in result_list_1])
@@ -201,8 +222,8 @@ class ClientPaymentAdmin(admin.ModelAdmin):
         for invoices in obj.proj_invoice.all().filter(
                 Q(status_payment='НЕ сплачено') | Q(status_payment='Частково сплачено')):
             result_list_2.append(invoices)
-        display_text_2 = ", ".join([
-            "<a href={}> №{} від {} на {}грн. за придбання обладнання {} \n</a>".format(
+        display_text_2 = ",".join([
+            "<a href={}> №{} від {} на {}грн. за придбання обладнання {} ---------\n</a>".format(
                 reverse('admin:invoices_projectinvoice_change', args=(invoices.pk,)), invoices.number, invoices.date,
                 invoices.invoice_sum,
                 invoices.status_payment, )
@@ -212,8 +233,8 @@ class ClientPaymentAdmin(admin.ModelAdmin):
             for sub_inv in sub.sub_invoice.all().filter(
                     Q(status_payment='НЕ сплачено') | Q(status_payment='Частково сплачено')):
                 result_list_3.append(sub_inv)
-        display_text_3 = ", ".join([
-            "<a href={}> №{} від {} на {}грн. за абонентське обслуговування {} \n</a>".format(
+        display_text_3 = ",".join([
+            "<a href={}> №{} від {} на {}грн. за абонентське обслуговування {} ----------\n</a>".format(
                 reverse('admin:invoices_subinvoice_change', args=(sub_inv.pk,)), sub_inv.number, sub_inv.date,
                 sub_inv.invoice_sum,
                 sub_inv.status_payment, )

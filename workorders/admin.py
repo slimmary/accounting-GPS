@@ -8,7 +8,7 @@ from invoices.models import ProjectInvoice, Invoice
 class InvoiceInline(admin.TabularInline):
     list_per_page = 20
     model = Invoice
-    verbose_name_plural = 'РФ засервісні роботи'
+    verbose_name_plural = 'РФ за сервісні роботи'
 
 
 class ServicePlanAdmin(admin.ModelAdmin):
@@ -144,8 +144,8 @@ class WorkOrderAdmin(admin.ModelAdmin):
     ]
 
     list_display = (
-        'date',
         'number',
+        'date',
         'type_of_work',
         'get_link_to_client',
         'get_link_project',
