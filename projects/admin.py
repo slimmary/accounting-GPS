@@ -8,21 +8,34 @@ from django.urls import reverse
 
 class ContractInline(admin.TabularInline):
     model = Contract
-    fields = ('number', 'type', 'contract_date', 'client', 'status',)
+    fields = ('number',
+              'type',
+              'contract_date',
+              'client',
+              'status',)
 
 
 class AdditionsInline(admin.TabularInline):
     model = Additions
-    fields = ('number', 'contract_date', 'status', 'contract_to')
+    fields = ('number',
+              'contract_date',
+              'status',
+              'contract_to')
 
 
 class ProjectInvoiceInline(admin.TabularInline):
     model = ProjectInvoice
-    fields = ('number', 'date', 'invoice_sum', 'pay_form', 'status_payment', 'sum_payment', 'date_payment')
+    fields = ('number',
+              'date',
+              'invoice_sum',
+              'pay_form',
+              'status_payment',
+              'sum_payment',
+              'date_payment')
 
 
 class ProjectAdmin(admin.ModelAdmin):
-    inlines = [ContractInline, AdditionsInline, ProjectInvoiceInline]
+    inlines = [ContractInline, AdditionsInline, ProjectInvoiceInline, ]
     list_per_page = 4
 
     list_filter = ('date_receipt_contract',

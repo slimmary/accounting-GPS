@@ -141,7 +141,17 @@ class ClientPaymentAdmin(admin.ModelAdmin):
         'get_non_payed_invoices',
         'get_non_contracts',
         'get_to_wo_plan',
+        'get_to_projects'
     )
+
+    def get_to_projects(self, obj):
+        display_text = ",----------".join([
+            "<a href={}>{}\n</a>".format(
+                reverse('admin:projects_project_change', args=(project.pk,)), project, )
+            for project in obj.project.all().filter(project_status='НЕ завершено')])
+        return format_html(display_text)
+
+    get_to_projects.short_description = 'НЕ завершені проекти'
 
     def get_to_wo_plan(self, obj):
         display_text = ",----------".join([
@@ -149,6 +159,7 @@ class ClientPaymentAdmin(admin.ModelAdmin):
                 reverse('admin:workorders_serviceplan_change', args=(work_orders_plan.pk,)), work_orders_plan, )
             for work_orders_plan in obj.work_orders_plan.all().filter(status=None)])
         return format_html(display_text)
+
     get_to_wo_plan.short_description = 'заплановані роботи'
 
     def get_to_letters(self, obj):
