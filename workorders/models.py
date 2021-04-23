@@ -798,14 +798,14 @@ class ExecutorPayment(models.Model):
     qua_payment_works_1 = models.PositiveIntegerField(null=True,
                                                       default=0,
                                                       verbose_name='сума ЗП 1',
-                                                      help_text='кількість виконаних робіт співробітником заповниться '
+                                                      help_text='сума ЗП за роботи \nзаповниться '
                                                                 'автоматично, вводити нічого не потрібно',
                                                       blank=True
                                                       )
     qua_payment_works_2 = models.PositiveIntegerField(null=True,
                                                       default=0,
                                                       verbose_name='сума ЗП 2',
-                                                      help_text='кількість виконаних робіт співробітником заповниться '
+                                                      help_text='сума ЗП за роботи \nзаповниться '
                                                                 'автоматично, вводити нічого не потрібно',
                                                       blank=True
                                                       )
@@ -813,14 +813,14 @@ class ExecutorPayment(models.Model):
     qua_payment_works_3 = models.PositiveIntegerField(null=True,
                                                       default=0,
                                                       verbose_name='сума ЗП 3',
-                                                      help_text='кількість виконаних робіт співробітником заповниться '
+                                                      help_text='сума ЗП за роботи \nзаповниться '
                                                                 'автоматично, вводити нічого не потрібно',
                                                       blank=True
                                                       )
     qua_payment_works_sum = models.PositiveIntegerField(null=True,
                                                         default=0,
                                                         verbose_name='сума ЗП сумарно',
-                                                        help_text='кількість виконаних робіт співробітником заповниться '
+                                                        help_text='сума ЗП за роботи \nзаповниться '
                                                                   'автоматично, вводити нічого не потрібно',
                                                         blank=True
                                                         )
@@ -905,7 +905,12 @@ class ExecutorPayment(models.Model):
         wo_1 = []
         wo_count_1 = 0
         list_works_1 = 0
+        trip_day_1 = 0
+        payment_works_1 = 0
         for wo in period_wo.filter(executor=self.executor_1):
+            for works in wo.list_works.all():
+                payment_works_1 += works.type_service.salary_installer
+            trip_day_1 += wo.trip_day
             list_works_1 += wo.list_works.count()
             if wo.date not in dates_1 and wo.date.isoweekday() <= 5:
                 dates_1.append(wo.date)
@@ -919,6 +924,7 @@ class ExecutorPayment(models.Model):
         self.work_days_weekend_1 = date_count_weekend_1
         self.qua_work_orders_1 = wo_count_1
         self.qua_works_1 = list_works_1
+        self.qua_payment_works_1 = payment_works_1
 
         dates_2 = []
         date_count_2 = 0
@@ -926,7 +932,12 @@ class ExecutorPayment(models.Model):
         wo_2 = []
         wo_count_2 = 0
         list_works_2 = 0
+        trip_day_2 = 0
+        payment_works_2 = 0
         for wo in period_wo.filter(executor=self.executor_2):
+            for works in wo.list_works.all():
+                payment_works_2 += works.type_service.salary_installer
+            trip_day_2 += wo.trip_day
             list_works_2 += wo.list_works.count()
             if wo.date not in dates_2 and wo.date.isoweekday() <= 5:
                 dates_2.append(wo.date)
@@ -940,6 +951,7 @@ class ExecutorPayment(models.Model):
         self.work_days_weekend_2 = date_count_weekend_2
         self.qua_work_orders_2 = wo_count_2
         self.qua_works_2 = list_works_2
+        self.qua_payment_works_2 = payment_works_2
 
         dates_3 = []
         date_count_3 = 0
@@ -947,7 +959,12 @@ class ExecutorPayment(models.Model):
         wo_3 = []
         wo_count_3 = 0
         list_works_3 = 0
+        trip_day_3 = 0
+        payment_works_3 = 0
         for wo in period_wo.filter(executor=self.executor_3):
+            for works in wo.list_works.all():
+                payment_works_3 += works.type_service.salary_installer
+            trip_day_3 += wo.trip_day
             list_works_3 += wo.list_works.count()
             if wo.date not in dates_1 and wo.date.isoweekday() <= 5:
                 dates_3.append(wo.date)
@@ -960,7 +977,8 @@ class ExecutorPayment(models.Model):
         self.work_days_3 = date_count_3
         self.work_days_weekend_1 = date_count_weekend_3
         self.qua_work_orders_3 = wo_count_3
-        self.qua_works_3 = list_works_2
+        self.qua_works_3 = list_works_3
+        self.qua_payment_works_3 = payment_works_3
 
         super().save(*args, **kwargs)
 
