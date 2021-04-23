@@ -317,11 +317,19 @@ class ExecutorPaymentAdmin(admin.ModelAdmin):
         'qua_work_orders_1',
         'qua_works_1',
         'qua_payment_works_1',
+        'milege_price_1',
+        'premium_1',
+        'total_payment_1',
+
         'executor_2',
         'work_days_2',
         'work_days_weekend_2',
         'qua_work_orders_2',
         'qua_works_2',
+        'milege_price_2',
+        'premium_2',
+        'total_payment_2',
+
         'qua_payment_works_2',
         'executor_3',
         'work_days_3',
@@ -329,6 +337,9 @@ class ExecutorPaymentAdmin(admin.ModelAdmin):
         'qua_work_orders_3',
         'qua_works_3',
         'qua_payment_works_3',
+        'milege_price_3',
+        'premium_3',
+        'total_payment_3',
 
 
     ]
