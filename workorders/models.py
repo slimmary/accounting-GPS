@@ -768,14 +768,14 @@ class ExecutorPayment(models.Model):
                                                       )
     qua_works_1 = models.PositiveIntegerField(null=True,
                                               default=0,
-                                              verbose_name='к-ть вик. робіт співробітник 1',
+                                              verbose_name='к-ть вик. робіт 1',
                                               help_text='кількість виконаних робіт співробітником заповниться '
                                                         'автоматично, вводити нічого не потрібно',
                                               blank=True
                                               )
     qua_works_2 = models.PositiveIntegerField(null=True,
                                               default=0,
-                                              verbose_name='к-ть вик. робіт співробітник 2',
+                                              verbose_name='к-ть вик. робіт 2',
                                               help_text='кількість виконаних робіт співробітником заповниться '
                                                         'автоматично, вводити нічого не потрібно',
                                               blank=True
@@ -783,7 +783,7 @@ class ExecutorPayment(models.Model):
 
     qua_works_3 = models.PositiveIntegerField(null=True,
                                               default=0,
-                                              verbose_name='к-ть вик. робіт співробітник 3',
+                                              verbose_name='к-ть вик. робіт 3',
                                               help_text='кількість виконаних робіт співробітником заповниться '
                                                         'автоматично, вводити нічого не потрібно',
                                               blank=True
@@ -898,13 +898,15 @@ class ExecutorPayment(models.Model):
                                                   )
 
     def save(self, *args, **kwargs):
-        period_wo = WorkOrder.objects.all().filter(date__month=self.period.month)
+        period_wo = WorkOrder.objects.all().filter(month_executor_pay__month=self.period.month)
         dates_1 = []
         date_count_1 = 0
         date_count_weekend_1 = 0
         wo_1 = []
         wo_count_1 = 0
+        list_works_1 = 0
         for wo in period_wo.filter(executor=self.executor_1):
+            list_works_1 += wo.list_works.count()
             if wo.date not in dates_1 and wo.date.isoweekday() <= 5:
                 dates_1.append(wo.date)
                 date_count_1 += 1
@@ -916,13 +918,16 @@ class ExecutorPayment(models.Model):
         self.work_days_1 = date_count_1
         self.work_days_weekend_1 = date_count_weekend_1
         self.qua_work_orders_1 = wo_count_1
+        self.qua_works_1 = list_works_1
 
         dates_2 = []
         date_count_2 = 0
         date_count_weekend_2 = 0
         wo_2 = []
         wo_count_2 = 0
+        list_works_2 = 0
         for wo in period_wo.filter(executor=self.executor_2):
+            list_works_2 += wo.list_works.count()
             if wo.date not in dates_2 and wo.date.isoweekday() <= 5:
                 dates_2.append(wo.date)
                 date_count_2 += 1
@@ -934,13 +939,16 @@ class ExecutorPayment(models.Model):
         self.work_days_2 = date_count_2
         self.work_days_weekend_2 = date_count_weekend_2
         self.qua_work_orders_2 = wo_count_2
+        self.qua_works_2 = list_works_2
 
         dates_3 = []
         date_count_3 = 0
         date_count_weekend_3 = 0
         wo_3 = []
         wo_count_3 = 0
-        for wo in period_wo.filter(executor=self.executor_1):
+        list_works_3 = 0
+        for wo in period_wo.filter(executor=self.executor_3):
+            list_works_3 += wo.list_works.count()
             if wo.date not in dates_1 and wo.date.isoweekday() <= 5:
                 dates_3.append(wo.date)
                 date_count_3 += 1
@@ -952,6 +960,7 @@ class ExecutorPayment(models.Model):
         self.work_days_3 = date_count_3
         self.work_days_weekend_1 = date_count_weekend_3
         self.qua_work_orders_3 = wo_count_3
+        self.qua_works_3 = list_works_2
 
         super().save(*args, **kwargs)
 
