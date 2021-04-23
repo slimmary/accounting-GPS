@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+    'django_static_jquery3',
+    'django_yearmonth_widget',
     'rest_framework',
     'phone_field',
     'clients',

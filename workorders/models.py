@@ -15,6 +15,70 @@ def get_first_name(self):
 User.add_to_class("__str__", get_first_name)
 
 
+class Expertise(models.Model):
+    date_wo = models.DateField(verbose_name='Дата демонтажу (ЗН)',
+                               help_text='Введіть дату',
+                               )
+    client = models.ForeignKey(Client,
+                               null=True,
+                               on_delete=models.CASCADE,
+                               verbose_name='клієнт',
+                               related_name='expertise',
+                               blank=True,
+                               )
+    gps = models.ForeignKey(Gps,
+                            null=True,
+                            on_delete=models.CASCADE,
+                            verbose_name='БР',
+                            related_name='gps_expertise',
+                            blank=True
+                            )
+
+    fuel_sensor = models.ForeignKey(FuelSensor,
+                                    null=True,
+                                    on_delete=models.CASCADE,
+                                    verbose_name='ДВРП',
+                                    related_name='fuel_sensor_expertise',
+                                    blank=True
+                                    )
+
+    desription = models.CharField(null=True,
+                                  max_length=200,
+                                  verbose_name='опис рекламації',
+                                  blank=True
+                                  )
+
+    date_take_to_rapeir = models.DateField(null=True,
+                                           verbose_name='Дата сдачі в ремонт',
+                                           help_text='Введіть дату',
+                                           blank=True
+                                           )
+    date_receving_expertise = models.DateField(null=True,
+                                               verbose_name='Дата отримання результатів експертизи (обладанання)',
+                                               help_text='Введіть дату',
+                                               blank=True
+                                               )
+
+    malfunctions = models.CharField(null=True,
+                                    max_length=200,
+                                    verbose_name='виявлені несправності',
+                                    blank=True
+                                    )
+
+    result_expertise = models.CharField(null=True,
+                                        max_length=200,
+                                        verbose_name='результати експертизи',
+                                        blank=True
+                                        )
+    price_expertise = models.PositiveIntegerField(null=True,
+                                                  verbose_name='Вартість робіт',
+                                                  blank=True
+                                                  )
+
+    class Meta:
+        verbose_name_plural = "Експертизи"
+
+
 class WorkOrder(models.Model):
     date = models.DateField(verbose_name='Дата ЗН',
                             help_text='Введіть дату',
@@ -104,23 +168,39 @@ class WorkOrder(models.Model):
                                                         blank=True
                                                         )
 
-    milege_price_client = models.PositiveIntegerField(null=True,
-                                                      verbose_name='грн за км клієнту',
-                                                      help_text='Вартість пробігу для клієнта\nПоле заповниться '
-                                                                'автоматично, вводити нічого не потрібно',
-                                                      blank=True
-                                                      )
+    milege_price_client = models.IntegerField(null=True,
+                                              verbose_name='грн за км клієнту',
+                                              help_text='Вартість пробігу для клієнта\nПоле заповниться '
+                                                        'автоматично, вводити нічого не потрібно',
+                                              blank=True
+                                              )
+
+    trip_day = models.FloatField(null=True,
+                                 default=0,
+                                 verbose_name='Добові дні',
+                                 help_text='Кількість днів нарахування добових монтажнику',
+                                 blank=True
+                                 )
+
+    trip_day_costs_executor = models.PositiveIntegerField(null=True,
+                                                          default=0,
+                                                          verbose_name='грн добових \nмонтажнику',
+                                                          help_text='Сума коомпенсації монтажнику\nПоле '
+                                                                    'заповниться автоматично, вводити нічого не '
+                                                                    'потрібно',
+                                                          blank=True
+                                                          )
 
     add_costs_executor = models.PositiveIntegerField(null=True,
                                                      verbose_name='грн за ДВ \nмонтажнику',
                                                      help_text='Сума коомпенсації за додаткові витрати монтажнику',
                                                      blank=True
                                                      )
-    add_costs_client = models.PositiveIntegerField(null=True,
-                                                   verbose_name='грн за ДВ \nклієнту',
-                                                   help_text='Вартість додаткових витрат для клієнта',
-                                                   blank=True
-                                                   )
+    add_costs_client = models.IntegerField(null=True,
+                                           verbose_name='грн за ДВ \nклієнту',
+                                           help_text='Вартість додаткових витрат для клієнта',
+                                           blank=True
+                                           )
     description_add_costs = models.CharField(null=True,
                                              max_length=100,
                                              verbose_name='Список додаткових витрат',
@@ -160,6 +240,8 @@ class WorkOrder(models.Model):
             raise ValidationError('Не можливо приєднати проект, якщо тип ЗН не Проект')
 
     def save(self, *args, **kwargs):
+        if self.trip_day != 0:
+            self.trip_day_costs_executor = self.trip_day * 250
         if self.milege:
             self.milege_price_executor = self.milege * 4.5
             if self.pay_form == self.PayForm.taxfree:
@@ -218,9 +300,11 @@ class CompletedWorks(models.Model):
         ckt = 'СКТ'
         executor = 'монтажник'
         manufacturer = 'виробник'
+        expertise = 'Експертиза'
 
     PAYER_CHOICE = (
         (Payer.client, 'Клієнт'),
+        (Payer.expertise, 'Експертиза'),
         (Payer.ckt, 'СКТ'),
         (Payer.executor, 'монтажник'),
         (Payer.manufacturer, 'виробник'),
@@ -253,6 +337,12 @@ class CompletedWorks(models.Model):
                             verbose_name='додаткова інформація\nз протоколу огляду',
                             blank=True
                             )
+
+    def save(self, *args, **kwargs):
+        if self.payer == self.Payer.expertise:
+            Expertise.objects.create(date_wo=self.work_order.date, client=self.work_order.client, gps=self.gps,
+                                     fuel_sensor=self.fuel_sensor, desription=self.info)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return '{} {} {} {} {} {}'.format(
@@ -532,3 +622,292 @@ class ServicePlan(models.Model):
 
     class Meta:
         verbose_name_plural = "План сервісних робіт"
+
+
+class WorkOrderProxy(WorkOrder):
+    class Meta:
+        verbose_name_plural = "зведені дані сервісного відділу"
+        proxy = True
+
+
+class ExecutorPayment(models.Model):
+    period = models.DateField(null=True,
+                              verbose_name='місяць/рік ЗП',
+                              help_text='місяць нарахування ЗП сервісному відділу',
+                              blank=True
+                              )
+    executor_1 = models.ForeignKey(User,
+                                   null=True,
+                                   on_delete=models.CASCADE,
+                                   verbose_name='співробітник 1',
+                                   related_name='executor_payment_1',
+                                   blank=True
+                                   )
+    executor_2 = models.ForeignKey(User,
+                                   null=True,
+                                   on_delete=models.CASCADE,
+                                   verbose_name='співробітник 2',
+                                   related_name='executor_payment_2',
+                                   blank=True
+                                   )
+    executor_3 = models.ForeignKey(User,
+                                   null=True,
+                                   on_delete=models.CASCADE,
+                                   verbose_name='співробітник 3',
+                                   related_name='executor_payment_3',
+                                   blank=True
+                                   )
+
+    work_days_1 = models.PositiveIntegerField(null=True,
+                                              default=0,
+                                              verbose_name='роб.д. співробітник 1',
+                                              help_text='кількість робочих днів(окрім вихідних)\nПоле заповниться '
+                                                        'автоматично, вводити нічого не потрібно',
+                                              blank=True
+                                              )
+    work_days_2 = models.PositiveIntegerField(null=True,
+                                              default=0,
+                                              verbose_name='роб.д. співробітник 2',
+                                              help_text='кількість робочих днів(окрім вихідних)\nПоле заповниться '
+                                                        'автоматично, вводити нічого не потрібно',
+                                              blank=True
+                                              )
+    work_days_3 = models.PositiveIntegerField(null=True,
+                                              verbose_name='роб.д. співробітник 3',
+                                              help_text='кількість робочих днів(окрім вихідних)\nПоле заповниться '
+                                                        'автоматично, вводити нічого не потрібно',
+                                              blank=True
+                                              )
+    work_days_sum = models.PositiveIntegerField(null=True,
+                                                verbose_name='роб.д. сумарно',
+                                                help_text='кількість робочих днів(окрім вихідних)\nПоле заповниться '
+                                                          'автоматично, вводити нічого не потрібно',
+                                                blank=True
+                                                )
+    work_days_weekend_1 = models.PositiveIntegerField(null=True,
+                                                      default=0,
+                                                      verbose_name='роб.д.вих співробітник 1',
+                                                      help_text='кількість робочих днів у вихідних\nПоле '
+                                                                'заповниться автоматично, вводити нічого не потрібно',
+                                                      blank=True
+                                                      )
+    work_days_weekend_2 = models.PositiveIntegerField(null=True,
+                                                      default=0,
+                                                      verbose_name='роб.д.вих співробітник 1',
+                                                      help_text='кількість робочих днів у вихідних\nПоле '
+                                                                'заповниться автоматично, вводити нічого не потрібно',
+                                                      blank=True
+                                                      )
+    work_days_weekend_3 = models.PositiveIntegerField(null=True,
+                                                      default=0,
+                                                      verbose_name='роб.д.вих співробітник 1',
+                                                      help_text='кількість робочих днів у вихідних\nПоле '
+                                                                'заповниться '
+                                                                'автоматично, вводити нічого не потрібно',
+                                                      blank=True
+                                                      )
+    work_days_weekend_sum = models.PositiveIntegerField(null=True,
+                                                        default=0,
+                                                        verbose_name='роб.д.вих сумарно',
+                                                        help_text='кількість робочих днів у вихідних\nПоле '
+                                                                  'заповниться '
+                                                                  'автоматично, вводити нічого не потрібно',
+                                                        blank=True
+                                                        )
+    trip_day_1 = models.PositiveIntegerField(null=True,
+                                             default=0,
+                                             verbose_name='добові співробітник 1',
+                                             help_text='кількість днів на які нараховано добові\nПоле '
+                                                       'заповниться автоматично, вводити нічого не потрібно',
+                                             blank=True
+                                             )
+    trip_day_2 = models.PositiveIntegerField(null=True,
+                                             default=0,
+                                             verbose_name='добові співробітник 2',
+                                             help_text='кількість днів на які нараховано добові\nПоле '
+                                                       'заповниться автоматично, вводити нічого не потрібно',
+                                             blank=True
+                                             )
+    trip_day_3 = models.PositiveIntegerField(null=True,
+                                             default=0,
+                                             verbose_name='добові співробітник 3',
+                                             help_text='кількість днів на які нараховано добові\nПоле '
+                                                       'заповниться автоматично, вводити нічого не потрібно',
+                                             blank=True
+                                             )
+    trip_day_sum = models.PositiveIntegerField(null=True,
+                                               default=0,
+                                               verbose_name='добові сумарно',
+                                               help_text='кількість днів на які нараховано добові\nПоле '
+                                                         'заповниться автоматично, вводити нічого не потрібно',
+                                               blank=True
+                                               )
+    qua_work_orders_1 = models.PositiveIntegerField(null=True,
+                                                    default=0,
+                                                    verbose_name='к-ть ЗН співробітник 1',
+                                                    help_text='заповниться автоматично, вводити нічого не потрібно',
+                                                    blank=True
+                                                    )
+    qua_work_orders_2 = models.PositiveIntegerField(null=True,
+                                                    default=0,
+                                                    verbose_name='к-ть ЗН співробітник 2',
+                                                    help_text='заповниться автоматично, вводити нічого не потрібно',
+                                                    blank=True
+                                                    )
+    qua_work_orders_3 = models.PositiveIntegerField(null=True,
+                                                    default=0,
+                                                    verbose_name='к-ть ЗН співробітник 3',
+                                                    help_text='заповниться автоматично, вводити нічого не потрібно',
+                                                    blank=True
+                                                    )
+    qua_work_orders_sum = models.PositiveIntegerField(null=True,
+                                                      default=0,
+                                                      verbose_name='к-ть ЗН сумарно',
+                                                      help_text='заповниться автоматично, вводити нічого не потрібно',
+                                                      blank=True
+                                                      )
+    qua_works_1 = models.PositiveIntegerField(null=True,
+                                              default=0,
+                                              verbose_name='к-ть вик. робіт співробітник 1',
+                                              help_text='кількість виконаних робіт співробітником заповниться '
+                                                        'автоматично, вводити нічого не потрібно',
+                                              blank=True
+                                              )
+    qua_works_2 = models.PositiveIntegerField(null=True,
+                                              default=0,
+                                              verbose_name='к-ть вик. робіт співробітник 2',
+                                              help_text='кількість виконаних робіт співробітником заповниться '
+                                                        'автоматично, вводити нічого не потрібно',
+                                              blank=True
+                                              )
+
+    qua_works_3 = models.PositiveIntegerField(null=True,
+                                              default=0,
+                                              verbose_name='к-ть вик. робіт співробітник 3',
+                                              help_text='кількість виконаних робіт співробітником заповниться '
+                                                        'автоматично, вводити нічого не потрібно',
+                                              blank=True
+                                              )
+    qua_works_sum = models.PositiveIntegerField(null=True,
+                                                default=0,
+                                                verbose_name='к-ть вик. робіт сумарно',
+                                                help_text='кількість виконаних робіт співробітником заповниться '
+                                                          'автоматично, вводити нічого не потрібно',
+                                                blank=True
+                                                )
+    qua_payment_works_1 = models.PositiveIntegerField(null=True,
+                                                      default=0,
+                                                      verbose_name='сума ЗП співробітник 1',
+                                                      help_text='кількість виконаних робіт співробітником заповниться '
+                                                                'автоматично, вводити нічого не потрібно',
+                                                      blank=True
+                                                      )
+    qua_payment_works_2 = models.PositiveIntegerField(null=True,
+                                                      default=0,
+                                                      verbose_name='сума ЗП співробітник 2',
+                                                      help_text='кількість виконаних робіт співробітником заповниться '
+                                                                'автоматично, вводити нічого не потрібно',
+                                                      blank=True
+                                                      )
+
+    qua_payment_works_3 = models.PositiveIntegerField(null=True,
+                                                      default=0,
+                                                      verbose_name='сума ЗП співробітник 3',
+                                                      help_text='кількість виконаних робіт співробітником заповниться '
+                                                                'автоматично, вводити нічого не потрібно',
+                                                      blank=True
+                                                      )
+    qua_payment_works_sum = models.PositiveIntegerField(null=True,
+                                                        default=0,
+                                                        verbose_name='сума ЗП сумарно',
+                                                        help_text='кількість виконаних робіт співробітником заповниться '
+                                                                  'автоматично, вводити нічого не потрібно',
+                                                        blank=True
+                                                        )
+    milege_price_1 = models.PositiveIntegerField(null=True,
+                                                 default=0,
+                                                 verbose_name='грн за км співробітник 1',
+                                                 help_text='Сума компенсації за пробіг монтажнику\nПоле '
+                                                           'заповниться автоматично, вводити нічого не '
+                                                           'потрібно',
+                                                 blank=True
+                                                 )
+    milege_price_2 = models.PositiveIntegerField(null=True,
+                                                 default=0,
+                                                 verbose_name='грн за км співробітник 2',
+                                                 help_text='Сума компенсації за пробіг монтажнику\nПоле '
+                                                           'заповниться автоматично, вводити нічого не '
+                                                           'потрібно',
+                                                 blank=True
+                                                 )
+    milege_price_3 = models.PositiveIntegerField(null=True,
+                                                 default=0,
+                                                 verbose_name='грн за км співробітник 3',
+                                                 help_text='Сума компенсації за пробіг монтажнику\nПоле '
+                                                           'заповниться автоматично, вводити нічого не '
+                                                           'потрібно',
+                                                 blank=True
+                                                 )
+    premium_sum = models.PositiveIntegerField(null=True,
+                                              default=0,
+                                              verbose_name='сума премії',
+                                              help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                              blank=True
+                                              )
+    boss_premium = models.PositiveIntegerField(null=True,
+                                               default=0,
+                                               verbose_name='сума премії керівника',
+                                               help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                               blank=True
+                                               )
+    premium_1 = models.PositiveIntegerField(null=True,
+                                           default=0,
+                                           verbose_name='сума премії співробітник 1',
+                                           help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                           blank=True
+                                           )
+    premium_2 = models.PositiveIntegerField(null=True,
+                                           default=0,
+                                           verbose_name='сума премії співробітник 2',
+                                           help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                           blank=True
+                                           )
+    premium_3 = models.PositiveIntegerField(null=True,
+                                           default=0,
+                                           verbose_name='сума премії співробітник 3',
+                                           help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                           blank=True
+                                           )
+    total_payment_1 = models.PositiveIntegerField(null=True,
+                                                  default=0,
+                                                  verbose_name='загальна сума ЗП співробітник 1',
+                                                  help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                                  blank=True
+                                                  )
+    total_payment_2 = models.PositiveIntegerField(null=True,
+                                                  default=0,
+                                                  verbose_name='загальна сума ЗП співробітник 1',
+                                                  help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                                  blank=True
+                                                  )
+    total_payment_3 = models.PositiveIntegerField(null=True,
+                                                  default=0,
+                                                  verbose_name='загальна сума ЗП співробітник 1',
+                                                  help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+                                                  blank=True
+                                                  )
+
+    def save(self, *args, **kwargs):
+        period_wo = WorkOrder.objects.all().filter(date__month=self.period.month)
+        dates = []
+        date_count = 0
+        for wo in period_wo.filter(executor=self.executor_1):
+            if wo.date not in dates and wo.date.isoweekday() <= 5:
+                dates.append(wo.date)
+                date_count += 1
+        self.work_days_1 = date_count
+
+        super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name_plural = "ЗП сервісний відділ"

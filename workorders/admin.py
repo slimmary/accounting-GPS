@@ -1,8 +1,35 @@
 from django.contrib import admin
-from .models import CompletedWorks, WorkOrder, ServicePlan
+from .models import CompletedWorks, WorkOrder, ServicePlan, WorkOrderProxy, Expertise, ExecutorPayment
 from django.utils.html import format_html
 from django.urls import reverse
 from invoices.models import ProjectInvoice, Invoice
+
+
+class ExpertiseAdmin(admin.ModelAdmin):
+    list_per_page = 10
+    list_display = (
+        'date_wo',
+        'client',
+        'gps',
+        'fuel_sensor',
+        'desription',
+        'date_take_to_rapeir',
+        'date_receving_expertise',
+        'malfunctions',
+        'result_expertise',
+        'price_expertise',
+
+    )
+
+    list_filter = (
+        'client',
+        'client__login',
+        'date_wo',
+        'date_take_to_rapeir',
+        'date_receving_expertise',
+        'result_expertise',
+        'price_expertise',
+    )
 
 
 class InvoiceInline(admin.TabularInline):
@@ -48,19 +75,21 @@ class ServicePlanAdmin(admin.ModelAdmin):
 
 
 class CompletedWorksInline(admin.TabularInline):
-    list_per_page = 20
+    list_per_page = 5
     model = CompletedWorks
     verbose_name_plural = 'виконані роботи'
 
 
 class CompletedWorksAdmin(admin.ModelAdmin):
-    list_per_page = 20
+    list_per_page = 5
+    list_display_links = ('type_service',)
     list_display = (
-        'work_order',
+        'get_work_order_date',
+        'get_link_work_order',
+        'type_service',
         'get_executor',
         'get_link_client',
         'get_link_vehicle',
-        'type_service',
         'get_link_gps',
         'get_link_fuelsensor',
         'get_used_equipment',
@@ -81,6 +110,18 @@ class CompletedWorksAdmin(admin.ModelAdmin):
         'work_order__number',
     ]
 
+    def get_work_order_date(selfself, obj):
+        return obj.work_order.date
+
+    get_work_order_date.short_description = 'Дата'
+
+    def get_link_work_order(self, obj):
+        return format_html(
+                "<a href='../../work_orders/work_order/%s/change/' >%s</a>" % (
+                    str(obj.work_order.id), str(obj.work_order.number)))
+
+    get_link_work_order.short_description = '№ ЗН'
+
     def get_link_fuelsensor(self, obj):
         if obj.fuel_sensor:
             return format_html(
@@ -89,7 +130,6 @@ class CompletedWorksAdmin(admin.ModelAdmin):
         return "-"
 
     get_link_fuelsensor.short_description = 'ДВРП'
-    get_link_fuelsensor.allow_tags = True
 
     def get_link_gps(self, obj):
         if obj.gps:
@@ -131,11 +171,12 @@ class CompletedWorksAdmin(admin.ModelAdmin):
 
 class WorkOrderAdmin(admin.ModelAdmin):
     inlines = [CompletedWorksInline, InvoiceInline]
-    list_per_page = 20
+    list_per_page = 5
     list_filter = (
         'date',
         'type_of_work',
         'client',
+        'client__login',
         'pay_form',
         'executor',
     )
@@ -222,6 +263,62 @@ class WorkOrderAdmin(admin.ModelAdmin):
     get_list_of_equipment.short_description = 'використане обладнання'
 
 
+class WorkOrderProxyAdmin(admin.ModelAdmin):
+    list_per_page = 20
+    list_filter = (
+        'date',
+        'type_of_work',
+        'client',
+        'executor',
+        'month_executor_pay',
+    )
+
+    list_display = (
+        'number',
+        'date',
+        'get_month_year_executor_payment',
+        'executor',
+        'get_list_of_work',
+        'milege',
+        'milege_price_executor',
+        'trip_day',
+        'trip_day_costs_executor',
+        'add_costs_executor',
+        'description_add_costs',
+    )
+
+    def get_month_year_executor_payment(self,obj):
+        if obj.month_executor_pay:
+            return '{} {}р.'.format(obj.month_executor_pay.month,obj.month_executor_pay.year)
+        return '-'
+
+    get_month_year_executor_payment.short_description = 'місяць/рік ЗП'
+
+    def get_list_of_work(self, obj):
+        result_dict = {}
+        for work in obj.list_works.all():
+            if work.type_service.name in result_dict:
+                result_dict[work.type_service.name] += 1
+            else:
+                result_dict[work.type_service.name] = 1
+        return '; '.join("{} - {}".format(k, v) for k, v in result_dict.items())
+
+    get_list_of_work.allow_tags = True
+    get_list_of_work.short_description = 'список виконаних робіт'
+
+
+class ExecutorPaymentAdmin(admin.ModelAdmin):
+    list_per_page = 20
+    list_display = [
+        'period',
+        'executor_1',
+        'work_days_1',
+    ]
+
+
+admin.site.register(ExecutorPayment,ExecutorPaymentAdmin)
+admin.site.register(Expertise, ExpertiseAdmin)
+admin.site.register(WorkOrderProxy, WorkOrderProxyAdmin)
 admin.site.register(CompletedWorks, CompletedWorksAdmin)
 admin.site.register(WorkOrder, WorkOrderAdmin)
 admin.site.register(ServicePlan, ServicePlanAdmin)
