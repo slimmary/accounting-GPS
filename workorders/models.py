@@ -975,10 +975,31 @@ class ExecutorPayment(models.Model):
                 wo_3.append(wo.number)
                 wo_count_3 += 1
         self.work_days_3 = date_count_3
-        self.work_days_weekend_1 = date_count_weekend_3
+        self.work_days_weekend_3 = date_count_weekend_3
         self.qua_work_orders_3 = wo_count_3
         self.qua_works_3 = list_works_3
         self.qua_payment_works_3 = payment_works_3
+
+        self.work_days_sum = self.work_days_1 + self.work_days_2 + self.work_days_3
+        self.work_days_weekend_sum = self.work_days_weekend_1 + self.work_days_weekend_2 + self.work_days_weekend_3
+        self.qua_work_orders_sum = self.qua_work_orders_1 + self.qua_work_orders_2 + self.qua_work_orders_3
+        self.qua_payment_works_sum = self.qua_payment_works_1 + self.qua_payment_works_2 + self.qua_payment_works_
+        self.premium_sum = self.qua_payment_works_sum * 0.3
+        self.boss_premium = self.premium_sum / 4
+
+        self.premium_1 = (self.boss_premium * (self.work_days_1 / self.work_days_sum)) + \
+                         (self.boss_premium * (self.work_days_weekend_1 / self.work_days_sum)) + \
+                         (self.boss_premium * (self.qua_work_orders_1 / self.qua_work_orders_sum))
+
+        self.premium_2 = (self.boss_premium * (self.work_days_2 / self.work_days_sum)) + \
+                         (self.boss_premium * (self.work_days_weekend_2 / self.work_days_sum)) + \
+                         (self.boss_premium * (self.qua_work_orders_2 / self.qua_work_orders_sum))
+
+        self.premium_3 = (self.boss_premium * (self.work_days_3 / self.work_days_sum)) + \
+                         (self.boss_premium * (self.work_days_weekend_3 / self.work_days_sum)) + \
+                         (self.boss_premium * (self.qua_work_orders_3 / self.qua_work_orders_sum))
+        
+
 
         super().save(*args, **kwargs)
 
