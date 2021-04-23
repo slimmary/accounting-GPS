@@ -313,6 +313,17 @@ class ExecutorPaymentAdmin(admin.ModelAdmin):
         'period',
         'executor_1',
         'work_days_1',
+        'work_days_weekend_1',
+        'qua_work_orders_1',
+        'executor_2',
+        'work_days_2',
+        'work_days_weekend_2',
+        'qua_work_orders_2',
+        'executor_3',
+        'work_days_3',
+        'work_days_weekend_3',
+        'qua_work_orders_3',
+
     ]
 
 
