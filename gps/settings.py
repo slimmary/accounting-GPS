@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_static_jquery3',
     'django_yearmonth_widget',
+    'rangefilter',
     'rest_framework',
     'phone_field',
     'clients',
@@ -122,7 +123,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'uk-UA'
 
 TIME_ZONE = 'UTC'
 

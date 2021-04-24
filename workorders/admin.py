@@ -3,6 +3,7 @@ from .models import CompletedWorks, WorkOrder, ServicePlan, WorkOrderProxy, Expe
 from django.utils.html import format_html
 from django.urls import reverse
 from invoices.models import ProjectInvoice, Invoice
+from rangefilter.filters import DateRangeFilter
 
 
 class ExpertiseAdmin(admin.ModelAdmin):
@@ -24,9 +25,9 @@ class ExpertiseAdmin(admin.ModelAdmin):
     list_filter = (
         'client',
         'client__login',
-        'date_wo',
-        'date_take_to_rapeir',
-        'date_receving_expertise',
+        ('date_wo', DateRangeFilter),
+        ('date_take_to_rapeir', DateRangeFilter),
+        ('date_receving_expertise',DateRangeFilter),
         'result_expertise',
         'price_expertise',
     )
@@ -56,6 +57,11 @@ class ServicePlanAdmin(admin.ModelAdmin):
         'date_ex',
         'executor',
         'status'
+    )
+    list_filter = (
+        'status',
+        'client',
+        ('date_ex', DateRangeFilter),
     )
 
     def get_contacts(self, obj):
@@ -101,7 +107,7 @@ class CompletedWorksAdmin(admin.ModelAdmin):
         'gps',
         'work_order__client',
         'work_order__executor',
-        'work_order__date',
+        ('work_order__date',DateRangeFilter),
         'type_service',
     )
     search_fields = [
@@ -173,7 +179,7 @@ class WorkOrderAdmin(admin.ModelAdmin):
     inlines = [CompletedWorksInline, InvoiceInline]
     list_per_page = 5
     list_filter = (
-        'date',
+        ('date',DateRangeFilter),
         'type_of_work',
         'client',
         'client__login',
@@ -266,7 +272,7 @@ class WorkOrderAdmin(admin.ModelAdmin):
 class WorkOrderProxyAdmin(admin.ModelAdmin):
     list_per_page = 20
     list_filter = (
-        'date',
+        ('date',DateRangeFilter),
         'type_of_work',
         'client',
         'executor',
@@ -343,6 +349,11 @@ class ExecutorPaymentAdmin(admin.ModelAdmin):
 
 
     ]
+
+
+    list_filter = (
+        ('period',DateRangeFilter),
+    )
 
 
 admin.site.register(ExecutorPayment,ExecutorPaymentAdmin)

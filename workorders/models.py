@@ -634,7 +634,7 @@ class ExecutorPayment(models.Model):
     period = models.DateField(null=True,
                               verbose_name='місяць/рік ЗП',
                               help_text='місяць нарахування ЗП сервісному відділу',
-                              blank=True
+                              blank=True,
                               )
     executor_1 = models.ForeignKey(User,
                                    null=True,
@@ -992,7 +992,7 @@ class ExecutorPayment(models.Model):
         self.work_days_sum = self.work_days_1 + self.work_days_2 + self.work_days_3
         self.work_days_weekend_sum = self.work_days_weekend_1 + self.work_days_weekend_2 + self.work_days_weekend_3
         self.qua_work_orders_sum = self.qua_work_orders_1 + self.qua_work_orders_2 + self.qua_work_orders_3
-        self.qua_payment_works_sum = self.qua_payment_works_1 + self.qua_payment_works_2 + self.qua_payment_works_
+        self.qua_payment_works_sum = self.qua_payment_works_1 + self.qua_payment_works_2 + self.qua_payment_works_3
         self.premium_sum = self.qua_payment_works_sum * 0.3
         self.boss_premium = self.premium_sum / 4
 
