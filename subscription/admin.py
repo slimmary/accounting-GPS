@@ -4,6 +4,7 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.shortcuts import render
 from django.db.models import Q
+from rangefilter.filters import DateRangeFilter
 
 
 class LettersAdmin(admin.ModelAdmin):
@@ -19,7 +20,7 @@ class LettersAdmin(admin.ModelAdmin):
                     'status',
                     )
     list_filter = ('gps',
-                   'date_letter',
+                   ('date_letter',DateRangeFilter),
                    'action',
                    'status',
                    'client__login',

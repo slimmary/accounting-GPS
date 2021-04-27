@@ -4,6 +4,7 @@ from clients.models import Client
 from django.utils.html import format_html
 from django.urls import reverse
 from django.db.models import Q
+from rangefilter.filters import DateRangeFilter
 
 
 class EquipmentAdmin(admin.ModelAdmin):
@@ -163,7 +164,7 @@ class SimAdmin(admin.ModelAdmin):
         'operator',
         'account_number',
         'installer',
-        'date_given',
+        ('date_given',DateRangeFilter),
         'gps_sim_1',
         'gps_sim_2',
         LoginListFilter,
@@ -236,7 +237,7 @@ class FuelSensorAdmin(admin.ModelAdmin):
     )
     list_filter = (
         'type',
-        'date_manufacturing',
+        ('date_manufacturing',DateRangeFilter),
         'gps',
         'gps__owner__name',
         'gps__owner__login',

@@ -255,6 +255,8 @@ class WorkOrder(models.Model):
 
         super(WorkOrder, self).save(*args, **kwargs)
 
+
+
     def __str__(self):
         return 'ЗН №{}, від {}'.format(
             self.number,
@@ -886,13 +888,13 @@ class ExecutorPayment(models.Model):
                                                   )
     total_payment_2 = models.PositiveIntegerField(null=True,
                                                   default=0,
-                                                  verbose_name='загальна сума ЗП 1',
+                                                  verbose_name='загальна сума ЗП 2',
                                                   help_text='Поле заповниться автоматично, вводити нічого не потрібно',
                                                   blank=True
                                                   )
     total_payment_3 = models.PositiveIntegerField(null=True,
                                                   default=0,
-                                                  verbose_name='загальна сума ЗП 1',
+                                                  verbose_name='загальна сума ЗП 3',
                                                   help_text='Поле заповниться автоматично, вводити нічого не потрібно',
                                                   blank=True
                                                   )

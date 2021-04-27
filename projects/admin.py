@@ -4,6 +4,7 @@ from invoices.models import ProjectInvoice
 from contracts.models import Contract, Additions
 from django.utils.html import format_html
 from django.urls import reverse
+from rangefilter.filters import DateRangeFilter
 
 
 class ContractInline(admin.TabularInline):
@@ -38,8 +39,8 @@ class ProjectAdmin(admin.ModelAdmin):
     inlines = [ContractInline, AdditionsInline, ProjectInvoiceInline, ]
     list_per_page = 4
 
-    list_filter = ('date_receipt_contract',
-                   'date_receipt_sale_invoice',
+    list_filter = (('date_receipt_contract',DateRangeFilter),
+                   ('date_receipt_sale_invoice',DateRangeFilter),
                    'client',
                    'client__login',
                    'execution_status',

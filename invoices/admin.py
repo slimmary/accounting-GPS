@@ -4,6 +4,7 @@ from clients.models import Client
 from django.db.models import Q
 from django.utils.html import format_html
 from datetime import date
+from rangefilter.filters import DateRangeFilter
 
 
 class InvoiceAdmin(admin.ModelAdmin):
@@ -54,11 +55,12 @@ class InvoiceAdmin(admin.ModelAdmin):
                     'invoice_sum',
                     'status_payment',
                     )
-    list_filter = ('date',
-                   LoginListFilter,
-                   ClientNameListFilter,
-                   'status_payment',
-                   )
+    list_filter = (
+        ('date', DateRangeFilter),
+        LoginListFilter,
+        ClientNameListFilter,
+        'status_payment',
+    )
 
     search_fields = [
         'wo__number',
@@ -141,11 +143,12 @@ class SubInvoiceAdmin(admin.ModelAdmin):
         'number',
     ]
 
-    list_filter = ('date',
-                   'subscription',
-                   LoginListFilter,
-                   ClientNameListFilter,
-                   )
+    list_filter = (
+        ('date', DateRangeFilter),
+        'subscription',
+        LoginListFilter,
+        ClientNameListFilter,
+    )
 
     def get_link_subscription(self, obj):
         return format_html(
@@ -223,8 +226,8 @@ class ProjectInvoiceAdmin(admin.ModelAdmin):
                     )
     list_filter = (LoginListFilter,
                    ClientNameListFilter,
-                   'date_payment',
-                   'date',
+                   ('date_payment', DateRangeFilter),
+                   ('date', DateRangeFilter),
                    )
     search_fields = [
         'number',

@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import Contract, Additions
 from django.utils.html import format_html
 from django.urls import reverse
+from rangefilter.filters import DateRangeFilter
 
 
 class AdditionsInline(admin.TabularInline):
@@ -26,7 +27,7 @@ class AdditionsAdmin(admin.ModelAdmin):
         'contract_to__client',
         'status',
         'contract_to__provider',
-        'contract_date',
+        ('contract_date',DateRangeFilter),
     )
 
     def get_link_project(self, obj):
@@ -66,7 +67,7 @@ class ContractAdmin(admin.ModelAdmin):
         'client',
         'status',
         'provider',
-        'contract_date',
+        ('contract_date',DateRangeFilter),
     )
     search_fields = [
         'number',

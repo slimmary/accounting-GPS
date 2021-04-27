@@ -276,7 +276,7 @@ class WorkOrderProxyAdmin(admin.ModelAdmin):
         'type_of_work',
         'client',
         'executor',
-        'month_executor_pay',
+        ('month_executor_pay',DateRangeFilter),
     )
 
     list_display = (
@@ -314,9 +314,10 @@ class WorkOrderProxyAdmin(admin.ModelAdmin):
 
 
 class ExecutorPaymentAdmin(admin.ModelAdmin):
+
     list_per_page = 20
     list_display = [
-        'period',
+        'get_period_month',
         'executor_1',
         'work_days_1',
         'work_days_weekend_1',
@@ -346,14 +347,15 @@ class ExecutorPaymentAdmin(admin.ModelAdmin):
         'milege_price_3',
         'premium_3',
         'total_payment_3',
-
-
     ]
 
-
     list_filter = (
-        ('period',DateRangeFilter),
-    )
+        ('period', DateRangeFilter),)
+
+    def get_period_month(self,obj):
+        return '{} {}'.format(obj.period.month, obj.period.year,)
+
+    get_period_month.short_description = 'period'
 
 
 admin.site.register(ExecutorPayment,ExecutorPaymentAdmin)
