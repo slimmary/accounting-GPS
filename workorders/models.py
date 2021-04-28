@@ -209,7 +209,7 @@ class WorkOrder(models.Model):
                                              )
     month_executor_pay = models.DateField(null=True,
                                           verbose_name='місяць/рік ЗП',
-                                          help_text='місяць нарахування ЗП монтажнику',
+                                          help_text='оберіть будь-яку дату в межах місяця нарахування ЗП монтажнику',
                                           blank=True
                                           )
     sum_price_client = models.PositiveIntegerField(null=True,
@@ -254,8 +254,6 @@ class WorkOrder(models.Model):
                     self.pay_form = self.project.project_invoice.pay_form
 
         super(WorkOrder, self).save(*args, **kwargs)
-
-
 
     def __str__(self):
         return 'ЗН №{}, від {}'.format(
@@ -681,7 +679,7 @@ class ExecutorPayment(models.Model):
                                               blank=True
                                               )
     work_days_sum = models.PositiveIntegerField(null=True,
-                                                verbose_name='р.д. сумарно',
+                                                verbose_name='р.д. заг',
                                                 help_text='кількість робочих днів(окрім вихідних)\nПоле заповниться '
                                                           'автоматично, вводити нічого не потрібно',
                                                 blank=True
@@ -710,40 +708,59 @@ class ExecutorPayment(models.Model):
                                                       )
     work_days_weekend_sum = models.PositiveIntegerField(null=True,
                                                         default=0,
-                                                        verbose_name='р.д.вих сумарно',
+                                                        verbose_name='р.д.вих заг.',
                                                         help_text='кількість робочих днів у вихідних\nПоле '
                                                                   'заповниться '
                                                                   'автоматично, вводити нічого не потрібно',
                                                         blank=True
                                                         )
-    trip_day_1 = models.PositiveIntegerField(null=True,
-                                             default=0,
-                                             verbose_name='добові 1',
-                                             help_text='кількість днів на які нараховано добові\nПоле '
-                                                       'заповниться автоматично, вводити нічого не потрібно',
-                                             blank=True
-                                             )
-    trip_day_2 = models.PositiveIntegerField(null=True,
-                                             default=0,
-                                             verbose_name='добові 2',
-                                             help_text='кількість днів на які нараховано добові\nПоле '
-                                                       'заповниться автоматично, вводити нічого не потрібно',
-                                             blank=True
-                                             )
-    trip_day_3 = models.PositiveIntegerField(null=True,
-                                             default=0,
-                                             verbose_name='добові 3',
-                                             help_text='кількість днів на які нараховано добові\nПоле '
-                                                       'заповниться автоматично, вводити нічого не потрібно',
-                                             blank=True
-                                             )
-    trip_day_sum = models.PositiveIntegerField(null=True,
-                                               default=0,
-                                               verbose_name='добові сумарно',
-                                               help_text='кількість днів на які нараховано добові\nПоле '
-                                                         'заповниться автоматично, вводити нічого не потрібно',
-                                               blank=True
-                                               )
+    trip_day_1 = models.FloatField(null=True,
+                                   default=0,
+                                   verbose_name='добові 1',
+                                   help_text='кількість днів на які нараховано добові\nПоле '
+                                             'заповниться автоматично, вводити нічого не потрібно',
+                                   blank=True
+                                   )
+    trip_day_2 = models.FloatField(null=True,
+                                   default=0,
+                                   verbose_name='добові 2',
+                                   help_text='кількість днів на які нараховано добові\nПоле '
+                                             'заповниться автоматично, вводити нічого не потрібно',
+                                   blank=True
+                                   )
+    trip_day_3 = models.FloatField(null=True,
+                                   default=0,
+                                   verbose_name='добові 3',
+                                   help_text='кількість днів на які нараховано добові\nПоле '
+                                             'заповниться автоматично, вводити нічого не потрібно',
+                                   blank=True
+                                   )
+    trip_day_sum = models.FloatField(null=True,
+                                     default=0,
+                                     verbose_name='добові заг',
+                                     help_text='кількість днів на які нараховано добові\nПоле '
+                                               'заповниться автоматично, вводити нічого не потрібно',
+                                     blank=True
+                                     )
+    trip_day_costs_1 = models.PositiveIntegerField(null=True,
+                                                   default=0,
+                                                   verbose_name=' грн добові 1',
+                                                   help_text='заповниться автоматично, вводити нічого не потрібно',
+                                                   blank=True
+                                                   )
+    trip_day_costs_2 = models.PositiveIntegerField(null=True,
+                                                   default=0,
+                                                   verbose_name=' грн добові 2',
+                                                   help_text='заповниться автоматично, вводити нічого не потрібно',
+                                                   blank=True
+                                                   )
+    trip_day_costs_3 = models.PositiveIntegerField(null=True,
+                                                   default=0,
+                                                   verbose_name=' грн добові 3',
+                                                   help_text='заповниться автоматично, вводити нічого не потрібно',
+                                                   blank=True
+                                                   )
+
     qua_work_orders_1 = models.PositiveIntegerField(null=True,
                                                     default=0,
                                                     verbose_name='к-ть ЗН 1',
@@ -764,7 +781,7 @@ class ExecutorPayment(models.Model):
                                                     )
     qua_work_orders_sum = models.PositiveIntegerField(null=True,
                                                       default=0,
-                                                      verbose_name='к-ть ЗН сумарно',
+                                                      verbose_name='к-ть ЗН заг',
                                                       help_text='заповниться автоматично, вводити нічого не потрібно',
                                                       blank=True
                                                       )
@@ -792,7 +809,7 @@ class ExecutorPayment(models.Model):
                                               )
     qua_works_sum = models.PositiveIntegerField(null=True,
                                                 default=0,
-                                                verbose_name='к-ть вик. робіт сумарно',
+                                                verbose_name='к-ть вик. робіт заг',
                                                 help_text='кількість виконаних робіт співробітником заповниться '
                                                           'автоматично, вводити нічого не потрібно',
                                                 blank=True
@@ -911,6 +928,7 @@ class ExecutorPayment(models.Model):
         payment_works_1 = 0
         millege_price_1 = 0
         for wo in period_wo.filter(executor=self.executor_1):
+            self.trip_day_costs_1 += wo.trip_day_costs_executor
             for works in wo.list_works.all():
                 payment_works_1 += works.type_service.salary_installer
             trip_day_1 += wo.trip_day
@@ -928,6 +946,7 @@ class ExecutorPayment(models.Model):
         self.work_days_weekend_1 = date_count_weekend_1
         self.qua_work_orders_1 = wo_count_1
         self.qua_works_1 = list_works_1
+        self.trip_day_1 = trip_day_1
         self.qua_payment_works_1 = payment_works_1
         self.milege_price_1 = millege_price_1
 
@@ -941,6 +960,7 @@ class ExecutorPayment(models.Model):
         payment_works_2 = 0
         millege_price_2 = 0
         for wo in period_wo.filter(executor=self.executor_2):
+            self.trip_day_costs_2 += wo.trip_day_costs_executor
             for works in wo.list_works.all():
                 payment_works_2 += works.type_service.salary_installer
             trip_day_2 += wo.trip_day
@@ -958,6 +978,7 @@ class ExecutorPayment(models.Model):
         self.work_days_weekend_2 = date_count_weekend_2
         self.qua_work_orders_2 = wo_count_2
         self.qua_works_2 = list_works_2
+        self.trip_day_2 = trip_day_2
         self.qua_payment_works_2 = payment_works_2
         self.milege_price_2 = millege_price_2
 
@@ -971,6 +992,7 @@ class ExecutorPayment(models.Model):
         payment_works_3 = 0
         millege_price_3 = 0
         for wo in period_wo.filter(executor=self.executor_3):
+            self.trip_day_costs_3 += wo.trip_day_costs_executor
             for works in wo.list_works.all():
                 payment_works_3 += works.type_service.salary_installer
             trip_day_3 += wo.trip_day
@@ -989,35 +1011,61 @@ class ExecutorPayment(models.Model):
         self.qua_work_orders_3 = wo_count_3
         self.qua_works_3 = list_works_3
         self.qua_payment_works_3 = payment_works_3
+        self.trip_day_3 = trip_day_3
         self.milege_price_3 = millege_price_3
 
         self.work_days_sum = self.work_days_1 + self.work_days_2 + self.work_days_3
         self.work_days_weekend_sum = self.work_days_weekend_1 + self.work_days_weekend_2 + self.work_days_weekend_3
         self.qua_work_orders_sum = self.qua_work_orders_1 + self.qua_work_orders_2 + self.qua_work_orders_3
+        self.qua_works_sum = self.qua_works_1 + self.qua_works_2 + self.qua_works_3
         self.qua_payment_works_sum = self.qua_payment_works_1 + self.qua_payment_works_2 + self.qua_payment_works_3
+        self.trip_day_sum = trip_day_1 + trip_day_2 + trip_day_3
         self.premium_sum = self.qua_payment_works_sum * 0.3
         self.boss_premium = self.premium_sum / 4
+        executors_premium = (self.premium_sum - self.boss_premium) / 5
 
-        self.premium_1 = (self.boss_premium * (self.work_days_1 / self.work_days_sum)) + \
-                         (self.boss_premium * (self.work_days_weekend_1 / self.work_days_sum)) + \
-                         (self.boss_premium * (self.qua_work_orders_1 / self.qua_work_orders_sum))
+        if self.work_days_sum != 0:
+            work_days_sum = self.work_days_sum
+        else:
+            work_days_sum = 1
+        if self.work_days_weekend_sum != 0:
+            work_days_weekend_sum = self.work_days_weekend_sum
+        else:
+            work_days_weekend_sum = 1
+        if self.trip_day_sum != 0:
+            trip_day_sum = self.trip_day_sum
+        else:
+            trip_day_sum = 1
 
-        self.premium_2 = (self.boss_premium * (self.work_days_2 / self.work_days_sum)) + \
-                         (self.boss_premium * (self.work_days_weekend_2 / self.work_days_sum)) + \
-                         (self.boss_premium * (self.qua_work_orders_2 / self.qua_work_orders_sum))
+        self.premium_1 = (executors_premium * (self.work_days_1 / work_days_sum)) + \
+                         (executors_premium * (self.work_days_weekend_1 / work_days_weekend_sum)) + \
+                         (executors_premium * (self.qua_work_orders_1 / self.qua_work_orders_sum)) + \
+                         (executors_premium * (self.qua_works_1 / self.qua_works_sum)) + \
+                         (executors_premium * (self.trip_day_1 / trip_day_sum))
 
-        self.premium_3 = (self.boss_premium * (self.work_days_3 / self.work_days_sum)) + \
-                         (self.boss_premium * (self.work_days_weekend_3 / self.work_days_sum)) + \
-                         (self.boss_premium * (self.qua_work_orders_3 / self.qua_work_orders_sum))
+        self.premium_2 = (executors_premium * (self.work_days_2 / work_days_sum)) + \
+                         (executors_premium * (self.work_days_weekend_2 / work_days_weekend_sum)) + \
+                         (executors_premium * (self.qua_work_orders_2 / self.qua_work_orders_sum)) + \
+                         (executors_premium * (self.qua_works_2 / self.qua_works_sum)) + \
+                         (executors_premium * (self.trip_day_2 / trip_day_sum))
+
+        self.premium_3 = (executors_premium * (self.work_days_3 / work_days_sum)) + \
+                         (executors_premium * (self.work_days_weekend_3 / work_days_weekend_sum)) + \
+                         (executors_premium * (self.qua_work_orders_3 / self.qua_work_orders_sum)) + \
+                         (executors_premium * (self.qua_works_3 / self.qua_works_sum)) + \
+                         (executors_premium * (self.trip_day_3 / trip_day_sum))
 
         self.total_payment_1 = 5000 + self.qua_payment_works_1 + self.premium_1 + self.milege_price_1
         self.total_payment_2 = 5000 + self.qua_payment_works_2 + self.premium_2 + self.milege_price_2
         self.total_payment_3 = 5000 + self.qua_payment_works_3 + self.premium_3 + self.milege_price_3
 
-
-
-
         super().save(*args, **kwargs)
 
     class Meta:
         verbose_name_plural = "ЗП сервісний відділ"
+
+
+class ExecutorPaymentProxy(ExecutorPayment):
+    class Meta:
+        verbose_name_plural = "зведені дані ЗП по монтажникам окремо"
+        proxy = True

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CompletedWorks, WorkOrder, ServicePlan, WorkOrderProxy, Expertise, ExecutorPayment
+from .models import CompletedWorks, WorkOrder, ServicePlan, WorkOrderProxy, Expertise, ExecutorPayment, ExecutorPaymentProxy
 from django.utils.html import format_html
 from django.urls import reverse
 from invoices.models import ProjectInvoice, Invoice
@@ -317,12 +317,24 @@ class ExecutorPaymentAdmin(admin.ModelAdmin):
 
     list_per_page = 20
     list_display = [
+
         'get_period_month',
+        'work_days_sum',
+        'work_days_weekend_sum',
+        'trip_day_sum',
+        'qua_work_orders_sum',
+        'qua_works_sum',
+        'premium_sum',
+        'boss_premium',
+        
+
         'executor_1',
         'work_days_1',
         'work_days_weekend_1',
         'qua_work_orders_1',
         'qua_works_1',
+        'trip_day_1',
+        'trip_day_costs_1',
         'qua_payment_works_1',
         'milege_price_1',
         'premium_1',
@@ -333,6 +345,8 @@ class ExecutorPaymentAdmin(admin.ModelAdmin):
         'work_days_weekend_2',
         'qua_work_orders_2',
         'qua_works_2',
+        'trip_day_2',
+        'trip_day_costs_2',
         'milege_price_2',
         'premium_2',
         'total_payment_2',
@@ -343,6 +357,8 @@ class ExecutorPaymentAdmin(admin.ModelAdmin):
         'work_days_weekend_3',
         'qua_work_orders_3',
         'qua_works_3',
+        'trip_day_3',
+        'trip_day_costs_3',
         'qua_payment_works_3',
         'milege_price_3',
         'premium_3',
@@ -350,15 +366,64 @@ class ExecutorPaymentAdmin(admin.ModelAdmin):
     ]
 
     list_filter = (
-        ('period', DateRangeFilter),)
+        ('period', DateRangeFilter),
+    )
 
     def get_period_month(self,obj):
-        return '{} {}'.format(obj.period.month, obj.period.year,)
+        return '{} / {}'.format(obj.period.month, obj.period.year,)
 
-    get_period_month.short_description = 'period'
+    get_period_month.short_description = 'місяць/рік ЗП'
 
 
-admin.site.register(ExecutorPayment,ExecutorPaymentAdmin)
+class ExecutorPaymentProxyAdmin(admin.ModelAdmin):
+    list_per_page = 20
+    list_display = [
+
+        'get_period_month',
+        'qua_payment_works_sum',
+        'premium_sum',
+        'boss_premium',
+        'get_executors_premium',
+
+        'executor_1',
+        'trip_day_costs_1',
+        'qua_payment_works_1',
+        'milege_price_1',
+        'premium_1',
+        'total_payment_1',
+
+        'executor_2',
+        'trip_day_costs_2',
+        'milege_price_2',
+        'premium_2',
+        'total_payment_2',
+
+        'qua_payment_works_2',
+        'executor_3',
+        'trip_day_costs_3',
+        'qua_payment_works_3',
+        'milege_price_3',
+        'premium_3',
+        'total_payment_3',
+    ]
+
+    list_filter = (
+        ('period', DateRangeFilter),
+    )
+
+    def get_executors_premium(self, obj):
+        return obj.premium_sum - obj.boss_premium
+
+    get_executors_premium.short_description = 'премія монтажників'
+
+    def get_period_month(self, obj):
+        return '{} / {}'.format(obj.period.month, obj.period.year, )
+
+    get_period_month.short_description = 'місяць/рік ЗП'
+
+
+admin.site.register(ExecutorPaymentProxy, ExecutorPaymentProxyAdmin)
+admin.site.register(ExecutorPayment, ExecutorPaymentAdmin)
 admin.site.register(Expertise, ExpertiseAdmin)
 admin.site.register(WorkOrderProxy, WorkOrderProxyAdmin)
 admin.site.register(CompletedWorks, CompletedWorksAdmin)
