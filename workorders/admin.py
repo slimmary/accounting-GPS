@@ -4,6 +4,7 @@ from django.utils.html import format_html
 from django.urls import reverse
 from invoices.models import ProjectInvoice, Invoice
 from rangefilter.filters import DateRangeFilter
+from django.core.mail import send_mail
 
 
 class ExpertiseAdmin(admin.ModelAdmin):
@@ -45,6 +46,7 @@ class InvoiceInline(admin.TabularInline):
 
 
 class ServicePlanAdmin(admin.ModelAdmin):
+    date_hierarchy = 'date_planing'
     list_per_page = 50
     list_display = (
         'date_create',
@@ -83,6 +85,32 @@ class ServicePlanAdmin(admin.ModelAdmin):
         return obj.district
 
     get_distrit_or_city.short_description = 'регіон'
+
+    actions = ['update_status', 'send_emails']
+
+    def update_status(self, request, queryset):
+        for works in queryset:
+            works.status = works.StatusWOPlan.executed
+            works.save()
+
+    update_status.short_description = 'Виконано'
+
+    def send_emails(self, request, queryset):
+        for works in queryset:
+            if works.district:
+                city_district = works.district
+            else:
+                city_district = works.city
+            send_mail(
+                'ЗН №{} на {}'.format(works.wo_numb, works.date_ex),
+                'Привіт, {}! тобі назначено на {} о {} год. за адресою: {} {} наступні роботи: {}'.format(
+                    works.executor, works.date_ex, works.time, city_district, works.adress,works.tasks),
+                'slimmarkelova@gmail.com',
+                [works.executor.email,],
+                fail_silently=False,
+            )
+
+    send_emails.short_description = 'Відправити e-mail виконавцю'
 
 
 class CompletedWorksInline(admin.TabularInline):
@@ -181,6 +209,7 @@ class CompletedWorksAdmin(admin.ModelAdmin):
 
 
 class WorkOrderAdmin(admin.ModelAdmin):
+    date_hierarchy = 'date'
     inlines = [CompletedWorksInline, InvoiceInline]
     list_per_page = 5
     list_filter = (
@@ -275,6 +304,7 @@ class WorkOrderAdmin(admin.ModelAdmin):
 
 
 class WorkOrderProxyAdmin(admin.ModelAdmin):
+    date_hierarchy = 'date'
     list_per_page = 20
     list_filter = (
         ('date',DateRangeFilter),
@@ -319,7 +349,7 @@ class WorkOrderProxyAdmin(admin.ModelAdmin):
 
 
 class ExecutorPaymentAdmin(admin.ModelAdmin):
-
+    date_hierarchy = 'period'
     list_per_page = 20
     list_display = [
 
@@ -371,7 +401,6 @@ class ExecutorPaymentAdmin(admin.ModelAdmin):
     ]
 
     list_filter = (
-        ('period', DateRangeFilter),
         'executor_1',
         'executor_2',
         'executor_3',
@@ -382,8 +411,17 @@ class ExecutorPaymentAdmin(admin.ModelAdmin):
 
     get_period_month.short_description = 'місяць/рік ЗП'
 
+    actions = ['update_status', ]
+
+    def update_status(self, request, queryset):
+        for executors in queryset:
+            executors.save()
+
+    update_status.short_description = 'Оновити дані'
+
 
 class ExecutorPaymentProxyAdmin(admin.ModelAdmin):
+    date_hierarchy = 'period'
     list_per_page = 20
     list_display = [
 
@@ -416,7 +454,6 @@ class ExecutorPaymentProxyAdmin(admin.ModelAdmin):
     ]
 
     list_filter = (
-        ('period', DateRangeFilter),
         'executor_1',
         'executor_2',
         'executor_3',
@@ -431,6 +468,14 @@ class ExecutorPaymentProxyAdmin(admin.ModelAdmin):
         return '{} / {}'.format(obj.period.month, obj.period.year, )
 
     get_period_month.short_description = 'місяць/рік ЗП'
+
+    actions = ['update_status', ]
+
+    def update_status(self, request, queryset):
+        for executors in queryset:
+            executors.save()
+
+    update_status.short_description = 'Оновити дані'
 
 
 admin.site.register(ExecutorPaymentProxy, ExecutorPaymentProxyAdmin)
