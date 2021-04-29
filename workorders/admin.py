@@ -32,6 +32,11 @@ class ExpertiseAdmin(admin.ModelAdmin):
         'price_expertise',
     )
 
+    search_fields = [
+        'gps__number',
+        'fuel_sensor__number',
+    ]
+
 
 class InvoiceInline(admin.TabularInline):
     list_per_page = 20
@@ -367,6 +372,9 @@ class ExecutorPaymentAdmin(admin.ModelAdmin):
 
     list_filter = (
         ('period', DateRangeFilter),
+        'executor_1',
+        'executor_2',
+        'executor_3',
     )
 
     def get_period_month(self,obj):
@@ -409,6 +417,9 @@ class ExecutorPaymentProxyAdmin(admin.ModelAdmin):
 
     list_filter = (
         ('period', DateRangeFilter),
+        'executor_1',
+        'executor_2',
+        'executor_3',
     )
 
     def get_executors_premium(self, obj):

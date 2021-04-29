@@ -128,12 +128,14 @@ class WorkOrder(models.Model):
                                )
 
     price_of_completed_works = models.PositiveIntegerField(null=True,
+                                                           default=0,
                                                            verbose_name='сума за виконані роботи',
                                                            help_text='Поле заповниться автоматично, вводити нічого не '
                                                                      'потрібно',
                                                            blank=True
                                                            )
     price_of_used_equipment = models.PositiveIntegerField(null=True,
+                                                          default=0,
                                                           verbose_name='Сума за використане обладнання',
                                                           help_text='Поле заповниться автоматично, вводити нічого не '
                                                                     'потрібно',
@@ -161,6 +163,7 @@ class WorkOrder(models.Model):
                                          blank=True
                                          )
     milege_price_executor = models.PositiveIntegerField(null=True,
+                                                        default=0,
                                                         verbose_name='грн за км монтажнику',
                                                         help_text='Сума компенсації за пробіг монтажнику\nПоле '
                                                                   'заповниться автоматично, вводити нічого не '
@@ -169,6 +172,7 @@ class WorkOrder(models.Model):
                                                         )
 
     milege_price_client = models.IntegerField(null=True,
+                                              default=0,
                                               verbose_name='грн за км клієнту',
                                               help_text='Вартість пробігу для клієнта\nПоле заповниться '
                                                         'автоматично, вводити нічого не потрібно',
@@ -192,11 +196,13 @@ class WorkOrder(models.Model):
                                                           )
 
     add_costs_executor = models.PositiveIntegerField(null=True,
+                                                     default=0,
                                                      verbose_name='грн за ДВ \nмонтажнику',
                                                      help_text='Сума коомпенсації за додаткові витрати монтажнику',
                                                      blank=True
                                                      )
     add_costs_client = models.IntegerField(null=True,
+                                           default=0,
                                            verbose_name='грн за ДВ \nклієнту',
                                            help_text='Вартість додаткових витрат для клієнта',
                                            blank=True
@@ -213,6 +219,7 @@ class WorkOrder(models.Model):
                                           blank=True
                                           )
     sum_price_client = models.PositiveIntegerField(null=True,
+                                                   default=0,
                                                    verbose_name='сума рахунку',
                                                    help_text='сума рахунку для клієнта\nПоле заповниться автоматично, '
                                                              'вводити нічого не потрібно',
@@ -240,6 +247,8 @@ class WorkOrder(models.Model):
             raise ValidationError('Не можливо приєднати проект, якщо тип ЗН не Проект')
 
     def save(self, *args, **kwargs):
+        if self.month_executor_pay is None:
+            self.month_executor_pay = self.date
         if self.trip_day != 0:
             self.trip_day_costs_executor = self.trip_day * 250
         if self.milege:
@@ -633,7 +642,8 @@ class WorkOrderProxy(WorkOrder):
 class ExecutorPayment(models.Model):
     period = models.DateField(null=True,
                               verbose_name='місяць/рік ЗП',
-                              help_text='місяць нарахування ЗП сервісному відділу',
+                              help_text='місяць нарахування ЗП сервісному відділу - оберіть будь-яку дату в межах '
+                                        'місяця',
                               blank=True,
                               )
     executor_1 = models.ForeignKey(User,
@@ -927,6 +937,7 @@ class ExecutorPayment(models.Model):
         trip_day_1 = 0
         payment_works_1 = 0
         millege_price_1 = 0
+
         for wo in period_wo.filter(executor=self.executor_1):
             self.trip_day_costs_1 += wo.trip_day_costs_executor
             for works in wo.list_works.all():
@@ -1022,20 +1033,25 @@ class ExecutorPayment(models.Model):
         self.trip_day_sum = trip_day_1 + trip_day_2 + trip_day_3
         self.premium_sum = self.qua_payment_works_sum * 0.3
         self.boss_premium = self.premium_sum / 4
-        executors_premium = (self.premium_sum - self.boss_premium) / 5
+        executors_premium = self.premium_sum - self.boss_premium
+        parts_premium_count = 5
 
-        if self.work_days_sum != 0:
-            work_days_sum = self.work_days_sum
-        else:
+        if self.work_days_sum == 0:
+            parts_premium_count -= 1
             work_days_sum = 1
-        if self.work_days_weekend_sum != 0:
-            work_days_weekend_sum = self.work_days_weekend_sum
         else:
+            work_days_sum = self.work_days_sum
+        if self.work_days_weekend_sum == 0:
+            parts_premium_count -= 1
             work_days_weekend_sum = 1
-        if self.trip_day_sum != 0:
-            trip_day_sum = self.trip_day_sum
         else:
+            work_days_weekend_sum = self.work_days_weekend_sum
+        if self.trip_day_sum == 0:
+            parts_premium_count -= 1
             trip_day_sum = 1
+        else:
+            trip_day_sum = self.trip_day_sum
+        executors_premium = executors_premium / parts_premium_count
 
         self.premium_1 = (executors_premium * (self.work_days_1 / work_days_sum)) + \
                          (executors_premium * (self.work_days_weekend_1 / work_days_weekend_sum)) + \
