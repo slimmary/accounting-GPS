@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 
 
 class ClientAddress(models.Model):
-    index = models.IntegerField(verbose_name='Пштовий індекс')
+    index = models.CharField(max_length=5, verbose_name='Пштовий індекс')
     region = models.CharField(max_length=50, verbose_name='Область')
     district = models.CharField(max_length=50, verbose_name='Район', blank=True)
     city = models.CharField(max_length=50, verbose_name='Місто')
@@ -162,19 +162,25 @@ class Client(models.Model):
     def clean(self):
         if self.type_notification_1 != self.Notification.medoc:
             if self.notification_contact_1 is None:
-                raise ValidationError("Не можливо обратий цей тип повідомленнь 1 не вказавши контактну особу,"
-                                      "яку повідомлятимуть по рахунках (особа має бути пов'язана з клієнтом)")
+                raise ValidationError(
+                    {'notification_contact_1': "Не можливо обратий цей тип повідомленнь 1 не вказавши "
+                                               "контактну особу, яку повідомлятимуть по рахунках "
+                                               "(особа має бути пов'язана з клієнтом)"})
             elif self.notification_contact_1 not in self.contacts.all():
-                raise ValidationError("Обрана особа не є контактною і не повязана з клєнтом, оберіть особу яка "
-                                      "пов'язана зі списку 'контактні особи'")
+                raise ValidationError(
+                    {'notification_contact_1': "Обрана особа не є контактною і не повязана з клєнтом, "
+                                               "оберіть особу яка пов'язана зі списку 'контактні особи'"})
         if self.type_notification_2 != self.Notification.medoc:
             if self.type_notification_2 is not None:
                 if self.notification_contact_2 is None:
-                    raise ValidationError("Не можливо обратий тип повідомленнь 2 не вказавши контактну особу, "
-                                          "яку повідомлятимуть по рахунках (особа має бути пов'язана з клієнтом)")
+                    raise ValidationError({'notification_contact_2': "Не можливо обратий тип повідомленнь 2? "
+                                                                     "не вказавши контактну особу, "
+                                                                     "яку повідомлятимуть по рахунках "
+                                                                     "(особа має бути пов'язана з клієнтом)"})
                 elif self.notification_contact_2 not in self.contacts.all():
-                    raise ValidationError("Обрана особа не є контактною і не повязана з клєнтом, оберіть особу яка "
-                                          "пов'язана зі списку 'контактні особи'")
+                    raise ValidationError(
+                        {'notification_contact_2': "Обрана особа не є контактною і не повязана з клєнтом,"
+                                                   "оберіть особу яка пов'язана зі списку 'контактні особи'"})
 
     def save(self, *args, **kwargs):
         if self.type_notification_1 != self.Notification.medoc:
@@ -203,7 +209,6 @@ class Client(models.Model):
 
 
 class ClientProxyPayment(Client):
-
     class Meta:
         verbose_name_plural = "Клієнт зведені дані"
         proxy = True

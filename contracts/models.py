@@ -93,7 +93,7 @@ class Contract(AbstractContract):
     def clean(self):
         if self.contract_project_to:
             if self.type != self.TypeChoice.project:
-                raise ValidationError("до проекту не можливо додати договір, який не є договором поставки")
+                raise ValidationError({'type':"до проекту не можливо додати договір, який не є договором поставки"})
 
     def save(self, *args, **kwargs):
         if self.type == self.TypeChoice.project:

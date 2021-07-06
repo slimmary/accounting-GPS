@@ -31,6 +31,7 @@ class ServiceAdmin(admin.ModelAdmin):
 
 
 class GpsAdmin(admin.ModelAdmin):
+    raw_id_fields = ('owner','vehicle','sim_1','sim_2')
     list_per_page = 20
     actions = ['rate_client_pause']
     list_display = (
@@ -224,6 +225,7 @@ class SimAdmin(admin.ModelAdmin):
 
 
 class FuelSensorAdmin(admin.ModelAdmin):
+    raw_id_fields = ('gps',)
     list_per_page = 20
     list_display = (
         'get_all_number',

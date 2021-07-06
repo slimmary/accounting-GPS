@@ -8,7 +8,7 @@ from rangefilter.filters import DateRangeFilter
 
 
 class LettersAdmin(admin.ModelAdmin):
-
+    raw_id_fields = ('client','gps')
     list_per_page = 20
     list_display = ('date_letter',
                     'get_link_client_name',
@@ -67,6 +67,7 @@ class LettersAdmin(admin.ModelAdmin):
 
 
 class SubscriptionAdmin(admin.ModelAdmin):
+    raw_id_fields = ('client',)
     list_per_page = 20
     actions = ['update_activation', 'update_status_payment', 'update_all']
 

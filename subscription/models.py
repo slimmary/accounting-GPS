@@ -357,7 +357,6 @@ class Subscription(models.Model):
 
 
 class Letters(models.Model):
-
     date_letter = models.DateField(null=True,
                                    verbose_name='Дата листа',
                                    help_text='Оберіть дату'
@@ -425,8 +424,8 @@ class Letters(models.Model):
         in_process = 'передано на обробку сервісний відділ'
 
     STATUS_CHOICE = (
-         (Status.finished, 'оброблено'),
-         (Status.in_process, 'передано на обробку')
+        (Status.finished, 'оброблено'),
+        (Status.in_process, 'передано на обробку')
     )
 
     status = models.CharField(default=Status.in_process,
@@ -438,10 +437,11 @@ class Letters(models.Model):
 
     def clean(self):
         if self.gps.owner != self.client:
-            raise ValidationError('Реєстратор не належить клієнту, ці данні не будуть збережені, оберіть реєстратор, '
-                                  'який належить клієнту')
+            raise ValidationError(
+                {'gps': 'Реєстратор не належить клієнту, ці данні не будуть збережені, оберіть реєстратор, '
+                        'який належить клієнту'})
         if self.gps_rate is not None and self.gps_rate == self.new_rate:
-            raise ValidationError('Тариф не змінено, оберіть тариф, який не встановлено на реєстратор')
+            raise ValidationError({'gps_rate': 'Тариф не змінено, оберіть тариф, який не встановлено на реєстратор'})
 
     def save(self, *args, **kwargs):
         try:
@@ -458,8 +458,8 @@ class Letters(models.Model):
                 self.gps__fuel_sensor = None
                 self.gps.rate_price = 0
         except ValidationError:
-            raise ValidationError('Реєстратор не належить клієнту, ці данні не будуть збережені, оберіть реєстратор, '
-                                  'який належить клієнту')
+            raise ValidationError({'gps':'Реєстратор не належить клієнту, ці данні не будуть збережені, оберіть '
+                                         'реєстратор, який належить клієнту'})
         super(Letters, self).save(*args, **kwargs)
         Gps.save(self.gps, *args, **kwargs)
 

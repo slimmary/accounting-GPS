@@ -45,7 +45,7 @@ class InvoiceAdmin(admin.ModelAdmin):
                 return queryset.filter(Q(wo__client_id=self.value()))
             else:
                 return queryset
-
+    raw_id_fields = ('wo',)
     list_per_page = 20
     list_display = ('number',
                     'date',
@@ -129,7 +129,7 @@ class SubInvoiceAdmin(admin.ModelAdmin):
                 return queryset.filter(Q(subscription__client_id=self.value()))
             else:
                 return queryset
-
+    raw_id_fields = ('subscription',)
     list_per_page = 20
     list_display = ('provider',
                     'number',
@@ -213,7 +213,7 @@ class ProjectInvoiceAdmin(admin.ModelAdmin):
                 return queryset.filter(Q(project_to__client_id=self.value()))
             else:
                 return queryset
-
+    raw_id_fields = ('project_to','client',)
     list_per_page = 20
     list_display = ('number',
                     'date',

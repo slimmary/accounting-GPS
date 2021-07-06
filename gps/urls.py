@@ -6,5 +6,6 @@ urlpatterns = [
     path('jet/dashboard/', include('jet.dashboard.urls', 'jet-dashboard')),
     path('api-auth/', include('rest_framework.urls')),
     path('admin/', admin.site.urls),
+    path('clients/', include('clients.urls')),
     
 ]

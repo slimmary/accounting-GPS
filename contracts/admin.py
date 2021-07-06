@@ -20,6 +20,7 @@ class AdditionsAdmin(admin.ModelAdmin):
         'get_link_project',
 
     )
+    raw_id_fields = ('contract_to',)
     search_fields = [
         'number',
     ]

@@ -203,12 +203,13 @@ class Gps(models.Model):
         if self.sim_1:
             if self.sim_2:
                 if self.sim_2.operator == self.sim_2.Operator.lifecell or self.sim_2.operator == self.sim_2.Operator.kiyvstar:
-                    raise ValidationError('Сім 2 може бути тільки операторів Тревелсім або Гудлайн')
+                    raise ValidationError({'sim_2': 'Сім 2 може бути тільки операторів Тревелсім або Гудлайн'})
                 elif self.sim_1.operator == self.sim_1.Operator.travelsim or self.sim_1.operator == self.sim_1.Operator.goodline:
-                    raise ValidationError('Сім 1 не може бути операторів Тревелсім або Гудлайн, якщо Сім 2 додана')
+                    raise ValidationError(
+                        {'sim_1': 'Сім 1 не може бути операторів Тревелсім або Гудлайн, якщо Сім 2 додана'})
         else:
             if self.sim_2:
-                raise ValidationError('Сім 2 може бути додана якщо Сім 1 не додана')
+                raise ValidationError({'sim_2': 'Сім 2 може бути додана якщо Сім 1 не додана'})
         # if self.sim_1.gps_sim_1 or self.sim_1.gps_sim_2:
         #     raise ValidationError('Сім 1 вже закріплена за іншим реєстратором')
         # elif self.sim_2.gps_sim_1 or self.sim_2.gps_sim_2:
@@ -228,7 +229,7 @@ class Gps(models.Model):
                 else:
                     if self.sim_2 is None:
                         if self.owner.provider == self.owner.Provider.dyachuk or self.owner.provider == self.owner.Provider.card:
-                            if self.sim_1.operator == self.sim_1.Operator.travelsim or self.sim_1.operator ==  self.sim_1.Operator.goodline:
+                            if self.sim_1.operator == self.sim_1.Operator.travelsim or self.sim_1.operator == self.sim_1.Operator.goodline:
                                 self.rate_client = self.Rate.world
                                 self.rate_price = 270
                             else:
@@ -237,7 +238,7 @@ class Gps(models.Model):
                         else:
                             if self.sim_1.operator == self.sim_1.Operator.travelsim or self.sim_1.operator == self.sim_1.Operator.goodline:
                                 self.rate_client = self.Rate.world
-                                self.rate_price =324
+                                self.rate_price = 324
                             else:
                                 self.rate_client = self.Rate.ua
                                 self.rate_price = 144

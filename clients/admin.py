@@ -1,6 +1,6 @@
 from django.contrib import admin
 from contracts.models import Contract
-from .models import Client, ClientAddress, ContactProfile, ClientLegalDetail, ClientProxyPayment
+from .models import Client, ClientAddress, ContactProfile, ClientLegalDetail, ClientProxyPayment, ClientLegalDetail
 from products.models import Gps
 from django.utils.html import format_html
 from django.urls import reverse
@@ -35,7 +35,7 @@ class ContractInline(admin.StackedInline):
 class ClientAdmin(admin.ModelAdmin):
     list_per_page = 20
     inlines = [ContractInline, GpsInline, ClientLegalDetailInline, ContactInline, ]
-    exclude = ('contacts',)
+    raw_id_fields = ['contacts','notification_contact_1','notification_contact_2']
     list_display = (
         'name',
         'login',
@@ -49,7 +49,6 @@ class ClientAdmin(admin.ModelAdmin):
         'get_phone_email_contact_2',
         'get_contacts',
     )
-
     list_filter = ('type_notification_2', 'type_notification_1', 'status', 'name', 'login',)
     search_fields = ['name', 'login', 'edrpou', 'login']
 
@@ -128,7 +127,7 @@ class ContactProfileAdmin(admin.ModelAdmin):
     get_clients.allow_tags = True
 
 
-class ClientPaymentAdmin(admin.ModelAdmin):
+class ClientProxyAdmin(admin.ModelAdmin):
     inlines = [ContractInline, GpsInline, ClientLegalDetailInline, ContactInline, ]
     list_per_page = 20
     list_filter = ('name',
@@ -137,12 +136,42 @@ class ClientPaymentAdmin(admin.ModelAdmin):
     list_display = (
         'name',
         'login',
+        'get_gps_active',
+        'get_gps_pause',
         'get_to_letters',
         'get_non_payed_invoices',
         'get_non_contracts',
         'get_to_wo_plan',
-        'get_to_projects'
+        'get_to_projects',
     )
+
+    def get_gps_active(self, obj):
+        count = 0
+        for gps in obj.gps.all():
+            if gps.rate_client != gps.Rate.pause:
+                count = + 1
+        url = (
+                reverse("admin:products_gps_changelist")
+                + "?"
+                + urlencode({"owner__id": f"{obj.id}"})
+        )
+        return format_html('<a href="{}">{} </a>', url, count)
+
+    get_gps_active.short_description = 'активні бр'
+
+    def get_gps_pause(self, obj):
+        count = 0
+        for gps in obj.gps.all():
+            if gps.rate_client == gps.Rate.pause:
+                count = + 1
+        url = (
+                reverse("admin:products_gps_changelist")
+                + "?"
+                + urlencode({"owner__id": f"{obj.id}"})
+        )
+        return format_html('<a href="{}">{} </a>', url, count)
+
+    get_gps_pause.short_description = 'пауза бр'
 
     def get_to_projects(self, obj):
         display_text = ",----------".join([
@@ -247,7 +276,14 @@ class ClientPaymentAdmin(admin.ModelAdmin):
     get_non_payed_invoices.allow_tags = True
 
 
+class ClientLegalDetailAdmin(admin.ModelAdmin):
+    list_per_page = 20
+    list_display = ['IPN','client','director','IBAN','bank_account','MFO','legal_address','post_address']
+    search_fields = ['client', 'IPN', ]
+
+
 admin.site.register(Client, ClientAdmin)
-admin.site.register(ClientProxyPayment, ClientPaymentAdmin)
+admin.site.register(ClientProxyPayment, ClientProxyAdmin)
 admin.site.register(ClientAddress, ClientAddressAdmin)
 admin.site.register(ContactProfile, ContactProfileAdmin)
+admin.site.register(ClientLegalDetail, ClientLegalDetailAdmin)

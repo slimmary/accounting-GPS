@@ -242,9 +242,9 @@ class WorkOrder(models.Model):
     # date_payment:
     def clean(self):
         if (self.amount_gps != 0 or self.amount_fuel_sensor != 0) and self.type_of_work != self.TypeWork.project:
-            raise ValidationError('Кількість СКТ да ДВРП не потрібно рахувати якщо ЗН не Проект')
+            raise ValidationError({'amount_gps': 'Кількість СКТ да ДВРП не потрібно рахувати якщо ЗН не Проект'})
         if self.type_of_work != self.TypeWork.project and self.project:
-            raise ValidationError('Не можливо приєднати проект, якщо тип ЗН не Проект')
+            raise ValidationError({'type_of_work':'Не можливо приєднати проект, якщо тип ЗН не Проект'})
 
     def save(self, *args, **kwargs):
         if self.month_executor_pay is None:
@@ -610,11 +610,11 @@ class ServicePlan(models.Model):
 
     def clean(self):
         if self.city is None and self.district is None:
-            raise ValidationError('Оберіть або область або місто')
+            raise ValidationError({'city': 'Оберіть або область або місто'})
         elif self.city and self.district:
-            raise ValidationError('Оберіть щось одне або область або місто')
+            raise ValidationError({'city': 'Оберіть щось одне або область або місто'})
         if self.status and self.date_ex is None:
-            raise ValidationError('Оберіть дату виконання або зміни статусу')
+            raise ValidationError({'date_ex': 'Оберіть дату виконання або зміни статусу'})
 
     def save(self, *args, **kwargs):
         if self.status == self.StatusWOPlan.executed:
@@ -1046,11 +1046,13 @@ class ExecutorPayment(models.Model):
             work_days_weekend_sum = 1
         else:
             work_days_weekend_sum = self.work_days_weekend_sum
+
         if self.trip_day_sum == 0:
             parts_premium_count -= 1
             trip_day_sum = 1
         else:
             trip_day_sum = self.trip_day_sum
+
         executors_premium = executors_premium / parts_premium_count
 
         self.premium_1 = (executors_premium * (self.work_days_1 / work_days_sum)) + \
@@ -1083,5 +1085,5 @@ class ExecutorPayment(models.Model):
 
 class ExecutorPaymentProxy(ExecutorPayment):
     class Meta:
-        verbose_name_plural = "зведені дані ЗП по монтажникам окремо"
+        verbose_name_plural = "зведені дані ЗП по монтажникам"
         proxy = True
