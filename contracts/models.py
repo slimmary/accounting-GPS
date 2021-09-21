@@ -1,8 +1,6 @@
 from django.db import models
-from clients.models import Client
+from clients.models import Client, Provider
 from datetime import date
-from projects.models import Project
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
 
 
 class AbstractContract(models.Model):
@@ -65,43 +63,14 @@ class Contract(AbstractContract):
                             verbose_name='Тип договору',
                             help_text='Оберіть тип', blank=True)
 
-    class ProviderChoice:
-        ckt = 'ТОВ "Системи Контролю Транспорту"'
-        shevchuk = 'ФОП Шевчук С.І.'
-        dyachuk = 'ФОП Дячук Л.В.'
-        demidenko = 'ФОП Демченко К.Б.'
+    provider = models.ForeignKey(Provider,
+                                 null=True,
+                                 on_delete=models.CASCADE,
+                                 verbose_name='Постачальник',
+                                 related_name='contract_provider')
 
-    PROVIDER_CHOICE = (
-        (ProviderChoice.ckt, 'ТОВ "Системи Контролю Транспорту"'),
-        (ProviderChoice.shevchuk, 'ФОП Шевчук С.І.'),
-        (ProviderChoice.dyachuk, 'ФОП Дячук Л.В.'),
-        (ProviderChoice.demidenko, 'ФОП Демченко К.Б.'),
-    )
-    provider = models.CharField(max_length=100, choices=PROVIDER_CHOICE, verbose_name='Постачальник',
-                                default=ProviderChoice.ckt,
-                                help_text='Оберіть постачальника', blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name='Покупець/Абонент',
                                related_name='contracts_all')
-    contract_project_to = models.OneToOneField(Project,
-                                               null=True,
-                                               on_delete=models.CASCADE,
-                                               verbose_name='Проект',
-                                               related_name='project_contract',
-                                               blank=True
-                                               )
-
-    def clean(self):
-        if self.contract_project_to:
-            if self.type != self.TypeChoice.project:
-                raise ValidationError({'type':"до проекту не можливо додати договір, який не є договором поставки"})
-
-    def save(self, *args, **kwargs):
-        if self.type == self.TypeChoice.project:
-            if self.status == self.StatusChoice.in_stock:
-                self.contract_project_to.date_receipt_contract = self.status_date
-
-        super(Contract, self).save(*args, **kwargs)
-        Project.save(self.contract_project_to, *args, **kwargs)
 
     def __str__(self):
         return 'Договір {} №{} від {} між {} та {} {}'.format(
@@ -118,13 +87,6 @@ class Contract(AbstractContract):
 
 
 class Additions(AbstractContract):
-    add_project_to = models.OneToOneField(Project,
-                                          null=True,
-                                          on_delete=models.CASCADE,
-                                          verbose_name='Проект',
-                                          related_name='project_add_contract',
-                                          blank=True
-                                          )
 
     contract_to = models.ForeignKey(Contract,
                                     null=True,
@@ -132,19 +94,6 @@ class Additions(AbstractContract):
                                     verbose_name='Основний договір до якого створено ДУ',
                                     related_name='additions',
                                     blank=True)
-
-    def save(self, *args, **kwargs):
-        if self.add_project_to is not None:
-            if self.status == self.StatusChoice.in_stock:
-                self.add_project_to.date_receipt_contract = self.status_date
-
-        super(Additions, self).save(*args, **kwargs)
-        Project.save(self.add_project_to, *args, **kwargs)
-    #
-    # def clean(self):
-    #     if self.add_project_to:
-    #         if self.contract_to.type != self.contract_to.TypeChoice.project:
-    #             raise ValidationError("до проекту не можливо додати ДУ, яка не відноситься до договору поставки")
 
     def __str__(self):
         return '№{} від {}'.format(self.number, self.contract_date)

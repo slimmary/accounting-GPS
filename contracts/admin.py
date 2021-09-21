@@ -32,10 +32,10 @@ class AdditionsAdmin(admin.ModelAdmin):
     )
 
     def get_link_project(self, obj):
-        if obj.add_project_to is not None:
+        if obj.project_additions is not None:
             return format_html(
                 "<a href='../../projects/project/%s/change/' >%s</a>" % (
-                    str(obj.add_project_to.id), str(obj.add_project_to)))
+                    str(obj.project_additions.id), str(obj.project_additions)))
         return '-'
 
     get_link_project.short_description = 'проект'
@@ -58,8 +58,8 @@ class AdditionsAdmin(admin.ModelAdmin):
         return format_html(
             "<a href='../../clients/client/%s/change/' >%s</a>" % (str(obj.contract_to.client.id), str(obj.contract_to.client)))
 
-    get_link_client.admin_order_field = 'client_name'  # Allows column order sorting
-    get_link_client.short_description = 'Покупець / абонент'  # Renames column head
+    get_link_client.admin_order_field = 'client_name'
+    get_link_client.short_description = 'Покупець / абонент'
 
 
 class ContractAdmin(admin.ModelAdmin):
@@ -88,10 +88,10 @@ class ContractAdmin(admin.ModelAdmin):
     )
 
     def get_link_project(self, obj):
-        if obj.type == obj.TypeChoice.project and obj.contract_project_to is not None :
+        if obj.type == obj.TypeChoice.project and obj.project_contract is not None :
             return format_html(
                 "<a href='../../projects/project/%s/change/' >%s</a>" % (
-                    str(obj.contract_project_to.id), str(obj.contract_project_to)))
+                    str(obj.project_contract.id), str(obj.project_contract)))
         return '-'
 
     get_link_project.short_description = 'проект'
@@ -114,15 +114,15 @@ class ContractAdmin(admin.ModelAdmin):
         return format_html(
             "<a href='../../clients/client/%s/change/' >%s</a>" % (str(obj.client.id), str(obj.client.name)))
 
-    get_link_client.admin_order_field = 'client_name'  # Allows column order sorting
-    get_link_client.short_description = 'Покупець / абонент'  # Renames column head
+    get_link_client.admin_order_field = 'client_name'
+    get_link_client.short_description = 'Покупець / абонент'
 
     def get_link_login(self, obj):
         return format_html(
             "<a href='../../clients/client/%s/change/' >%s</a>" % (str(obj.client.id), str(obj.client.login)))
 
-    get_link_login.admin_order_field = 'client_login'  # Allows column order sorting
-    get_link_login.short_description = 'Login'  # Renames column head
+    get_link_login.admin_order_field = 'client_login'
+    get_link_login.short_description = 'Login'
 
 
 admin.site.register(Contract, ContractAdmin)

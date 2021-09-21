@@ -50,6 +50,110 @@ class ContactProfile(models.Model):
         verbose_name_plural = "Контактні особи клієнтів"
 
 
+class Provider(models.Model):
+    name = models.CharField(null=True,
+                            max_length=100,
+                            verbose_name='Назва',
+                            help_text='Введіть повну назву постачальника послуг'
+                            )
+
+    class Taxtype:
+        taxfree = 'без ПДВ'
+        tax = 'з ПДВ'
+
+    TAX_CHOICE = (
+        (Taxtype.taxfree, 'без ПДВ'),
+        (Taxtype.tax, 'з ПДВ'),
+    )
+    tax_type = models.CharField(null=True,
+                                max_length=100,
+                                default=Taxtype.taxfree,
+                                choices=TAX_CHOICE,
+                                verbose_name='Форма оплати',
+                                help_text='Оберіть форму з ПДВ чи без'
+                                )
+
+    def __str__(self):
+        return '"{}"  /  {}  '.format(
+            self.name,
+            self.tax_type,
+
+        )
+
+    class Meta:
+        verbose_name_plural = "Постачальники послуг для клієнтів"
+
+
+class ClientLegalDetail(models.Model):
+    IPN = models.CharField(null=True,
+                           default=123456789012,
+                           max_length=12,
+                           verbose_name="ІПН",
+                           help_text='Введіть ІПН клієнта',
+                           validators=[RegexValidator(r'^\d{0,100}$'), MinLengthValidator(10)],
+                           blank=True
+                           )
+    director = models.CharField(null=True,
+                                max_length=100,
+                                verbose_name='Директор',
+                                help_text='Введіть ПІП директора',
+                                blank=True
+                                )
+    IBAN = models.CharField(null=True,
+                            default=12345678912345678901234567890,
+                            max_length=29,
+                            verbose_name="IBAN",
+                            help_text='Введіть IBAN клієнта',
+                            validators=[RegexValidator(r'^\d{0,100}$'), MinLengthValidator(29)],
+                            blank=True
+                            )
+    bank_account = models.CharField(null=True,
+                                    default=1234567890,
+                                    max_length=20,
+                                    verbose_name="№ р/р",
+                                    help_text='Введіть р/р',
+                                    validators=[RegexValidator(r'^\d{0,100}$'), ],
+                                    blank=True
+                                    )
+    MFO = models.CharField(null=True,
+                           default=12345,
+                           max_length=10,
+                           verbose_name="IBAN",
+                           help_text='Введіть IBAN клієнта',
+                           validators=[RegexValidator(r'^\d{0,100}$'), MinLengthValidator(5)],
+                           blank=True
+                           )
+    bank = models.CharField(null=True,
+                            max_length=100,
+                            verbose_name='Банк',
+                            help_text='Введіть назву банку',
+                            blank=True
+                            )
+    legal_address = models.OneToOneField(ClientAddress,
+                                         null=True,
+                                         on_delete=models.CASCADE,
+                                         verbose_name='Юридична адреса',
+                                         related_name='client_legal_address',
+                                         help_text='Оберіть юридичну адресу клієнта',
+                                         blank=True
+                                         )
+
+    post_address = models.OneToOneField(ClientAddress,
+                                        null=True,
+                                        on_delete=models.CASCADE,
+                                        verbose_name='Поштова адреса',
+                                        related_name='client_post_address',
+                                        help_text='Оберіть поштову адресу клієнта, якщо вона не співпадає з юридичною',
+                                        blank=True
+                                        )
+
+    def __str__(self):
+        return 'Реквізити {}'.format(self.IPN)
+
+    class Meta:
+        verbose_name_plural = "Реквізити клієнтів"
+
+
 class Client(models.Model):
     day_start = models.DateField(null=True,
                                  verbose_name='Дата початку роботи',
@@ -82,33 +186,16 @@ class Client(models.Model):
                               help_text='Введіть ЄДРПОУ клієнта',
                               validators=[RegexValidator(r'^\d{0,10}$'), MinLengthValidator(8)],
                               )
+    provider = models.ForeignKey(Provider,
+                                 null=True,
+                                 on_delete=models.CASCADE,
+                                 verbose_name='Постачальник з АП',
+                                 related_name='client_provider')
 
     contacts = models.ManyToManyField(ContactProfile,
                                       verbose_name='Контактні особи',
                                       related_name='client_field',
                                       )
-
-    class Provider:
-        ckt = 'ТОВ "Системи Контролю Транспорту"'
-        shevchuk = 'ФОП Шевчук С.І.'
-        demchenko = 'ФОП Демченко К.В.'
-        dyachuk = 'ФОП Дячук Л.В.'
-        card = 'БК/ІНШЕ'
-
-    PROVIDER_CHOICE = (
-        (Provider.ckt, 'ТОВ "Системи Контролю Транспорту"'),
-        (Provider.shevchuk, 'ФОП Шевчук С.І.'),
-        (Provider.dyachuk, 'ФОП Демченко К.В.'),
-        (Provider.demchenko, 'ФОП Дячук Л.В.'),
-        (Provider.card, 'БК/ІНШЕ')
-    )
-    provider = models.CharField(null=True,
-                                max_length=100,
-                                default=Provider.card,
-                                choices=PROVIDER_CHOICE,
-                                verbose_name='Постачальник з АП',
-                                help_text='Оберіть постачальника з абонплати'
-                                )
 
     class Notification:
         sms = 'SMS'
@@ -158,6 +245,15 @@ class Client(models.Model):
                                                help_text='Оберіть контактну особу, яку повідомлятимуть по рахунках',
                                                blank=True
                                                )
+    legal_info = models.OneToOneField(ClientLegalDetail,
+                                      on_delete=models.CASCADE,
+                                      null=True,
+                                      default=None,
+                                      verbose_name='Реквізити',
+                                      related_name='client_legal_detail',
+                                      help_text='Оберіть або створіть реквізити',
+                                      blank=True,
+                                      )
 
     def clean(self):
         if self.type_notification_1 != self.Notification.medoc:
@@ -212,83 +308,3 @@ class ClientProxyPayment(Client):
     class Meta:
         verbose_name_plural = "Клієнт зведені дані"
         proxy = True
-
-
-class ClientLegalDetail(models.Model):
-    IPN = models.CharField(null=True,
-                           default=123456789012,
-                           max_length=12,
-                           verbose_name="ІПН",
-                           help_text='Введіть ІПН клієнта',
-                           validators=[RegexValidator(r'^\d{0,100}$'), MinLengthValidator(10)],
-                           blank=True
-                           )
-    director = models.CharField(null=True,
-                                max_length=100,
-                                verbose_name='Директор',
-                                help_text='Введіть ПІП директора',
-                                blank=True
-                                )
-    IBAN = models.CharField(null=True,
-                            default=12345678912345678901234567890,
-                            max_length=29,
-                            verbose_name="IBAN",
-                            help_text='Введіть IBAN клієнта',
-                            validators=[RegexValidator(r'^\d{0,100}$'), MinLengthValidator(29)],
-                            blank=True
-                            )
-    bank_account = models.CharField(null=True,
-                                    default=1234567890,
-                                    max_length=20,
-                                    verbose_name="№ р/р",
-                                    help_text='Введіть р/р',
-                                    validators=[RegexValidator(r'^\d{0,100}$'), ],
-                                    blank=True
-                                    )
-    MFO = models.CharField(null=True,
-                           default=12345,
-                           max_length=10,
-                           verbose_name="IBAN",
-                           help_text='Введіть IBAN клієнта',
-                           validators=[RegexValidator(r'^\d{0,100}$'), MinLengthValidator(5)],
-                           blank=True
-                           )
-    bank = models.CharField(null=True,
-                            max_length=100,
-                            verbose_name='Банк>',
-                            help_text='Введіть назву банку',
-                            blank=True
-                            )
-    legal_address = models.OneToOneField(ClientAddress,
-                                         null=True,
-                                         on_delete=models.CASCADE,
-                                         verbose_name='Юридична адреса',
-                                         related_name='client_legal_address',
-                                         help_text='Оберіть юридичну адресу клієнта',
-                                         blank=True
-                                         )
-
-    post_address = models.OneToOneField(ClientAddress,
-                                        null=True,
-                                        on_delete=models.CASCADE,
-                                        verbose_name='Поштова адреса',
-                                        related_name='client_post_address',
-                                        help_text='Оберіть поштову адресу клієнта, якщо вона не співпадає з юридичною',
-                                        blank=True
-                                        )
-
-    client = models.ForeignKey(Client,
-                               on_delete=models.CASCADE,
-                               null=True,
-                               default=None,
-                               verbose_name='Клієнт',
-                               related_name='client_legal_detail',
-                               help_text='Оберіть клєнта якому належать ці реквізити',
-                               blank=True
-                               )
-
-    def __str__(self):
-        return 'Реквізити {}'.format(self.client.name)
-
-    class Meta:
-        verbose_name_plural = "Реквізити клієнтів"

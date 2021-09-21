@@ -1,7 +1,7 @@
 from django.contrib import admin
 from contracts.models import Contract
-from .models import Client, ClientAddress, ContactProfile, ClientLegalDetail, ClientProxyPayment, ClientLegalDetail
-from products.models import Gps
+from .models import Client, ClientAddress, ContactProfile, ClientProxyPayment, ClientLegalDetail, Provider
+from vehicle.models import Vehicle
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -15,16 +15,10 @@ class ContactInline(CompactInline):
     show_change_link = True
 
 
-class ClientLegalDetailInline(admin.StackedInline):
+class VehicleInline(admin.StackedInline):
     list_per_page = 20
-    model = ClientLegalDetail
-    verbose_name_plural = 'Реквізити'
-
-
-class GpsInline(admin.StackedInline):
-    list_per_page = 20
-    model = Gps
-    fields = ('number', 'vehicle', 'rate_client', 'rate_price')
+    model = Vehicle
+    fields = ('number', 'rate_client', 'rate_price',)
 
 
 class ContractInline(admin.StackedInline):
@@ -34,8 +28,8 @@ class ContractInline(admin.StackedInline):
 
 class ClientAdmin(admin.ModelAdmin):
     list_per_page = 20
-    inlines = [ContractInline, GpsInline, ClientLegalDetailInline, ContactInline, ]
-    raw_id_fields = ['contacts','notification_contact_1','notification_contact_2']
+    inlines = [ContractInline, VehicleInline, ]
+    raw_id_fields = ['contacts', 'notification_contact_1', 'notification_contact_2']
     list_display = (
         'name',
         'login',
@@ -43,6 +37,7 @@ class ClientAdmin(admin.ModelAdmin):
         'status',
         'get_all_gps',
         'provider',
+        'legal_info',
         'type_notification_1',
         'get_phone_email_contact_1',
         'type_notification_2',
@@ -53,7 +48,7 @@ class ClientAdmin(admin.ModelAdmin):
     search_fields = ['name', 'login', 'edrpou', 'login']
 
     def get_all_gps(self, obj):
-        queryset = obj.gps.all().count()
+        queryset = obj.vehicle.all().count()
         return queryset
 
     get_all_gps.admin_order_field = 'gps_all'
@@ -128,7 +123,7 @@ class ContactProfileAdmin(admin.ModelAdmin):
 
 
 class ClientProxyAdmin(admin.ModelAdmin):
-    inlines = [ContractInline, GpsInline, ClientLegalDetailInline, ContactInline, ]
+    inlines = [ContractInline, VehicleInline, ContactInline, ]
     list_per_page = 20
     list_filter = ('name',
                    'login'
@@ -147,11 +142,11 @@ class ClientProxyAdmin(admin.ModelAdmin):
 
     def get_gps_active(self, obj):
         count = 0
-        for gps in obj.gps.all():
-            if gps.rate_client != gps.Rate.pause:
+        for vehicle in obj.vehicle.all():
+            if vehicle.rate_client != vehicle.Rate.pause:
                 count = + 1
         url = (
-                reverse("admin:products_gps_changelist")
+                reverse("admin:vehicle_vehicle_changelist")
                 + "?"
                 + urlencode({"owner__id": f"{obj.id}"})
         )
@@ -161,11 +156,11 @@ class ClientProxyAdmin(admin.ModelAdmin):
 
     def get_gps_pause(self, obj):
         count = 0
-        for gps in obj.gps.all():
-            if gps.rate_client == gps.Rate.pause:
+        for vehicle in obj.vehicle.all():
+            if vehicle.rate_client == vehicle.Rate.pause:
                 count = + 1
         url = (
-                reverse("admin:products_gps_changelist")
+                reverse("admin:vehicle_vehicle_changelist")
                 + "?"
                 + urlencode({"owner__id": f"{obj.id}"})
         )
@@ -235,22 +230,23 @@ class ClientProxyAdmin(admin.ModelAdmin):
     get_non_contracts.allow_tags = True
 
     def get_non_payed_invoices(self, obj):
-        result_list_1 = []
+        # result_list_1 = []
         result_list_2 = []
         result_list_3 = []
-        for wo in obj.work_orders.all():
-            for inv in wo.invoice_workorder.all().filter(
-                    Q(status_payment='НЕ сплачено') | Q(status_payment='Частково сплачено')):
-                result_list_1.append(inv)
-        display_text_1 = ",".join([
-            "<a href={}> №{} від {} на {}грн. за ремонтні роботи {} ----------\n</a>".format(
-                reverse('admin:invoices_invoice_change', args=(inv.pk,)), inv.number, inv.date, inv.invoice_sum,
-                inv.status_payment, )
-            for inv in result_list_1])
+        # for wo in obj.work_orders.all():
+        #     for inv in wo.invoice_workorder.all().filter(
+        #             Q(status_payment='НЕ сплачено') | Q(status_payment='Частково сплачено')):
+        #         result_list_1.append(inv)
+        # display_text_1 = ",".join([
+        #     "<a href={}> №{} від {} на {}грн. за ремонтні роботи {} ----------\n</a>".format(
+        #         reverse('admin:invoices_invoice_change', args=(inv.pk,)), inv.number, inv.date, inv.invoice_sum,
+        #         inv.status_payment, )
+        #     for inv in result_list_1])
 
-        for invoices in obj.proj_invoice.all().filter(
-                Q(status_payment='НЕ сплачено') | Q(status_payment='Частково сплачено')):
-            result_list_2.append(invoices)
+        for projects in obj.project.all():
+            for invoices in projects.project_invoice.filter(
+                    Q(status_payment='НЕ сплачено') | Q(status_payment='Частково сплачено')):
+                result_list_2.append(invoices)
         display_text_2 = ",".join([
             "<a href={}> №{} від {} на {}грн. за придбання обладнання {} ---------\n</a>".format(
                 reverse('admin:invoices_projectinvoice_change', args=(invoices.pk,)), invoices.number, invoices.date,
@@ -268,8 +264,10 @@ class ClientProxyAdmin(admin.ModelAdmin):
                 sub_inv.invoice_sum,
                 sub_inv.status_payment, )
             for sub_inv in result_list_3])
-        if display_text_1 or display_text_2 or display_text_3:
-            return format_html(display_text_1 + display_text_2 + display_text_3)
+        # if display_text_1 or display_text_2 or display_text_3:
+        if display_text_2 or display_text_3:
+            # return format_html(display_text_1 + display_text_2 + display_text_3)
+            return format_html(display_text_2 + display_text_3)
         return '-'
 
     get_non_payed_invoices.short_description = "не сплачені РФ"
@@ -278,8 +276,21 @@ class ClientProxyAdmin(admin.ModelAdmin):
 
 class ClientLegalDetailAdmin(admin.ModelAdmin):
     list_per_page = 20
-    list_display = ['IPN','client','director','IBAN','bank_account','MFO','legal_address','post_address']
+    list_display = ['IPN', 'get_link_client', 'director', 'IBAN', 'bank_account', 'MFO', 'legal_address',
+                    'post_address']
     search_fields = ['client', 'IPN', ]
+
+    def get_link_client(self, obj):
+        return format_html("<a href={}> {} {}</a>".format(reverse(
+            'admin:clients_clientlegaldetai_change', args=obj.client_legal_detail.pk),
+            obj.client_legal_detail.name, obj.client_legal_detail.login))
+
+    get_link_client.short_description = 'клієнт'
+
+
+class ProviderAdmin(admin.ModelAdmin):
+    list_per_page = 20
+    list_display = ['name', 'tax_type']
 
 
 admin.site.register(Client, ClientAdmin)
@@ -287,3 +298,4 @@ admin.site.register(ClientProxyPayment, ClientProxyAdmin)
 admin.site.register(ClientAddress, ClientAddressAdmin)
 admin.site.register(ContactProfile, ContactProfileAdmin)
 admin.site.register(ClientLegalDetail, ClientLegalDetailAdmin)
+admin.site.register(Provider, ProviderAdmin)

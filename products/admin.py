@@ -31,29 +31,34 @@ class ServiceAdmin(admin.ModelAdmin):
 
 
 class GpsAdmin(admin.ModelAdmin):
-    raw_id_fields = ('owner','vehicle','sim_1','sim_2')
+    raw_id_fields = ('sim_1','sim_2', 'vehicle')
     list_per_page = 20
     actions = ['rate_client_pause']
     list_display = (
         'number',
-        'get_link_gps_fuel',
         'get_link_vehicle',
         'link_to_owner_name',
         'link_to_owner_login',
         'get_link_sim',
-        'rate_client',
+        'get_rate_client',
     )
 
     list_filter = (
-        'owner__name',
-        'owner__login',
-        'rate_client',
+        'vehicle__owner__name',
+        'vehicle__owner__login',
+        'vehicle__rate_client',
     )
     search_fields = [
         'number',
         'sim_1',
         'sim_2',
     ]
+
+    def get_rate_client(self,obj):
+        if obj.vehicle:
+            return obj.vehicle.rate_client
+
+    get_rate_client.short_description = 'тариф'
 
     def get_link_vehicle(self,obj):
         if obj.vehicle:
@@ -79,17 +84,17 @@ class GpsAdmin(admin.ModelAdmin):
 
     def rate_client_pause(self, request, queryset):
         for gps in queryset:
-            gps.rate_client = gps.Rate.pause
+            gps.vehicle.rate_client = gps.vehicle.Rate.pause
             gps.save()
 
     rate_client_pause.short_description = 'Встановити тариф "Пауза"'
 
     def link_to_owner_name(self, obj):
-        if obj.owner is None:
+        if obj.vehicle is None:
             return 'CKT'
-        elif obj.owner.id:
+        elif obj.vehicle.owner:
             return format_html(
-                "<a href='../../clients/client/%s/change/' >%s</a>" % (str(obj.owner.id), str(obj.owner.name)))
+                "<a href='../../clients/client/%s/change/' >%s</a>" % (str(obj.vehicle.owner.id), str(obj.vehicle.owner.name)))
         else:
             return 'CKT'
 
@@ -97,28 +102,16 @@ class GpsAdmin(admin.ModelAdmin):
     link_to_owner_name.short_description = 'Власник назва'
 
     def link_to_owner_login(self, obj):
-        if obj.owner is None:
+        if obj.vehicle is None:
             return 'CKT'
-        elif obj.owner.id:
+        elif obj.vehicle.owner:
             return format_html(
-                "<a href='../../clients/client/%s/change/' >%s</a>" % (str(obj.owner.id), str(obj.owner.login)))
+                "<a href='../../clients/client/%s/change/' >%s</a>" % (str(obj.vehicle.owner.id), str(obj.vehicle.owner.login)))
         else:
             return 'CKT'
 
     link_to_owner_login.allow_tags = True
     link_to_owner_login.short_description = 'Власник Login'
-
-    def get_link_gps_fuel(self, obj):
-        display_text = ", ".join([
-            "<a href={}>{} \n</a>".format(
-                reverse('admin:products_fuelsensor_change', args=(fuel_sensor.id,)), str(fuel_sensor),
-            ) for fuel_sensor in obj.fuel_sensor.all()
-        ])
-        if display_text:
-            return format_html(display_text)
-        return "-"
-
-    get_link_gps_fuel.short_description = 'ДВРП'
 
 
 class SimAdmin(admin.ModelAdmin):
@@ -135,9 +128,9 @@ class SimAdmin(admin.ModelAdmin):
 
         def queryset(self, request, queryset):
             if self.value() == 'СКТ':
-                return queryset.filter(Q(gps_sim_1__owner=None) | Q(gps_sim_2__owner=None))
+                return queryset.filter(Q(gps_sim_1__vehicle__owner=None) | Q(gps_sim_2__vehicle__owner=None))
             elif self.value():
-                return queryset.filter(Q(gps_sim_1__owner__id=self.value()) | Q(gps_sim_2__owner__id=self.value()))
+                return queryset.filter(Q(gps_sim_1__vehicle__owner__id=self.value()) | Q(gps_sim_2__vehicle__owner__id=self.value()))
             else:
                 return queryset
 
@@ -154,9 +147,9 @@ class SimAdmin(admin.ModelAdmin):
 
         def queryset(self, request, queryset):
             if self.value() == 'СКТ':
-                return queryset.filter(Q(gps_sim_1__owner=None) | Q(gps_sim_2__owner=None))
+                return queryset.filter(Q(gps_sim_1__vehicle__owner=None) | Q(gps_sim_2__vehicle__owner=None))
             elif self.value():
-                return queryset.filter(Q(gps_sim_1__owner__id=self.value()) | Q(gps_sim_2__owner__id=self.value()))
+                return queryset.filter(Q(gps_sim_1__vehicle__owner__id=self.value()) | Q(gps_sim_2__vehicle__owner__id=self.value()))
             else:
                 return queryset
 
@@ -200,10 +193,10 @@ class SimAdmin(admin.ModelAdmin):
     def link_to_owner_name(self, obj):
         if obj.gps_sim_1:
             return format_html(", ".join(["<a href={}> {} \n</a>".format(reverse(
-                'admin:clients_client_change', args=(gps.owner.pk,)), gps.owner.name) for gps in obj.gps_sim_1.all()]))
+                'admin:clients_client_change', args=(gps.vehicle.owner.pk,)), gps.vehicle.owner.name) for gps in obj.gps_sim_1.all()]))
         elif obj.gps_sim_2:
             return format_html(", ".join(["<a href={}> {} \n</a>".format(reverse(
-                'admin:clients_client_change', args=(gps.owner.pk,)), gps.owner.name) for gps in obj.gps_sim_2.all()]))
+                'admin:clients_client_change', args=(gps.vehicle.owner.pk,)), gps.vehicle.owner.name) for gps in obj.gps_sim_2.all()]))
         else:
             return 'CKT'
 
@@ -213,10 +206,10 @@ class SimAdmin(admin.ModelAdmin):
     def link_to_owner_login(self, obj):
         if obj.gps_sim_1:
             return format_html(", ".join(["<a href={}> {} \n</a>".format(reverse(
-                'admin:clients_client_change', args=(gps.owner.pk,)), gps.owner.login) for gps in obj.gps_sim_1.all()]))
+                'admin:clients_client_change', args=(gps.vehicle.owner.pk,)), gps.vehicle.owner.login) for gps in obj.gps_sim_1.all()]))
         elif obj.gps_sim_2:
             return format_html(", ".join(["<a href={}> {} \n</a>".format(reverse(
-                'admin:clients_client_change', args=(gps.owner.pk,)), gps.owner.login) for gps in obj.gps_sim_2.all()]))
+                'admin:clients_client_change', args=(gps.vehicle.owner.pk,)), gps.vehicle.owner.login) for gps in obj.gps_sim_2.all()]))
         else:
             return 'CKT'
 
@@ -225,7 +218,7 @@ class SimAdmin(admin.ModelAdmin):
 
 
 class FuelSensorAdmin(admin.ModelAdmin):
-    raw_id_fields = ('gps',)
+    raw_id_fields = ('vehicle',)
     list_per_page = 20
     list_display = (
         'get_all_number',
@@ -240,9 +233,9 @@ class FuelSensorAdmin(admin.ModelAdmin):
     list_filter = (
         'type',
         ('date_manufacturing',DateRangeFilter),
-        'gps',
-        'gps__owner__name',
-        'gps__owner__login',
+        'vehicle',
+        'vehicle__owner__name',
+        'vehicle__owner__login',
     )
     search_fields = [
         'number',
@@ -279,13 +272,13 @@ class FuelSensorAdmin(admin.ModelAdmin):
     get_link_gps_vehicle.short_description = 'ТЗ'
 
     def link_to_owner_name(self, obj):
-        if obj.gps.owner is None:
+        if obj.gps.vehicle is None:
             return 'CKT'
         else:
             if obj.gps is not None:
                 return format_html(
                     "<a href='../../clients/client/%s/change/' >%s</a>" % (
-                        str(obj.gps.owner.id), str(obj.gps.owner.name)))
+                        str(obj.gps.vehicle.owner.id), str(obj.gps.vehicle.owner.name)))
             else:
                 return 'CKT'
 
@@ -293,13 +286,13 @@ class FuelSensorAdmin(admin.ModelAdmin):
     link_to_owner_name.short_description = 'Власник'
 
     def link_to_owner_login(self, obj):
-        if obj.gps.owner is None:
+        if obj.gps.vehicle is None:
             return 'CKT'
         else:
             if obj.gps is not None:
                 return format_html(
                     "<a href='../../clients/client/%s/change/' >%s</a>" % (
-                        str(obj.gps.owner.id), str(obj.gps.owner.login)))
+                        str(obj.gps.vehicle.owner.id), str(obj.gps.vehicle.owner.login)))
             else:
                 return 'CKT'
 

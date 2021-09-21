@@ -1,32 +1,31 @@
 from django.contrib import admin
-from .models import Subscription, Letters, Client
+from .models import Subscription, Letters
 from django.utils.html import format_html
 from django.urls import reverse
-from django.shortcuts import render
-from django.db.models import Q
 from rangefilter.filters import DateRangeFilter
 
 
 class LettersAdmin(admin.ModelAdmin):
-    raw_id_fields = ('client','gps')
+    raw_id_fields = ('client','vehicle')
     list_per_page = 20
     list_display = ('date_letter',
                     'get_link_client_name',
                     'get_link_client_login',
+                    'get_link_vehicle',
                     'get_link_gps',
                     'get_action',
                     'gps_rate',
                     'get_new_rate',
                     'status',
                     )
-    list_filter = ('gps',
+    list_filter = ('vehicle',
                    ('date_letter',DateRangeFilter),
                    'action',
                    'status',
                    'client__login',
                    )
     search_fields = [
-                     'gps__number',
+                     'vehicle__gps__number',
                      ]
 
     def get_link_client_name(self, obj):
@@ -45,12 +44,20 @@ class LettersAdmin(admin.ModelAdmin):
     get_link_client_login.admin_order_field = 'client_login'
     get_link_client_login.short_description = 'Login'
 
+    def get_link_vehicle(self, obj):
+        return format_html(
+            "<a href='../../vehicles/vehicle/%s/change/' >%s</a>" % (
+                str(obj.vehicle.id), str(obj.vehicle)))
+
+    get_link_vehicle.admin_order_field = 'vehicle'
+    get_link_vehicle.short_description = 'ТЗ'
+
     def get_link_gps(self, obj):
         return format_html(
             "<a href='../../products/gps/%s/change/' >%s</a>" % (
-                str(obj.gps.id), str(obj.gps.number)))
+                str(obj.vehicle.gps.id), str(obj.vehicle.gps.number)))
 
-    get_link_gps.admin_order_field = 'gps_number'
+    get_link_gps.admin_order_field = 'gps'
     get_link_gps.short_description = 'БР'
 
     def get_action(self, obj):
@@ -67,7 +74,6 @@ class LettersAdmin(admin.ModelAdmin):
 
 
 class SubscriptionAdmin(admin.ModelAdmin):
-    raw_id_fields = ('client',)
     list_per_page = 20
     actions = ['update_activation', 'update_status_payment', 'update_all']
 

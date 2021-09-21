@@ -1,9 +1,8 @@
 from django.db import models
 from datetime import date
 from clients.models import Client
-from products.models import Gps
+from vehicle.models import Vehicle
 from django.core.exceptions import ValidationError
-from django.utils import timezone
 
 
 class Subscription(models.Model):
@@ -231,7 +230,7 @@ class Subscription(models.Model):
         else:
             self.quarter = self.quarter
 
-        all_gps = self.client.gps.all()
+        all_gps = self.client.vehicle.all()
 
         m1 = date(self.date_init.year, (self.date_init.month + 1), 15)
         m2 = date(self.date_init.year, (self.date_init.month + 2), 15)
@@ -366,7 +365,7 @@ class Letters(models.Model):
                                on_delete=models.CASCADE,
                                max_length=100,
                                related_name='letters',
-                               verbose_name='Покупець/Абонент',
+                               verbose_name='Абонент',
                                help_text='Оберіть клієнта від якого реєструється звернення',
                                blank=True
                                )
@@ -374,10 +373,12 @@ class Letters(models.Model):
     class Action:
         delete = 'Видалення'
         change = 'Зміна тарифу'
+        change_owner = 'Зміна власника'
 
     ACTION_CHOICE = (
         (Action.delete, 'Видалення'),
         (Action.change, 'Зміна тарифу'),
+        (Action.change_owner, 'Зміна власника'),
     )
 
     action = models.CharField(max_length=100,
@@ -385,13 +386,13 @@ class Letters(models.Model):
                               verbose_name='Дія',
                               help_text='Оберіть дію')
 
-    gps = models.ForeignKey(Gps,
-                            on_delete=models.CASCADE,
-                            verbose_name='БР',
-                            related_name='letters',
-                            default=None,
-                            help_text='Оберіть реєстратор для зміни'
-                            )
+    vehicle = models.ForeignKey(Vehicle,
+                                on_delete=models.CASCADE,
+                                verbose_name='ТЗ',
+                                related_name='letters',
+                                default=None,
+                                help_text='Оберіть ТЗ для зміни'
+                                )
 
     class Rate:
         ua = 'Україна'
@@ -418,6 +419,15 @@ class Letters(models.Model):
                                 verbose_name='на тариф',
                                 help_text='Оберіть тариф на який змінюється',
                                 blank=True)
+    new_owner = models.ForeignKey(Client,
+                                  null=True,
+                                  on_delete=models.CASCADE,
+                                  max_length=100,
+                                  related_name='letters_new_owner',
+                                  verbose_name='Новий власник',
+                                  help_text='Оберіть клієнта від якого реєструється звернення',
+                                  blank=True
+                                  )
 
     class Status:
         finished = 'оброблено'
@@ -436,32 +446,36 @@ class Letters(models.Model):
                                         'реєстратором на сервері')
 
     def clean(self):
-        if self.gps.owner != self.client:
+        if self.vehicle.owner != self.client:
             raise ValidationError(
-                {'gps': 'Реєстратор не належить клієнту, ці данні не будуть збережені, оберіть реєстратор, '
-                        'який належить клієнту'})
+                {'vehicle': 'ТЗ не належить клієнту, ці данні не будуть збережені, оберіть ТЗ, '
+                            'яке належить клієнту'})
         if self.gps_rate is not None and self.gps_rate == self.new_rate:
-            raise ValidationError({'gps_rate': 'Тариф не змінено, оберіть тариф, який не встановлено на реєстратор'})
+            raise ValidationError({'gps_rate': 'Тариф не змінено, оберіть тариф, який не встановлено на ТЗ'})
+        if self.vehicle.gps is None:
+            raise ValidationError({'vehicle': 'На цьому ТЗ не встановлено жодного БР, спершу додайте БР до ТЗ'})
+        if self.action == self.Action.change_owner and self.new_rate:
+            raise ValidationError({'new_rate': 'Тариф не змінено, або оберіть дію "зміна тарифу" або залиште цю графу порожньою'})
+        elif self.action == self.Action.change and self.new_owner:
+            raise ValidationError(
+                {'new_owner': 'Власника не змінено, або оберіть дію "зміна власника" або залиште цю графу порожньою'})
 
     def save(self, *args, **kwargs):
-        try:
-            self.gps.owner = self.client
-            if self.action == self.Action.change:
-                self.gps_rate = self.gps.rate_client
-                self.gps.rate_client = self.new_rate
-            else:
-                self.gps_rate = None
-                self.new_rate = None
-                self.gps.rate_client = None
-                self.gps.owner = None
-                self.gps.vehicle = None
-                self.gps__fuel_sensor = None
-                self.gps.rate_price = 0
-        except ValidationError:
-            raise ValidationError({'gps':'Реєстратор не належить клієнту, ці данні не будуть збережені, оберіть '
-                                         'реєстратор, який належить клієнту'})
+        if self.action == self.Action.change:
+            self.gps_rate = self.vehicle.rate_client
+            self.vehicle.rate_client = self.new_rate
+        elif self.action == self.Action.change_owner:
+            self.vehicle.owner = self.new_owner
+        else:
+            self.gps_rate = None
+            self.new_rate = None
+            self.vehicle.rate_client = None
+            self.vehicle.owner = None
+            self.vehicle.gps = None
+            self.vehicle__fuel_sensor = None
+            self.vehicle.rate_price = 0
         super(Letters, self).save(*args, **kwargs)
-        Gps.save(self.gps, *args, **kwargs)
+        Vehicle.save(self.vehicle, *args, **kwargs)
 
     class Meta:
         verbose_name_plural = "Звернення/листи"

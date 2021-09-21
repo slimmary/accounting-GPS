@@ -1,8 +1,7 @@
 from django.db import models
 from django.core.validators import RegexValidator
-from vehicle.models import Vehicle
-from clients.models import Client
 from django.core.exceptions import ValidationError
+from vehicle.models import Vehicle
 
 
 class ServiceAndEquipment(models.Model):
@@ -142,33 +141,6 @@ class Gps(models.Model):
                               max_length=6,
                               validators=[RegexValidator(r'^\d{0,10}$')]
                               )
-    owner = models.ForeignKey(Client,
-                              null=True,
-                              on_delete=models.CASCADE,
-                              verbose_name='Власник',
-                              related_name='gps',
-                              blank=True
-                              )
-    vehicle = models.OneToOneField(Vehicle,
-                                   null=True,
-                                   on_delete=models.CASCADE,
-                                   verbose_name='Транспортний засіб',
-                                   related_name='gps',
-                                   blank=True
-                                   )
-
-    class Rate:
-        ua = 'Україна'
-        world = 'Світ'
-        pause = 'Пауза'
-        own_sim = 'Власна сім'
-
-    RATE_CHOICE = (
-        (Rate.ua, 'Україна'),
-        (Rate.world, 'Світ'),
-        (Rate.pause, 'Пауза'),
-        (Rate.own_sim, 'Власна сім'),
-    )
 
     sim_1 = models.ForeignKey(Sim,
                               null=True,
@@ -177,6 +149,7 @@ class Gps(models.Model):
                               related_name='gps_sim_1',
                               blank=True
                               )
+
     sim_2 = models.ForeignKey(Sim,
                               null=True,
                               on_delete=models.CASCADE,
@@ -184,20 +157,13 @@ class Gps(models.Model):
                               related_name='gps_sim_2',
                               blank=True
                               )
-    rate_client = models.CharField(null=True,
-                                   choices=RATE_CHOICE,
-                                   max_length=100,
-                                   verbose_name='Тариф',
-                                   help_text='Тариф заповниться автоматично нічого не потрібно вводити',
+    vehicle = models.OneToOneField(Vehicle,
+                                   null=True,
+                                   on_delete=models.CASCADE,
+                                   verbose_name='ТЗ',
+                                   related_name='gps',
                                    blank=True
                                    )
-
-    rate_price = models.IntegerField(null=True,
-                                     default=0,
-                                     verbose_name='Вартість грн/міс',
-                                     help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                     blank=True
-                                     )
 
     def clean(self):
         if self.sim_1:
@@ -210,69 +176,10 @@ class Gps(models.Model):
         else:
             if self.sim_2:
                 raise ValidationError({'sim_2': 'Сім 2 може бути додана якщо Сім 1 не додана'})
-        # if self.sim_1.gps_sim_1 or self.sim_1.gps_sim_2:
-        #     raise ValidationError('Сім 1 вже закріплена за іншим реєстратором')
-        # elif self.sim_2.gps_sim_1 or self.sim_2.gps_sim_2:
-        #     raise ValidationError('Сім 2 вже закріплена за іншим реєстратором')
 
-    def save(self, *args, **kwargs):
-        if self.owner is None:
-            self.rate_client = 0
-        else:
-            if self.rate_client is None:
-                if self.sim_1 is None and self.sim_2 is None:
-                    self.rate_client = self.Rate.own_sim
-                    if self.owner.provider == self.owner.Provider.dyachuk or self.owner.provider == self.owner.Provider.card:
-                        self.rate_price = 60
-                    else:
-                        self.rate_price = 72
-                else:
-                    if self.sim_2 is None:
-                        if self.owner.provider == self.owner.Provider.dyachuk or self.owner.provider == self.owner.Provider.card:
-                            if self.sim_1.operator == self.sim_1.Operator.travelsim or self.sim_1.operator == self.sim_1.Operator.goodline:
-                                self.rate_client = self.Rate.world
-                                self.rate_price = 270
-                            else:
-                                self.rate_client = self.Rate.ua
-                                self.rate_price = 120
-                        else:
-                            if self.sim_1.operator == self.sim_1.Operator.travelsim or self.sim_1.operator == self.sim_1.Operator.goodline:
-                                self.rate_client = self.Rate.world
-                                self.rate_price = 324
-                            else:
-                                self.rate_client = self.Rate.ua
-                                self.rate_price = 144
-                    else:
-                        self.rate_client = self.Rate.world
-                        if self.owner.provider == self.owner.Provider.dyachuk or self.owner.provider == self.owner.Provider.card:
-                            self.rate_price = 270
-                        else:
-                            self.rate_price = 324
-            else:
-                if self.owner.provider == self.owner.Provider.dyachuk or self.owner.provider == self.owner.Provider.card:
-                    if self.rate_client == self.Rate.pause:
-                        self.rate_price = 30
-                    elif self.rate_client == self.Rate.world:
-                        self.rate_price = 270
-                    elif self.rate_client == self.Rate.ua:
-                        self.rate_price = 120
-                    elif self.rate_client == self.Rate.own_sim:
-                        self.rate_price = 60
-                    else:
-                        self.rate_price = 0
-
-                else:
-                    if self.rate_client == self.Rate.pause:
-                        self.rate_price = 36
-                    elif self.rate_client == self.Rate.world:
-                        self.rate_price = 324
-                    elif self.rate_client == self.Rate.ua:
-                        self.rate_price = 144
-                    elif self.rate_client == self.Rate.own_sim:
-                        self.rate_price = 72
-                    else:
-                        self.rate_price = 0
-
+    def save(self,*args, **kwargs):
+        if self.vehicle:
+            Vehicle.save(self.vehicle, *args, **kwargs)
         super(Gps, self).save(*args, **kwargs)
 
     class Meta:
@@ -329,12 +236,13 @@ class FuelSensor(models.Model):
     number = models.PositiveIntegerField(verbose_name="Номер", help_text='Введіть номер', )
     date_manufacturing = models.DateField(verbose_name='Дата виробництва', null=True, help_text='Оберіть дату',
                                           blank=True)
-    gps = models.ForeignKey(Gps,
-                            null=True,
-                            on_delete=models.CASCADE,
-                            verbose_name='БР',
-                            related_name='fuel_sensor',
-                            )
+    vehicle = models.ForeignKey(Vehicle,
+                                null=True,
+                                on_delete=models.CASCADE,
+                                verbose_name='ТЗ',
+                                related_name='fuel_sensor',
+                                blank=True
+                                )
     comments = models.CharField(null=True,
                                 verbose_name='Висота та інше',
                                 max_length=200,

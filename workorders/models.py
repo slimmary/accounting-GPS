@@ -5,6 +5,7 @@ from users.models import User
 from vehicle.models import Vehicle
 from projects.models import Project
 from products.models import Equipment, Service, Gps, FuelSensor
+from invoices.models import ServiceInvoice
 from django.core.exceptions import ValidationError
 
 
@@ -15,9 +16,77 @@ def get_first_name(self):
 User.add_to_class("__str__", get_first_name)
 
 
+class WorkOrder(models.Model):
+    date = models.DateField(verbose_name='Дата ЗН',
+                            help_text='Введіть дату',
+                            )
+    number = models.PositiveIntegerField(null=True,
+                                         verbose_name='№',
+                                         help_text='Номер ЗН',
+                                         blank=True
+                                         )
+
+    executor = models.ForeignKey(User,
+                                 null=True,
+                                 on_delete=models.CASCADE,
+                                 verbose_name='виконавець',
+                                 related_name='work_order',
+                                 blank=True
+                                 )
+    client = models.ForeignKey(Client,
+                               null=True,
+                               on_delete=models.CASCADE,
+                               verbose_name='клієнт',
+                               related_name='work_order',
+                               blank=True,
+                               )
+    price_of_project_completed_works = models.PositiveIntegerField(null=True,
+                                                                   default=0,
+                                                                   verbose_name='сума за проектні виконані роботи',
+                                                                   help_text='Поле заповниться автоматично, вводити нічого не '
+                                                                             'потрібно',
+                                                                   blank=True
+                                                                   )
+    price_of_service_completed_works = models.PositiveIntegerField(null=True,
+                                                                   default=0,
+                                                                   verbose_name='Сума за сервісні виконані роботи',
+                                                                   help_text='Поле заповниться автоматично, вводити нічого не '
+                                                                             'потрібно',
+                                                                   blank=True
+                                                                   )
+    price_of_expertise_completed_works = models.PositiveIntegerField(null=True,
+                                                                     default=0,
+                                                                     verbose_name='Сума по результатах експертизи',
+                                                                     help_text='Поле заповниться автоматично, вводити нічого не '
+                                                                               'потрібно',
+                                                                     blank=True
+                                                                     )
+
+    wo_image = models.ImageField(upload_to='images/workorders',
+                                 verbose_name='Скан-копія',
+                                 blank=True)
+
+    def __str__(self):
+        return 'ЗН №{}, від {}'.format(
+            self.number,
+            self.date,
+        )
+
+    class Meta:
+        verbose_name_plural = "Заказ Наряди"
+
+
 class Expertise(models.Model):
-    date_wo = models.DateField(verbose_name='Дата демонтажу (ЗН)',
-                               help_text='Введіть дату',
+    work_order = models.ForeignKey(WorkOrder,
+                                   null=True,
+                                   on_delete=models.CASCADE,
+                                   verbose_name='ЗН',
+                                   related_name='expertise',
+                                   blank=True
+                                   )
+    date_wo = models.CharField(verbose_name='Дата демонтажу (ЗН)',
+                               max_length=200,
+                               help_text='Заповнюється автоматично з ЗН',
                                )
     client = models.ForeignKey(Client,
                                null=True,
@@ -42,22 +111,22 @@ class Expertise(models.Model):
                                     blank=True
                                     )
 
-    desription = models.CharField(null=True,
-                                  max_length=200,
-                                  verbose_name='опис рекламації',
-                                  blank=True
-                                  )
+    description = models.CharField(null=True,
+                                   max_length=200,
+                                   verbose_name='опис рекламації',
+                                   blank=True
+                                   )
 
     date_take_to_rapeir = models.DateField(null=True,
                                            verbose_name='Дата сдачі в ремонт',
                                            help_text='Введіть дату',
                                            blank=True
                                            )
-    date_receving_expertise = models.DateField(null=True,
-                                               verbose_name='Дата отримання результатів експертизи (обладанання)',
-                                               help_text='Введіть дату',
-                                               blank=True
-                                               )
+    date_receiving_expertise = models.DateField(null=True,
+                                                verbose_name='Дата отримання результатів експертизи (обладанання)',
+                                                help_text='Введіть дату',
+                                                blank=True
+                                                )
 
     malfunctions = models.CharField(null=True,
                                     max_length=200,
@@ -75,72 +144,242 @@ class Expertise(models.Model):
                                                   blank=True
                                                   )
 
+    def __str__(self):
+        return 'Експертиза {}{}, до ЗН №{}'.format(
+            self.gps.number,
+            self.fuel_sensor,
+            self.work_order
+        )
+
     class Meta:
         verbose_name_plural = "Експертизи"
 
 
-class WorkOrder(models.Model):
-    date = models.DateField(verbose_name='Дата ЗН',
-                            help_text='Введіть дату',
-                            )
-    number = models.PositiveIntegerField(null=True,
-                                         verbose_name='№',
-                                         help_text='Номер ЗН',
-                                         blank=True
-                                         )
+class CompletedProjectWorks(models.Model):
+    work_order = models.ForeignKey(WorkOrder,
+                                   null=True,
+                                   on_delete=models.CASCADE,
+                                   verbose_name='ЗН',
+                                   related_name='list_project_works',
+                                   blank=True
+                                   )
 
-    class TypeWork:
-        project = 'Проект'
-        service = 'Сервіс'
-
-    TYPE_WORK_CHOICE = (
-        (TypeWork.project, 'Проект'),
-        (TypeWork.service, 'Сервіс'),
-    )
-    type_of_work = models.CharField(max_length=100,
-                                    default=TypeWork.service,
-                                    choices=TYPE_WORK_CHOICE,
-                                    verbose_name='Тип ЗН',
-                                    help_text='Оберіть тип',
-
-                                    )
     project = models.ForeignKey(Project,
                                 null=True,
                                 on_delete=models.CASCADE,
                                 verbose_name='Проект',
-                                related_name='work_orders',
+                                related_name='project_completed_works',
+                                blank=True,
+                                )
+    vehicle = models.ForeignKey(Vehicle,
+                                null=True,
+                                on_delete=models.CASCADE,
+                                verbose_name='ТЗ',
+                                related_name='vehicle_completed_works',
+                                blank=True,
+                                )
+    type_service = models.ForeignKey(Service,
+                                     null=True,
+                                     on_delete=models.CASCADE,
+                                     verbose_name='Роботи які виконані',
+                                     related_name='service_completed_works',
+                                     blank=True,
+                                     )
+    gps = models.ForeignKey(Gps,
+                            null=True,
+                            on_delete=models.CASCADE,
+                            verbose_name='БР',
+                            related_name='gps_project_works',
+                            blank=True
+                            )
+
+    fuel_sensor_1 = models.ForeignKey(FuelSensor,
+                                      null=True,
+                                      on_delete=models.CASCADE,
+                                      verbose_name='ДВРП 1',
+                                      related_name='fuel_sensor_1_project_works',
+                                      blank=True
+                                      )
+    fuel_sensor_2 = models.ForeignKey(FuelSensor,
+                                      null=True,
+                                      on_delete=models.CASCADE,
+                                      verbose_name='ДВРП 2',
+                                      related_name='fuel_sensor_2_project_works',
+                                      blank=True
+                                      )
+
+    count_gps = models.PositiveIntegerField(null=True,
+                                            default=0,
+                                            verbose_name='встановлено СКТ',
+                                            help_text='Заповнюється автоматично',
+                                            blank=True
+                                            )
+    count_fuel = models.PositiveIntegerField(null=True,
+                                             default=0,
+                                             verbose_name='встановлено ДВРП',
+                                             help_text='Заповнюється автоматично',
+                                             blank=True
+                                             )
+    count_executor_works = models.PositiveIntegerField(null=True,
+                                                       default=0,
+                                                       verbose_name='к-сть робыт, виконаних монтажником',
+                                                       help_text='Заповнюється автоматично',
+                                                       blank=True
+                                                       )
+
+    def __str__(self):
+        return '{} на {} по ЗН №{}'.format(
+            self.type_service,
+            self.vehicle,
+            self.work_order
+        )
+
+    def save(self, *args, **kwargs):
+        if self.gps:
+            self.gps.vehicle = self.vehicle
+            self.count_gps = 1
+            Gps.save(self.gps, *args, **kwargs)
+        if self.fuel_sensor_1 and self.fuel_sensor_2:
+            self.fuel_sensor_1.vehicle = self.vehicle
+            self.fuel_sensor_2.vehicle = self.vehicle
+            self.count_fuel = 2
+            FuelSensor.save(self.fuel_sensor_1, *args, **kwargs)
+            FuelSensor.save(self.fuel_sensor_2, *args, **kwargs)
+        elif self.fuel_sensor_1:
+            self.fuel_sensor_1.vehicle = self.vehicle
+            self.count_fuel = 1
+            FuelSensor.save(self.fuel_sensor_1, *args, **kwargs)
+        self.count_executor_works = self.count_gps + self.count_fuel
+        super(CompletedProjectWorks, self).save(*args, **kwargs)
+
+    class Meta:
+        verbose_name_plural = "Список виконаних проектних робіт"
+
+
+class CompletedServiceWorks(models.Model):
+    work_order = models.ForeignKey(WorkOrder,
+                                   null=True,
+                                   on_delete=models.CASCADE,
+                                   verbose_name='ЗН',
+                                   related_name='list_works',
+                                   blank=True
+                                   )
+
+    vehicle = models.ForeignKey(Vehicle,
+                                null=True,
+                                on_delete=models.CASCADE,
+                                verbose_name='ТЗ',
+                                related_name='service_works',
                                 blank=True
                                 )
+    gps = models.ForeignKey(Gps,
+                            null=True,
+                            on_delete=models.CASCADE,
+                            verbose_name='БР',
+                            related_name='gps_service_works',
+                            blank=True
+                            )
 
-    executor = models.ForeignKey(User,
-                                 null=True,
-                                 on_delete=models.CASCADE,
-                                 verbose_name='виконавець',
-                                 related_name='work_orders',
-                                 blank=True
-                                 )
-    client = models.ForeignKey(Client,
-                               null=True,
-                               on_delete=models.CASCADE,
-                               verbose_name='клієнт',
-                               related_name='work_orders',
-                               blank=True,
-                               )
+    fuel_sensor = models.ForeignKey(FuelSensor,
+                                    null=True,
+                                    on_delete=models.CASCADE,
+                                    verbose_name='ДВРП',
+                                    related_name='fuel_sensor_service_works',
+                                    blank=True
+                                    )
+    type_service = models.ForeignKey(Service,
+                                     on_delete=models.CASCADE,
+                                     verbose_name='виконані роботи',
+                                     related_name='completed_works',
+                                     )
 
-    price_of_completed_works = models.PositiveIntegerField(null=True,
-                                                           default=0,
-                                                           verbose_name='сума за виконані роботи',
-                                                           help_text='Поле заповниться автоматично, вводити нічого не '
-                                                                     'потрібно',
-                                                           blank=True
-                                                           )
-    price_of_used_equipment = models.PositiveIntegerField(null=True,
-                                                          default=0,
-                                                          verbose_name='Сума за використане обладнання',
-                                                          help_text='Поле заповниться автоматично, вводити нічого не '
-                                                                    'потрібно',
-                                                          blank=True
-                                                          )
+    used_equipment = models.ManyToManyField(Equipment,
+                                            null=True,
+                                            verbose_name='використане обладнання',
+                                            related_name='used_equipment',
+                                            blank=True
+                                            )
+
+    class Payer:
+        client = 'Клієнт'
+        ckt = 'СКТ'
+        executor = 'монтажник'
+        manufacturer = 'виробник'
+        expertise = 'Експертиза'
+
+    PAYER_CHOICE = (
+        (Payer.client, 'Клієнт'),
+        (Payer.expertise, 'Експертиза'),
+        (Payer.ckt, 'СКТ'),
+        (Payer.executor, 'монтажник'),
+        (Payer.manufacturer, 'виробник'),
+    )
+    payer = models.CharField(max_length=100,
+                             default=Payer.client,
+                             choices=PAYER_CHOICE,
+                             verbose_name='Платник',
+                             help_text='Оберіть платника'
+                             )
+
+    info = models.CharField(max_length=100,
+                            null=True,
+                            verbose_name='додаткова інформація\nз протоколу огляду',
+                            blank=True
+                            )
+
+    def clean(self):
+        if self.gps and self.fuel_sensor:
+            raise ValidationError(
+                {'fuel_sensor': 'Робота може бути записана тільки 1 або по БР або по ДВРП'})
+
+    def save(self, *args, **kwargs):
+        if self.payer == self.Payer.expertise:
+            Expertise.objects.create(work_order=self.work_order, wo_date=self.work_order.date,
+                                     client=self.work_order.client, gps=self.gps,
+                                     fuel_sensor=self.fuel_sensor, desription=self.info)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return '{} на {} по ЗН {} СКТ-{} ДВРП-{} використано:{} {}'.format(
+            self.type_service,
+            self.vehicle,
+            self.work_order,
+            self.gps,
+            self.fuel_sensor,
+            self.used_equipment,
+            self.payer
+        )
+
+    class Meta:
+        verbose_name_plural = "Список виконаних робіт"
+
+
+class AddCosts(models.Model):
+    work_order = models.ForeignKey(WorkOrder,
+                                   null=True,
+                                   on_delete=models.CASCADE,
+                                   verbose_name='ЗН',
+                                   related_name='add_costs',
+                                   blank=True,
+                                   )
+
+    class TypeWorks:
+        project = 'Проектні'
+        service = 'Сервісні'
+        expertise = 'Експертиза'
+
+    TYPE_CHOICE = (
+        (TypeWorks.project, 'Проектні'),
+        (TypeWorks.service, 'Сервісні'),
+        (TypeWorks.service, 'Експертиза'),
+    )
+    type_works = models.CharField(max_length=100,
+                                  default=TypeWorks.project,
+                                  choices=TYPE_CHOICE,
+                                  verbose_name='Тип додаткових витрат',
+                                  help_text='Вкажіть куди віднести витрати до проекту чи до сервісних робіт',
+                                  blank=True
+                                  )
 
     class PayForm:
         taxfree = 'КО'
@@ -220,31 +459,18 @@ class WorkOrder(models.Model):
                                           )
     sum_price_client = models.PositiveIntegerField(null=True,
                                                    default=0,
-                                                   verbose_name='сума рахунку',
-                                                   help_text='сума рахунку для клієнта\nПоле заповниться автоматично, '
+                                                   verbose_name='сума додаткових витрат',
+                                                   help_text='*для клієнта \nПоле заповниться автоматично, '
                                                              'вводити нічого не потрібно',
                                                    blank=True
                                                    )
 
-    amount_gps = models.PositiveIntegerField(null=True,
-                                             default=0,
-                                             verbose_name='кіл-ть СКТ',
-                                             help_text='введіть кількість ТІЛЬКИ ЯКЩО ПРОЕКТ',
-                                             blank=True
-                                             )
-    amount_fuel_sensor = models.PositiveIntegerField(null=True,
-                                                     default=0,
-                                                     verbose_name='кіл-ть ДВРП',
-                                                     help_text='введіть кількість ТІЛЬКИ ЯКЩО ПРОЕКТ',
-                                                     blank=True
-                                                     )
-
-    # date_payment:
-    def clean(self):
-        if (self.amount_gps != 0 or self.amount_fuel_sensor != 0) and self.type_of_work != self.TypeWork.project:
-            raise ValidationError({'amount_gps': 'Кількість СКТ да ДВРП не потрібно рахувати якщо ЗН не Проект'})
-        if self.type_of_work != self.TypeWork.project and self.project:
-            raise ValidationError({'type_of_work':'Не можливо приєднати проект, якщо тип ЗН не Проект'})
+    def __str__(self):
+        return 'Дод.витрати {} до ЗН №{} на суму {}'.format(
+            self.work_order,
+            self.type_works,
+            self.sum_price_client
+        )
 
     def save(self, *args, **kwargs):
         if self.month_executor_pay is None:
@@ -257,114 +483,19 @@ class WorkOrder(models.Model):
                 self.milege_price_client = self.milege * 4.5
             else:
                 self.milege_price_client = self.milege * 5.4
-        if self.type_of_work == self.TypeWork.project:
-            if self.project:
-                if self.project.project_invoice:
-                    self.pay_form = self.project.project_invoice.pay_form
 
-        super(WorkOrder, self).save(*args, **kwargs)
+        self.sum_price_client = self.milege_price_client + self.add_costs_client
 
-    def __str__(self):
-        return 'ЗН №{}, від {}'.format(
-            self.number,
-            self.date,
-        )
+        if self.type_works == self.TypeWorks.project:
+            self.work_order.price_of_project_completed_works = self.sum_price_client
+        elif self.type_works == self.TypeWorks.service:
+            self.work_order.price_of_service_completed_works = self.sum_price_client
+        elif self.type_works == self.TypeWorks.expertise:
+            self.work_order.price_of_expertise_completed_works = self.sum_price_client
+        super(AddCosts, self).save(*args, **kwargs)
 
     class Meta:
-        verbose_name_plural = "Заказ-Наряди"
-
-
-class CompletedWorks(models.Model):
-    work_order = models.ForeignKey(WorkOrder,
-                                   null=True,
-                                   on_delete=models.CASCADE,
-                                   verbose_name='ЗН',
-                                   related_name='list_works',
-                                   blank=True
-                                   )
-
-    car = models.ForeignKey(Vehicle,
-                            null=True,
-                            on_delete=models.CASCADE,
-                            verbose_name='ТЗ',
-                            related_name='service_works',
-                            blank=True
-                            )
-
-    type_service = models.ForeignKey(Service,
-                                     on_delete=models.CASCADE,
-                                     verbose_name='виконані роботи',
-                                     related_name='completed_works'
-                                     )
-
-    used_equipment = models.ManyToManyField(Equipment,
-                                            null=True,
-                                            verbose_name='використане обладнання',
-                                            related_name='used_equipment',
-                                            blank=True
-                                            )
-
-    class Payer:
-        client = 'Клієнт'
-        ckt = 'СКТ'
-        executor = 'монтажник'
-        manufacturer = 'виробник'
-        expertise = 'Експертиза'
-
-    PAYER_CHOICE = (
-        (Payer.client, 'Клієнт'),
-        (Payer.expertise, 'Експертиза'),
-        (Payer.ckt, 'СКТ'),
-        (Payer.executor, 'монтажник'),
-        (Payer.manufacturer, 'виробник'),
-    )
-    payer = models.CharField(max_length=100,
-                             default=Payer.client,
-                             choices=PAYER_CHOICE,
-                             verbose_name='Платник',
-                             help_text='Оберіть платника'
-                             )
-
-    gps = models.ForeignKey(Gps,
-                            null=True,
-                            on_delete=models.CASCADE,
-                            verbose_name='БР',
-                            related_name='gps_project_works',
-                            blank=True
-                            )
-
-    fuel_sensor = models.ForeignKey(FuelSensor,
-                                    null=True,
-                                    on_delete=models.CASCADE,
-                                    verbose_name='ДВРП',
-                                    related_name='fuel_sensor_project_works',
-                                    blank=True
-                                    )
-
-    info = models.CharField(max_length=100,
-                            null=True,
-                            verbose_name='додаткова інформація\nз протоколу огляду',
-                            blank=True
-                            )
-
-    def save(self, *args, **kwargs):
-        if self.payer == self.Payer.expertise:
-            Expertise.objects.create(date_wo=self.work_order.date, client=self.work_order.client, gps=self.gps,
-                                     fuel_sensor=self.fuel_sensor, desription=self.info)
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return '{} {} {} {} {} {}'.format(
-            self.car,
-            self.type_service,
-            self.gps,
-            self.fuel_sensor,
-            self.used_equipment,
-            self.payer
-        )
-
-    class Meta:
-        verbose_name_plural = "Список виконаних робіт"
+        verbose_name_plural = "Додаткові витрати клієнтів"
 
 
 class ServicePlan(models.Model):
@@ -616,10 +747,11 @@ class ServicePlan(models.Model):
         if self.status and self.date_ex is None:
             raise ValidationError({'date_ex': 'Оберіть дату виконання або зміни статусу'})
 
-    def save(self, *args, **kwargs):
-        if self.status == self.StatusWOPlan.executed:
-            WorkOrder.objects.create(date=self.date_ex, number=self.wo_numb, executor=self.executor, client=self.client)
-        super().save(*args, **kwargs)
+    #
+    # def save(self, *args, **kwargs):
+    #     if self.status == self.StatusWOPlan.executed:
+    #         WorkOrder.objects.create(date=self.date_ex, number=self.wo_numb, executor=self.executor, client=self.client)
+    #     super().save(*args, **kwargs)
 
     def __str__(self):
         return '{} заплановано {} на {} за адресою {}'.format(
@@ -631,459 +763,459 @@ class ServicePlan(models.Model):
 
     class Meta:
         verbose_name_plural = "План сервісних робіт"
+#
+#
+# class WorkOrderProxy(WorkOrder):
+#     class Meta:
+#         verbose_name_plural = "зведені дані сервісного відділу"
+#         proxy = True
 
-
-class WorkOrderProxy(WorkOrder):
-    class Meta:
-        verbose_name_plural = "зведені дані сервісного відділу"
-        proxy = True
-
-
-class ExecutorPayment(models.Model):
-    period = models.DateField(null=True,
-                              verbose_name='місяць/рік ЗП',
-                              help_text='місяць нарахування ЗП сервісному відділу - оберіть будь-яку дату в межах '
-                                        'місяця',
-                              blank=True,
-                              )
-    executor_1 = models.ForeignKey(User,
-                                   null=True,
-                                   on_delete=models.CASCADE,
-                                   verbose_name='співробітник 1',
-                                   related_name='executor_payment_1',
-                                   blank=True
-                                   )
-    executor_2 = models.ForeignKey(User,
-                                   null=True,
-                                   on_delete=models.CASCADE,
-                                   verbose_name='співробітник 2',
-                                   related_name='executor_payment_2',
-                                   blank=True
-                                   )
-    executor_3 = models.ForeignKey(User,
-                                   null=True,
-                                   on_delete=models.CASCADE,
-                                   verbose_name='співробітник 3',
-                                   related_name='executor_payment_3',
-                                   blank=True
-                                   )
-
-    work_days_1 = models.PositiveIntegerField(null=True,
-                                              default=0,
-                                              verbose_name='роб.д. 1',
-                                              help_text='кількість робочих днів(окрім вихідних)\nПоле заповниться '
-                                                        'автоматично, вводити нічого не потрібно',
-                                              blank=True
-                                              )
-    work_days_2 = models.PositiveIntegerField(null=True,
-                                              default=0,
-                                              verbose_name='р.д. 2',
-                                              help_text='кількість робочих днів(окрім вихідних)\nПоле заповниться '
-                                                        'автоматично, вводити нічого не потрібно',
-                                              blank=True
-                                              )
-    work_days_3 = models.PositiveIntegerField(null=True,
-                                              verbose_name='р.д. 3',
-                                              help_text='кількість робочих днів(окрім вихідних)\nПоле заповниться '
-                                                        'автоматично, вводити нічого не потрібно',
-                                              blank=True
-                                              )
-    work_days_sum = models.PositiveIntegerField(null=True,
-                                                verbose_name='р.д. заг',
-                                                help_text='кількість робочих днів(окрім вихідних)\nПоле заповниться '
-                                                          'автоматично, вводити нічого не потрібно',
-                                                blank=True
-                                                )
-    work_days_weekend_1 = models.PositiveIntegerField(null=True,
-                                                      default=0,
-                                                      verbose_name='р.д.вих 1',
-                                                      help_text='кількість робочих днів у вихідних\nПоле '
-                                                                'заповниться автоматично, вводити нічого не потрібно',
-                                                      blank=True
-                                                      )
-    work_days_weekend_2 = models.PositiveIntegerField(null=True,
-                                                      default=0,
-                                                      verbose_name='р.д.вих 2',
-                                                      help_text='кількість робочих днів у вихідних\nПоле '
-                                                                'заповниться автоматично, вводити нічого не потрібно',
-                                                      blank=True
-                                                      )
-    work_days_weekend_3 = models.PositiveIntegerField(null=True,
-                                                      default=0,
-                                                      verbose_name='р.д.вих 3',
-                                                      help_text='кількість робочих днів у вихідних\nПоле '
-                                                                'заповниться '
-                                                                'автоматично, вводити нічого не потрібно',
-                                                      blank=True
-                                                      )
-    work_days_weekend_sum = models.PositiveIntegerField(null=True,
-                                                        default=0,
-                                                        verbose_name='р.д.вих заг.',
-                                                        help_text='кількість робочих днів у вихідних\nПоле '
-                                                                  'заповниться '
-                                                                  'автоматично, вводити нічого не потрібно',
-                                                        blank=True
-                                                        )
-    trip_day_1 = models.FloatField(null=True,
-                                   default=0,
-                                   verbose_name='добові 1',
-                                   help_text='кількість днів на які нараховано добові\nПоле '
-                                             'заповниться автоматично, вводити нічого не потрібно',
-                                   blank=True
-                                   )
-    trip_day_2 = models.FloatField(null=True,
-                                   default=0,
-                                   verbose_name='добові 2',
-                                   help_text='кількість днів на які нараховано добові\nПоле '
-                                             'заповниться автоматично, вводити нічого не потрібно',
-                                   blank=True
-                                   )
-    trip_day_3 = models.FloatField(null=True,
-                                   default=0,
-                                   verbose_name='добові 3',
-                                   help_text='кількість днів на які нараховано добові\nПоле '
-                                             'заповниться автоматично, вводити нічого не потрібно',
-                                   blank=True
-                                   )
-    trip_day_sum = models.FloatField(null=True,
-                                     default=0,
-                                     verbose_name='добові заг',
-                                     help_text='кількість днів на які нараховано добові\nПоле '
-                                               'заповниться автоматично, вводити нічого не потрібно',
-                                     blank=True
-                                     )
-    trip_day_costs_1 = models.PositiveIntegerField(null=True,
-                                                   default=0,
-                                                   verbose_name=' грн добові 1',
-                                                   help_text='заповниться автоматично, вводити нічого не потрібно',
-                                                   blank=True
-                                                   )
-    trip_day_costs_2 = models.PositiveIntegerField(null=True,
-                                                   default=0,
-                                                   verbose_name=' грн добові 2',
-                                                   help_text='заповниться автоматично, вводити нічого не потрібно',
-                                                   blank=True
-                                                   )
-    trip_day_costs_3 = models.PositiveIntegerField(null=True,
-                                                   default=0,
-                                                   verbose_name=' грн добові 3',
-                                                   help_text='заповниться автоматично, вводити нічого не потрібно',
-                                                   blank=True
-                                                   )
-
-    qua_work_orders_1 = models.PositiveIntegerField(null=True,
-                                                    default=0,
-                                                    verbose_name='к-ть ЗН 1',
-                                                    help_text='заповниться автоматично, вводити нічого не потрібно',
-                                                    blank=True
-                                                    )
-    qua_work_orders_2 = models.PositiveIntegerField(null=True,
-                                                    default=0,
-                                                    verbose_name='к-ть ЗН 2',
-                                                    help_text='заповниться автоматично, вводити нічого не потрібно',
-                                                    blank=True
-                                                    )
-    qua_work_orders_3 = models.PositiveIntegerField(null=True,
-                                                    default=0,
-                                                    verbose_name='к-ть ЗН 3',
-                                                    help_text='заповниться автоматично, вводити нічого не потрібно',
-                                                    blank=True
-                                                    )
-    qua_work_orders_sum = models.PositiveIntegerField(null=True,
-                                                      default=0,
-                                                      verbose_name='к-ть ЗН заг',
-                                                      help_text='заповниться автоматично, вводити нічого не потрібно',
-                                                      blank=True
-                                                      )
-    qua_works_1 = models.PositiveIntegerField(null=True,
-                                              default=0,
-                                              verbose_name='к-ть вик. робіт 1',
-                                              help_text='кількість виконаних робіт співробітником заповниться '
-                                                        'автоматично, вводити нічого не потрібно',
-                                              blank=True
-                                              )
-    qua_works_2 = models.PositiveIntegerField(null=True,
-                                              default=0,
-                                              verbose_name='к-ть вик. робіт 2',
-                                              help_text='кількість виконаних робіт співробітником заповниться '
-                                                        'автоматично, вводити нічого не потрібно',
-                                              blank=True
-                                              )
-
-    qua_works_3 = models.PositiveIntegerField(null=True,
-                                              default=0,
-                                              verbose_name='к-ть вик. робіт 3',
-                                              help_text='кількість виконаних робіт співробітником заповниться '
-                                                        'автоматично, вводити нічого не потрібно',
-                                              blank=True
-                                              )
-    qua_works_sum = models.PositiveIntegerField(null=True,
-                                                default=0,
-                                                verbose_name='к-ть вик. робіт заг',
-                                                help_text='кількість виконаних робіт співробітником заповниться '
-                                                          'автоматично, вводити нічого не потрібно',
-                                                blank=True
-                                                )
-    qua_payment_works_1 = models.PositiveIntegerField(null=True,
-                                                      default=0,
-                                                      verbose_name='сума ЗП 1',
-                                                      help_text='сума ЗП за роботи \nзаповниться '
-                                                                'автоматично, вводити нічого не потрібно',
-                                                      blank=True
-                                                      )
-    qua_payment_works_2 = models.PositiveIntegerField(null=True,
-                                                      default=0,
-                                                      verbose_name='сума ЗП 2',
-                                                      help_text='сума ЗП за роботи \nзаповниться '
-                                                                'автоматично, вводити нічого не потрібно',
-                                                      blank=True
-                                                      )
-
-    qua_payment_works_3 = models.PositiveIntegerField(null=True,
-                                                      default=0,
-                                                      verbose_name='сума ЗП 3',
-                                                      help_text='сума ЗП за роботи \nзаповниться '
-                                                                'автоматично, вводити нічого не потрібно',
-                                                      blank=True
-                                                      )
-    qua_payment_works_sum = models.PositiveIntegerField(null=True,
-                                                        default=0,
-                                                        verbose_name='сума ЗП сумарно',
-                                                        help_text='сума ЗП за роботи \nзаповниться '
-                                                                  'автоматично, вводити нічого не потрібно',
-                                                        blank=True
-                                                        )
-    milege_price_1 = models.PositiveIntegerField(null=True,
-                                                 default=0,
-                                                 verbose_name='грн за км 1',
-                                                 help_text='Сума компенсації за пробіг монтажнику\nПоле '
-                                                           'заповниться автоматично, вводити нічого не '
-                                                           'потрібно',
-                                                 blank=True
-                                                 )
-    milege_price_2 = models.PositiveIntegerField(null=True,
-                                                 default=0,
-                                                 verbose_name='грн за км 2',
-                                                 help_text='Сума компенсації за пробіг монтажнику\nПоле '
-                                                           'заповниться автоматично, вводити нічого не '
-                                                           'потрібно',
-                                                 blank=True
-                                                 )
-    milege_price_3 = models.PositiveIntegerField(null=True,
-                                                 default=0,
-                                                 verbose_name='грн за км 3',
-                                                 help_text='Сума компенсації за пробіг монтажнику\nПоле '
-                                                           'заповниться автоматично, вводити нічого не '
-                                                           'потрібно',
-                                                 blank=True
-                                                 )
-    premium_sum = models.PositiveIntegerField(null=True,
-                                              default=0,
-                                              verbose_name='сума премії',
-                                              help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                              blank=True
-                                              )
-    boss_premium = models.PositiveIntegerField(null=True,
-                                               default=0,
-                                               verbose_name='сума премії керівника',
-                                               help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                               blank=True
-                                               )
-    premium_1 = models.PositiveIntegerField(null=True,
-                                            default=0,
-                                            verbose_name='сума премії 1',
-                                            help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                            blank=True
-                                            )
-    premium_2 = models.PositiveIntegerField(null=True,
-                                            default=0,
-                                            verbose_name='сума премії 2',
-                                            help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                            blank=True
-                                            )
-    premium_3 = models.PositiveIntegerField(null=True,
-                                            default=0,
-                                            verbose_name='сума премії 3',
-                                            help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                            blank=True
-                                            )
-    total_payment_1 = models.PositiveIntegerField(null=True,
-                                                  default=0,
-                                                  verbose_name='загальна сума ЗП 1',
-                                                  help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                                  blank=True
-                                                  )
-    total_payment_2 = models.PositiveIntegerField(null=True,
-                                                  default=0,
-                                                  verbose_name='загальна сума ЗП 2',
-                                                  help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                                  blank=True
-                                                  )
-    total_payment_3 = models.PositiveIntegerField(null=True,
-                                                  default=0,
-                                                  verbose_name='загальна сума ЗП 3',
-                                                  help_text='Поле заповниться автоматично, вводити нічого не потрібно',
-                                                  blank=True
-                                                  )
-
-    def save(self, *args, **kwargs):
-        period_wo = WorkOrder.objects.all().filter(month_executor_pay__month=self.period.month)
-        dates_1 = []
-        date_count_1 = 0
-        date_count_weekend_1 = 0
-        wo_1 = []
-        wo_count_1 = 0
-        list_works_1 = 0
-        trip_day_1 = 0
-        payment_works_1 = 0
-        millege_price_1 = 0
-
-        for wo in period_wo.filter(executor=self.executor_1):
-            self.trip_day_costs_1 += wo.trip_day_costs_executor
-            for works in wo.list_works.all():
-                payment_works_1 += works.type_service.salary_installer
-            trip_day_1 += wo.trip_day
-            list_works_1 += wo.list_works.count()
-            millege_price_1 += wo.milege_price_executor
-            if wo.date not in dates_1 and wo.date.isoweekday() <= 5:
-                dates_1.append(wo.date)
-                date_count_1 += 1
-            else:
-                date_count_weekend_1 += 1
-            if wo.number not in wo_1:
-                wo_1.append(wo.number)
-                wo_count_1 += 1
-        self.work_days_1 = date_count_1
-        self.work_days_weekend_1 = date_count_weekend_1
-        self.qua_work_orders_1 = wo_count_1
-        self.qua_works_1 = list_works_1
-        self.trip_day_1 = trip_day_1
-        self.qua_payment_works_1 = payment_works_1
-        self.milege_price_1 = millege_price_1
-
-        dates_2 = []
-        date_count_2 = 0
-        date_count_weekend_2 = 0
-        wo_2 = []
-        wo_count_2 = 0
-        list_works_2 = 0
-        trip_day_2 = 0
-        payment_works_2 = 0
-        millege_price_2 = 0
-        for wo in period_wo.filter(executor=self.executor_2):
-            self.trip_day_costs_2 += wo.trip_day_costs_executor
-            for works in wo.list_works.all():
-                payment_works_2 += works.type_service.salary_installer
-            trip_day_2 += wo.trip_day
-            list_works_2 += wo.list_works.count()
-            millege_price_2 += wo.milege_price_executor
-            if wo.date not in dates_2 and wo.date.isoweekday() <= 5:
-                dates_2.append(wo.date)
-                date_count_2 += 1
-            else:
-                date_count_weekend_2 += 1
-            if wo.number not in wo_2:
-                wo_2.append(wo.number)
-                wo_count_2 += 1
-        self.work_days_2 = date_count_2
-        self.work_days_weekend_2 = date_count_weekend_2
-        self.qua_work_orders_2 = wo_count_2
-        self.qua_works_2 = list_works_2
-        self.trip_day_2 = trip_day_2
-        self.qua_payment_works_2 = payment_works_2
-        self.milege_price_2 = millege_price_2
-
-        dates_3 = []
-        date_count_3 = 0
-        date_count_weekend_3 = 0
-        wo_3 = []
-        wo_count_3 = 0
-        list_works_3 = 0
-        trip_day_3 = 0
-        payment_works_3 = 0
-        millege_price_3 = 0
-        for wo in period_wo.filter(executor=self.executor_3):
-            self.trip_day_costs_3 += wo.trip_day_costs_executor
-            for works in wo.list_works.all():
-                payment_works_3 += works.type_service.salary_installer
-            trip_day_3 += wo.trip_day
-            list_works_3 += wo.list_works.count()
-            millege_price_3 += wo.milege_price_executor
-            if wo.date not in dates_1 and wo.date.isoweekday() <= 5:
-                dates_3.append(wo.date)
-                date_count_3 += 1
-            else:
-                date_count_weekend_3 += 1
-            if wo.number not in wo_3:
-                wo_3.append(wo.number)
-                wo_count_3 += 1
-        self.work_days_3 = date_count_3
-        self.work_days_weekend_3 = date_count_weekend_3
-        self.qua_work_orders_3 = wo_count_3
-        self.qua_works_3 = list_works_3
-        self.qua_payment_works_3 = payment_works_3
-        self.trip_day_3 = trip_day_3
-        self.milege_price_3 = millege_price_3
-
-        self.work_days_sum = self.work_days_1 + self.work_days_2 + self.work_days_3
-        self.work_days_weekend_sum = self.work_days_weekend_1 + self.work_days_weekend_2 + self.work_days_weekend_3
-        self.qua_work_orders_sum = self.qua_work_orders_1 + self.qua_work_orders_2 + self.qua_work_orders_3
-        self.qua_works_sum = self.qua_works_1 + self.qua_works_2 + self.qua_works_3
-        self.qua_payment_works_sum = self.qua_payment_works_1 + self.qua_payment_works_2 + self.qua_payment_works_3
-        self.trip_day_sum = trip_day_1 + trip_day_2 + trip_day_3
-        self.premium_sum = self.qua_payment_works_sum * 0.3
-        self.boss_premium = self.premium_sum / 4
-        executors_premium = self.premium_sum - self.boss_premium
-        parts_premium_count = 5
-
-        if self.work_days_sum == 0:
-            parts_premium_count -= 1
-            work_days_sum = 1
-        else:
-            work_days_sum = self.work_days_sum
-        if self.work_days_weekend_sum == 0:
-            parts_premium_count -= 1
-            work_days_weekend_sum = 1
-        else:
-            work_days_weekend_sum = self.work_days_weekend_sum
-
-        if self.trip_day_sum == 0:
-            parts_premium_count -= 1
-            trip_day_sum = 1
-        else:
-            trip_day_sum = self.trip_day_sum
-
-        executors_premium = executors_premium / parts_premium_count
-
-        self.premium_1 = (executors_premium * (self.work_days_1 / work_days_sum)) + \
-                         (executors_premium * (self.work_days_weekend_1 / work_days_weekend_sum)) + \
-                         (executors_premium * (self.qua_work_orders_1 / self.qua_work_orders_sum)) + \
-                         (executors_premium * (self.qua_works_1 / self.qua_works_sum)) + \
-                         (executors_premium * (self.trip_day_1 / trip_day_sum))
-
-        self.premium_2 = (executors_premium * (self.work_days_2 / work_days_sum)) + \
-                         (executors_premium * (self.work_days_weekend_2 / work_days_weekend_sum)) + \
-                         (executors_premium * (self.qua_work_orders_2 / self.qua_work_orders_sum)) + \
-                         (executors_premium * (self.qua_works_2 / self.qua_works_sum)) + \
-                         (executors_premium * (self.trip_day_2 / trip_day_sum))
-
-        self.premium_3 = (executors_premium * (self.work_days_3 / work_days_sum)) + \
-                         (executors_premium * (self.work_days_weekend_3 / work_days_weekend_sum)) + \
-                         (executors_premium * (self.qua_work_orders_3 / self.qua_work_orders_sum)) + \
-                         (executors_premium * (self.qua_works_3 / self.qua_works_sum)) + \
-                         (executors_premium * (self.trip_day_3 / trip_day_sum))
-
-        self.total_payment_1 = 5000 + self.qua_payment_works_1 + self.premium_1 + self.milege_price_1
-        self.total_payment_2 = 5000 + self.qua_payment_works_2 + self.premium_2 + self.milege_price_2
-        self.total_payment_3 = 5000 + self.qua_payment_works_3 + self.premium_3 + self.milege_price_3
-
-        super().save(*args, **kwargs)
-
-    class Meta:
-        verbose_name_plural = "ЗП сервісний відділ"
-
-
-class ExecutorPaymentProxy(ExecutorPayment):
-    class Meta:
-        verbose_name_plural = "зведені дані ЗП по монтажникам"
-        proxy = True
+#
+# class ExecutorPayment(models.Model):
+#     period = models.DateField(null=True,
+#                               verbose_name='місяць/рік ЗП',
+#                               help_text='місяць нарахування ЗП сервісному відділу - оберіть будь-яку дату в межах '
+#                                         'місяця',
+#                               blank=True,
+#                               )
+#     executor_1 = models.ForeignKey(User,
+#                                    null=True,
+#                                    on_delete=models.CASCADE,
+#                                    verbose_name='співробітник 1',
+#                                    related_name='executor_payment_1',
+#                                    blank=True
+#                                    )
+#     executor_2 = models.ForeignKey(User,
+#                                    null=True,
+#                                    on_delete=models.CASCADE,
+#                                    verbose_name='співробітник 2',
+#                                    related_name='executor_payment_2',
+#                                    blank=True
+#                                    )
+#     executor_3 = models.ForeignKey(User,
+#                                    null=True,
+#                                    on_delete=models.CASCADE,
+#                                    verbose_name='співробітник 3',
+#                                    related_name='executor_payment_3',
+#                                    blank=True
+#                                    )
+#
+#     work_days_1 = models.PositiveIntegerField(null=True,
+#                                               default=0,
+#                                               verbose_name='роб.д. 1',
+#                                               help_text='кількість робочих днів(окрім вихідних)\nПоле заповниться '
+#                                                         'автоматично, вводити нічого не потрібно',
+#                                               blank=True
+#                                               )
+#     work_days_2 = models.PositiveIntegerField(null=True,
+#                                               default=0,
+#                                               verbose_name='р.д. 2',
+#                                               help_text='кількість робочих днів(окрім вихідних)\nПоле заповниться '
+#                                                         'автоматично, вводити нічого не потрібно',
+#                                               blank=True
+#                                               )
+#     work_days_3 = models.PositiveIntegerField(null=True,
+#                                               verbose_name='р.д. 3',
+#                                               help_text='кількість робочих днів(окрім вихідних)\nПоле заповниться '
+#                                                         'автоматично, вводити нічого не потрібно',
+#                                               blank=True
+#                                               )
+#     work_days_sum = models.PositiveIntegerField(null=True,
+#                                                 verbose_name='р.д. заг',
+#                                                 help_text='кількість робочих днів(окрім вихідних)\nПоле заповниться '
+#                                                           'автоматично, вводити нічого не потрібно',
+#                                                 blank=True
+#                                                 )
+#     work_days_weekend_1 = models.PositiveIntegerField(null=True,
+#                                                       default=0,
+#                                                       verbose_name='р.д.вих 1',
+#                                                       help_text='кількість робочих днів у вихідних\nПоле '
+#                                                                 'заповниться автоматично, вводити нічого не потрібно',
+#                                                       blank=True
+#                                                       )
+#     work_days_weekend_2 = models.PositiveIntegerField(null=True,
+#                                                       default=0,
+#                                                       verbose_name='р.д.вих 2',
+#                                                       help_text='кількість робочих днів у вихідних\nПоле '
+#                                                                 'заповниться автоматично, вводити нічого не потрібно',
+#                                                       blank=True
+#                                                       )
+#     work_days_weekend_3 = models.PositiveIntegerField(null=True,
+#                                                       default=0,
+#                                                       verbose_name='р.д.вих 3',
+#                                                       help_text='кількість робочих днів у вихідних\nПоле '
+#                                                                 'заповниться '
+#                                                                 'автоматично, вводити нічого не потрібно',
+#                                                       blank=True
+#                                                       )
+#     work_days_weekend_sum = models.PositiveIntegerField(null=True,
+#                                                         default=0,
+#                                                         verbose_name='р.д.вих заг.',
+#                                                         help_text='кількість робочих днів у вихідних\nПоле '
+#                                                                   'заповниться '
+#                                                                   'автоматично, вводити нічого не потрібно',
+#                                                         blank=True
+#                                                         )
+#     trip_day_1 = models.FloatField(null=True,
+#                                    default=0,
+#                                    verbose_name='добові 1',
+#                                    help_text='кількість днів на які нараховано добові\nПоле '
+#                                              'заповниться автоматично, вводити нічого не потрібно',
+#                                    blank=True
+#                                    )
+#     trip_day_2 = models.FloatField(null=True,
+#                                    default=0,
+#                                    verbose_name='добові 2',
+#                                    help_text='кількість днів на які нараховано добові\nПоле '
+#                                              'заповниться автоматично, вводити нічого не потрібно',
+#                                    blank=True
+#                                    )
+#     trip_day_3 = models.FloatField(null=True,
+#                                    default=0,
+#                                    verbose_name='добові 3',
+#                                    help_text='кількість днів на які нараховано добові\nПоле '
+#                                              'заповниться автоматично, вводити нічого не потрібно',
+#                                    blank=True
+#                                    )
+#     trip_day_sum = models.FloatField(null=True,
+#                                      default=0,
+#                                      verbose_name='добові заг',
+#                                      help_text='кількість днів на які нараховано добові\nПоле '
+#                                                'заповниться автоматично, вводити нічого не потрібно',
+#                                      blank=True
+#                                      )
+#     trip_day_costs_1 = models.PositiveIntegerField(null=True,
+#                                                    default=0,
+#                                                    verbose_name=' грн добові 1',
+#                                                    help_text='заповниться автоматично, вводити нічого не потрібно',
+#                                                    blank=True
+#                                                    )
+#     trip_day_costs_2 = models.PositiveIntegerField(null=True,
+#                                                    default=0,
+#                                                    verbose_name=' грн добові 2',
+#                                                    help_text='заповниться автоматично, вводити нічого не потрібно',
+#                                                    blank=True
+#                                                    )
+#     trip_day_costs_3 = models.PositiveIntegerField(null=True,
+#                                                    default=0,
+#                                                    verbose_name=' грн добові 3',
+#                                                    help_text='заповниться автоматично, вводити нічого не потрібно',
+#                                                    blank=True
+#                                                    )
+#
+#     qua_work_orders_1 = models.PositiveIntegerField(null=True,
+#                                                     default=0,
+#                                                     verbose_name='к-ть ЗН 1',
+#                                                     help_text='заповниться автоматично, вводити нічого не потрібно',
+#                                                     blank=True
+#                                                     )
+#     qua_work_orders_2 = models.PositiveIntegerField(null=True,
+#                                                     default=0,
+#                                                     verbose_name='к-ть ЗН 2',
+#                                                     help_text='заповниться автоматично, вводити нічого не потрібно',
+#                                                     blank=True
+#                                                     )
+#     qua_work_orders_3 = models.PositiveIntegerField(null=True,
+#                                                     default=0,
+#                                                     verbose_name='к-ть ЗН 3',
+#                                                     help_text='заповниться автоматично, вводити нічого не потрібно',
+#                                                     blank=True
+#                                                     )
+#     qua_work_orders_sum = models.PositiveIntegerField(null=True,
+#                                                       default=0,
+#                                                       verbose_name='к-ть ЗН заг',
+#                                                       help_text='заповниться автоматично, вводити нічого не потрібно',
+#                                                       blank=True
+#                                                       )
+#     qua_works_1 = models.PositiveIntegerField(null=True,
+#                                               default=0,
+#                                               verbose_name='к-ть вик. робіт 1',
+#                                               help_text='кількість виконаних робіт співробітником заповниться '
+#                                                         'автоматично, вводити нічого не потрібно',
+#                                               blank=True
+#                                               )
+#     qua_works_2 = models.PositiveIntegerField(null=True,
+#                                               default=0,
+#                                               verbose_name='к-ть вик. робіт 2',
+#                                               help_text='кількість виконаних робіт співробітником заповниться '
+#                                                         'автоматично, вводити нічого не потрібно',
+#                                               blank=True
+#                                               )
+#
+#     qua_works_3 = models.PositiveIntegerField(null=True,
+#                                               default=0,
+#                                               verbose_name='к-ть вик. робіт 3',
+#                                               help_text='кількість виконаних робіт співробітником заповниться '
+#                                                         'автоматично, вводити нічого не потрібно',
+#                                               blank=True
+#                                               )
+#     qua_works_sum = models.PositiveIntegerField(null=True,
+#                                                 default=0,
+#                                                 verbose_name='к-ть вик. робіт заг',
+#                                                 help_text='кількість виконаних робіт співробітником заповниться '
+#                                                           'автоматично, вводити нічого не потрібно',
+#                                                 blank=True
+#                                                 )
+#     qua_payment_works_1 = models.PositiveIntegerField(null=True,
+#                                                       default=0,
+#                                                       verbose_name='сума ЗП 1',
+#                                                       help_text='сума ЗП за роботи \nзаповниться '
+#                                                                 'автоматично, вводити нічого не потрібно',
+#                                                       blank=True
+#                                                       )
+#     qua_payment_works_2 = models.PositiveIntegerField(null=True,
+#                                                       default=0,
+#                                                       verbose_name='сума ЗП 2',
+#                                                       help_text='сума ЗП за роботи \nзаповниться '
+#                                                                 'автоматично, вводити нічого не потрібно',
+#                                                       blank=True
+#                                                       )
+#
+#     qua_payment_works_3 = models.PositiveIntegerField(null=True,
+#                                                       default=0,
+#                                                       verbose_name='сума ЗП 3',
+#                                                       help_text='сума ЗП за роботи \nзаповниться '
+#                                                                 'автоматично, вводити нічого не потрібно',
+#                                                       blank=True
+#                                                       )
+#     qua_payment_works_sum = models.PositiveIntegerField(null=True,
+#                                                         default=0,
+#                                                         verbose_name='сума ЗП сумарно',
+#                                                         help_text='сума ЗП за роботи \nзаповниться '
+#                                                                   'автоматично, вводити нічого не потрібно',
+#                                                         blank=True
+#                                                         )
+#     milege_price_1 = models.PositiveIntegerField(null=True,
+#                                                  default=0,
+#                                                  verbose_name='грн за км 1',
+#                                                  help_text='Сума компенсації за пробіг монтажнику\nПоле '
+#                                                            'заповниться автоматично, вводити нічого не '
+#                                                            'потрібно',
+#                                                  blank=True
+#                                                  )
+#     milege_price_2 = models.PositiveIntegerField(null=True,
+#                                                  default=0,
+#                                                  verbose_name='грн за км 2',
+#                                                  help_text='Сума компенсації за пробіг монтажнику\nПоле '
+#                                                            'заповниться автоматично, вводити нічого не '
+#                                                            'потрібно',
+#                                                  blank=True
+#                                                  )
+#     milege_price_3 = models.PositiveIntegerField(null=True,
+#                                                  default=0,
+#                                                  verbose_name='грн за км 3',
+#                                                  help_text='Сума компенсації за пробіг монтажнику\nПоле '
+#                                                            'заповниться автоматично, вводити нічого не '
+#                                                            'потрібно',
+#                                                  blank=True
+#                                                  )
+#     premium_sum = models.PositiveIntegerField(null=True,
+#                                               default=0,
+#                                               verbose_name='сума премії',
+#                                               help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+#                                               blank=True
+#                                               )
+#     boss_premium = models.PositiveIntegerField(null=True,
+#                                                default=0,
+#                                                verbose_name='сума премії керівника',
+#                                                help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+#                                                blank=True
+#                                                )
+#     premium_1 = models.PositiveIntegerField(null=True,
+#                                             default=0,
+#                                             verbose_name='сума премії 1',
+#                                             help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+#                                             blank=True
+#                                             )
+#     premium_2 = models.PositiveIntegerField(null=True,
+#                                             default=0,
+#                                             verbose_name='сума премії 2',
+#                                             help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+#                                             blank=True
+#                                             )
+#     premium_3 = models.PositiveIntegerField(null=True,
+#                                             default=0,
+#                                             verbose_name='сума премії 3',
+#                                             help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+#                                             blank=True
+#                                             )
+#     total_payment_1 = models.PositiveIntegerField(null=True,
+#                                                   default=0,
+#                                                   verbose_name='загальна сума ЗП 1',
+#                                                   help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+#                                                   blank=True
+#                                                   )
+#     total_payment_2 = models.PositiveIntegerField(null=True,
+#                                                   default=0,
+#                                                   verbose_name='загальна сума ЗП 2',
+#                                                   help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+#                                                   blank=True
+#                                                   )
+#     total_payment_3 = models.PositiveIntegerField(null=True,
+#                                                   default=0,
+#                                                   verbose_name='загальна сума ЗП 3',
+#                                                   help_text='Поле заповниться автоматично, вводити нічого не потрібно',
+#                                                   blank=True
+#                                                   )
+#
+#     def save(self, *args, **kwargs):
+#         period_wo = WorkOrder.objects.all().filter(month_executor_pay__month=self.period.month)
+#         dates_1 = []
+#         date_count_1 = 0
+#         date_count_weekend_1 = 0
+#         wo_1 = []
+#         wo_count_1 = 0
+#         list_works_1 = 0
+#         trip_day_1 = 0
+#         payment_works_1 = 0
+#         millege_price_1 = 0
+#
+#         for wo in period_wo.filter(executor=self.executor_1):
+#             self.trip_day_costs_1 += wo.trip_day_costs_executor
+#             for works in wo.list_works.all():
+#                 payment_works_1 += works.type_service.salary_installer
+#             trip_day_1 += wo.trip_day
+#             list_works_1 += wo.list_works.count()
+#             millege_price_1 += wo.milege_price_executor
+#             if wo.date not in dates_1 and wo.date.isoweekday() <= 5:
+#                 dates_1.append(wo.date)
+#                 date_count_1 += 1
+#             else:
+#                 date_count_weekend_1 += 1
+#             if wo.number not in wo_1:
+#                 wo_1.append(wo.number)
+#                 wo_count_1 += 1
+#         self.work_days_1 = date_count_1
+#         self.work_days_weekend_1 = date_count_weekend_1
+#         self.qua_work_orders_1 = wo_count_1
+#         self.qua_works_1 = list_works_1
+#         self.trip_day_1 = trip_day_1
+#         self.qua_payment_works_1 = payment_works_1
+#         self.milege_price_1 = millege_price_1
+#
+#         dates_2 = []
+#         date_count_2 = 0
+#         date_count_weekend_2 = 0
+#         wo_2 = []
+#         wo_count_2 = 0
+#         list_works_2 = 0
+#         trip_day_2 = 0
+#         payment_works_2 = 0
+#         millege_price_2 = 0
+#         for wo in period_wo.filter(executor=self.executor_2):
+#             self.trip_day_costs_2 += wo.trip_day_costs_executor
+#             for works in wo.list_works.all():
+#                 payment_works_2 += works.type_service.salary_installer
+#             trip_day_2 += wo.trip_day
+#             list_works_2 += wo.list_works.count()
+#             millege_price_2 += wo.milege_price_executor
+#             if wo.date not in dates_2 and wo.date.isoweekday() <= 5:
+#                 dates_2.append(wo.date)
+#                 date_count_2 += 1
+#             else:
+#                 date_count_weekend_2 += 1
+#             if wo.number not in wo_2:
+#                 wo_2.append(wo.number)
+#                 wo_count_2 += 1
+#         self.work_days_2 = date_count_2
+#         self.work_days_weekend_2 = date_count_weekend_2
+#         self.qua_work_orders_2 = wo_count_2
+#         self.qua_works_2 = list_works_2
+#         self.trip_day_2 = trip_day_2
+#         self.qua_payment_works_2 = payment_works_2
+#         self.milege_price_2 = millege_price_2
+#
+#         dates_3 = []
+#         date_count_3 = 0
+#         date_count_weekend_3 = 0
+#         wo_3 = []
+#         wo_count_3 = 0
+#         list_works_3 = 0
+#         trip_day_3 = 0
+#         payment_works_3 = 0
+#         millege_price_3 = 0
+#         for wo in period_wo.filter(executor=self.executor_3):
+#             self.trip_day_costs_3 += wo.trip_day_costs_executor
+#             for works in wo.list_works.all():
+#                 payment_works_3 += works.type_service.salary_installer
+#             trip_day_3 += wo.trip_day
+#             list_works_3 += wo.list_works.count()
+#             millege_price_3 += wo.milege_price_executor
+#             if wo.date not in dates_1 and wo.date.isoweekday() <= 5:
+#                 dates_3.append(wo.date)
+#                 date_count_3 += 1
+#             else:
+#                 date_count_weekend_3 += 1
+#             if wo.number not in wo_3:
+#                 wo_3.append(wo.number)
+#                 wo_count_3 += 1
+#         self.work_days_3 = date_count_3
+#         self.work_days_weekend_3 = date_count_weekend_3
+#         self.qua_work_orders_3 = wo_count_3
+#         self.qua_works_3 = list_works_3
+#         self.qua_payment_works_3 = payment_works_3
+#         self.trip_day_3 = trip_day_3
+#         self.milege_price_3 = millege_price_3
+#
+#         self.work_days_sum = self.work_days_1 + self.work_days_2 + self.work_days_3
+#         self.work_days_weekend_sum = self.work_days_weekend_1 + self.work_days_weekend_2 + self.work_days_weekend_3
+#         self.qua_work_orders_sum = self.qua_work_orders_1 + self.qua_work_orders_2 + self.qua_work_orders_3
+#         self.qua_works_sum = self.qua_works_1 + self.qua_works_2 + self.qua_works_3
+#         self.qua_payment_works_sum = self.qua_payment_works_1 + self.qua_payment_works_2 + self.qua_payment_works_3
+#         self.trip_day_sum = trip_day_1 + trip_day_2 + trip_day_3
+#         self.premium_sum = self.qua_payment_works_sum * 0.3
+#         self.boss_premium = self.premium_sum / 4
+#         executors_premium = self.premium_sum - self.boss_premium
+#         parts_premium_count = 5
+#
+#         if self.work_days_sum == 0:
+#             parts_premium_count -= 1
+#             work_days_sum = 1
+#         else:
+#             work_days_sum = self.work_days_sum
+#         if self.work_days_weekend_sum == 0:
+#             parts_premium_count -= 1
+#             work_days_weekend_sum = 1
+#         else:
+#             work_days_weekend_sum = self.work_days_weekend_sum
+#
+#         if self.trip_day_sum == 0:
+#             parts_premium_count -= 1
+#             trip_day_sum = 1
+#         else:
+#             trip_day_sum = self.trip_day_sum
+#
+#         executors_premium = executors_premium / parts_premium_count
+#
+#         self.premium_1 = (executors_premium * (self.work_days_1 / work_days_sum)) + \
+#                          (executors_premium * (self.work_days_weekend_1 / work_days_weekend_sum)) + \
+#                          (executors_premium * (self.qua_work_orders_1 / self.qua_work_orders_sum)) + \
+#                          (executors_premium * (self.qua_works_1 / self.qua_works_sum)) + \
+#                          (executors_premium * (self.trip_day_1 / trip_day_sum))
+#
+#         self.premium_2 = (executors_premium * (self.work_days_2 / work_days_sum)) + \
+#                          (executors_premium * (self.work_days_weekend_2 / work_days_weekend_sum)) + \
+#                          (executors_premium * (self.qua_work_orders_2 / self.qua_work_orders_sum)) + \
+#                          (executors_premium * (self.qua_works_2 / self.qua_works_sum)) + \
+#                          (executors_premium * (self.trip_day_2 / trip_day_sum))
+#
+#         self.premium_3 = (executors_premium * (self.work_days_3 / work_days_sum)) + \
+#                          (executors_premium * (self.work_days_weekend_3 / work_days_weekend_sum)) + \
+#                          (executors_premium * (self.qua_work_orders_3 / self.qua_work_orders_sum)) + \
+#                          (executors_premium * (self.qua_works_3 / self.qua_works_sum)) + \
+#                          (executors_premium * (self.trip_day_3 / trip_day_sum))
+#
+#         self.total_payment_1 = 5000 + self.qua_payment_works_1 + self.premium_1 + self.milege_price_1
+#         self.total_payment_2 = 5000 + self.qua_payment_works_2 + self.premium_2 + self.milege_price_2
+#         self.total_payment_3 = 5000 + self.qua_payment_works_3 + self.premium_3 + self.milege_price_3
+#
+#         super().save(*args, **kwargs)
+#
+#     class Meta:
+#         verbose_name_plural = "ЗП сервісний відділ"
+#
+#
+# class ExecutorPaymentProxy(ExecutorPayment):
+#     class Meta:
+#         verbose_name_plural = "зведені дані ЗП по монтажникам"
+#         proxy = True
