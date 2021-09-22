@@ -331,6 +331,16 @@ class CompletedServiceWorks(models.Model):
         if self.gps and self.fuel_sensor:
             raise ValidationError(
                 {'fuel_sensor': 'Робота може бути записана тільки 1 або по БР або по ДВРП'})
+        if self.gps:
+            if self.gps.vehicle and self.gps.vehicle != self.vehicle:
+                raise ValidationError(
+                    {'gps': 'Цей реєстратор встановлений на інший автомобіль, оберіть реєстратор, що належить '
+                            'автомобілю, на якому проводились роботи'})
+        if self.fuel_sensor:
+            if self.fuel_sensor.vehicle and self.fuel_sensor.vehicle != self.vehicle:
+                raise ValidationError(
+                    {'fuel_sensor': 'Цей ДВРП встановлений на інший автомобіль, оберіть ДВРП, що належить автомобілю, '
+                                    'на якому проводились роботи'})
 
     def save(self, *args, **kwargs):
         if self.payer == self.Payer.expertise:
